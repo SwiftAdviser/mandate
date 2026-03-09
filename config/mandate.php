@@ -5,9 +5,10 @@ return [
     'coingecko_api_key'  => env('COINGECKO_API_KEY'),
 
     'privy' => [
-        'app_id'     => env('PRIVY_APP_ID'),
-        'app_secret' => env('PRIVY_APP_SECRET'),
-        'jwks_url'   => env('PRIVY_JWKS_URL', 'https://auth.privy.io/api/v1/apps'),
+        'app_id'           => env('PRIVY_APP_ID'),
+        'app_secret'       => env('PRIVY_APP_SECRET'),
+        // ES256 PEM verification key — copy from Privy Dashboard → Settings → Basics
+        'verification_key' => env('PRIVY_VERIFICATION_KEY'),
     ],
 
     'api_key_prefix' => [
