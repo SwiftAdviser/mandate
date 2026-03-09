@@ -1,0 +1,34 @@
+{
+  "name": "@mandate/agentkit-provider",
+  "version": "0.1.0",
+  "description": "Coinbase AgentKit WalletProvider + ActionProvider for Mandate policy enforcement",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "scripts": {
+    "build": "tsup src/index.ts --format esm --dts --clean",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "dependencies": {
+    "@mandate/sdk": "workspace:*",
+    "zod": "^3.22.0"
+  },
+  "peerDependencies": {
+    "@coinbase/agentkit": ">=0.1.0"
+  },
+  "peerDependenciesMeta": {
+    "@coinbase/agentkit": { "optional": true }
+  },
+  "devDependencies": {
+    "tsup": "^8.0.0",
+    "typescript": "^5.0.0",
+    "vitest": "^2.0.0"
+  }
+}

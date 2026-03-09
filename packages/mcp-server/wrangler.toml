@@ -1,0 +1,10 @@
+name = "mandate-mcp"
+main = "src/index.ts"
+compatibility_date = "2024-11-01"
+compatibility_flags = ["nodejs_compat"]
+
+[vars]
+MANDATE_API_URL = "https://api.mandate.krutovoy.me"
+
+# Secrets (set via: npx wrangler secret put MANDATE_RUNTIME_KEY)
+# MANDATE_RUNTIME_KEY

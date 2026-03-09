@@ -1,0 +1,60 @@
+import { MandateWallet, PolicyBlockedError, ApprovalRequiredError } from '@mandate/sdk';
+
+export interface TransferParams {
+  to: string;
+  amount: string;
+  tokenAddress: string;
+  runtimeKey?: string;
+  privateKey?: string;
+  chainId?: number;
+}
+
+export const transferTool = {
+  name: 'mandate_transfer',
+  description: 'Transfer ERC20 tokens with Mandate policy enforcement. Transaction will be blocked if it exceeds configured spending limits.',
+  parameters: {
+    type: 'object',
+    properties: {
+      to: {
+        type: 'string',
+        description: 'Recipient EVM address (0x...)',
+      },
+      amount: {
+        type: 'string',
+        description: 'Amount in token smallest units (e.g. "1000000" = 1 USDC at 6 decimals)',
+      },
+      tokenAddress: {
+        type: 'string',
+        description: 'ERC20 token contract address (0x...)',
+      },
+    },
+    required: ['to', 'amount', 'tokenAddress'],
+  },
+  execute: async (
+    params: TransferParams,
+    context?: { runtimeKey?: string; privateKey?: string; chainId?: number },
+  ): Promise<{ success: boolean; txHash?: string; intentId?: string; blocked?: boolean; reason?: string; requiresApproval?: boolean }> => {
+    const runtimeKey = params.runtimeKey ?? context?.runtimeKey ?? process.env.MANDATE_RUNTIME_KEY ?? '';
+    const privateKey = (params.privateKey ?? context?.privateKey ?? process.env.MANDATE_PRIVATE_KEY ?? '') as `0x${string}`;
+    const chainId = params.chainId ?? context?.chainId ?? Number(process.env.MANDATE_CHAIN_ID ?? '84532');
+
+    const wallet = new MandateWallet({ runtimeKey, privateKey, chainId });
+
+    try {
+      const result = await wallet.transfer(
+        params.to as `0x${string}`,
+        params.amount,
+        params.tokenAddress as `0x${string}`,
+      );
+      return { success: true, txHash: result.txHash, intentId: result.intentId };
+    } catch (err) {
+      if (err instanceof PolicyBlockedError) {
+        return { success: false, blocked: true, reason: err.blockReason };
+      }
+      if (err instanceof ApprovalRequiredError) {
+        return { success: false, requiresApproval: true, intentId: err.intentId };
+      }
+      throw err;
+    }
+  },
+};

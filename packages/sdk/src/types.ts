@@ -83,3 +83,7 @@ export class ApprovalRequiredError extends MandateError {
     this.name = 'ApprovalRequiredError';
   }
 }
+
+/** Alias for PolicyBlockedError — used by integration adapters */
+export const MandateBlockedError = PolicyBlockedError;
+export type MandateBlockedError = PolicyBlockedError;

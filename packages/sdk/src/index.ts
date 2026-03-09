@@ -26,12 +26,14 @@
  */
 
 export { MandateWallet }    from './MandateWallet.js';
+export type { MandateWalletConfig, TransferResult } from './MandateWallet.js';
 export { MandateClient }    from './MandateClient.js';
 export { computeIntentHash } from './intentHash.js';
 export {
   MandateError,
   CircuitBreakerError,
   PolicyBlockedError,
+  MandateBlockedError,
   ApprovalRequiredError,
 } from './types.js';
 export type {

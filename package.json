@@ -2,6 +2,9 @@
     "$schema": "https://www.schemastore.org/package.json",
     "private": true,
     "type": "module",
+    "workspaces": [
+        "packages/*"
+    ],
     "scripts": {
         "build": "vite build",
         "dev": "vite"

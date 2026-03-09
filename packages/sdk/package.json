@@ -11,6 +11,10 @@
       "import": "./dist/index.js",
       "require": "./dist/index.cjs",
       "types": "./dist/index.d.ts"
+    },
+    "./client": {
+      "import": "./dist/MandateClient.js",
+      "types": "./dist/MandateClient.d.ts"
     }
   },
   "scripts": {
