@@ -1,4 +1,4 @@
-import { keccak256, toHex, encodePacked } from 'viem';
+import { keccak256 } from 'viem';
 
 export interface HashInput {
   chainId: number;
@@ -33,5 +33,5 @@ export function computeIntentHash(input: HashInput): `0x${string}` {
 
   // keccak256 of UTF-8 encoded canonical string
   const bytes = new TextEncoder().encode(packed);
-  return keccak256(bytes as `0x${string}`);
+  return keccak256(bytes as unknown as `0x${string}`);
 }

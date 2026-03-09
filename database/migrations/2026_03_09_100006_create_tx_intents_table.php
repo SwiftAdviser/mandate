@@ -22,7 +22,7 @@ return new class extends Migration {
             $table->string('max_fee_per_gas', 20);
             $table->string('max_priority_fee_per_gas', 20);
             $table->smallInteger('tx_type')->default(2);
-            $table->jsonb('access_list')->default('[]');
+            $table->json('access_list')->default('[]');
             // Decoded intent
             $table->string('decoded_action')->nullable();    // 'transfer' | 'approve' | 'swap' | 'unknown'
             $table->string('decoded_token', 42)->nullable();

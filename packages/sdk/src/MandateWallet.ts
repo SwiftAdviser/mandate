@@ -19,21 +19,18 @@ import {
   createPublicClient,
   createWalletClient,
   http,
-  parseUnits,
   encodeFunctionData,
   type Hash,
-  type TransactionReceipt,
   type WalletClient,
   type PublicClient,
   type Chain,
   type PrivateKeyAccount,
-  privateKeyToAccount,
 } from 'viem';
+import { privateKeyToAccount } from 'viem/accounts';
 import { baseSepolia, base } from 'viem/chains';
 import { MandateClient } from './MandateClient.js';
 import { computeIntentHash } from './intentHash.js';
 import type { IntentStatus, MandateConfig } from './types.js';
-import { ApprovalRequiredError } from './types.js';
 
 const ERC20_ABI = [
   {
@@ -71,7 +68,8 @@ export interface TransferResult {
 
 export class MandateWallet {
   private readonly client: MandateClient;
-  private readonly wallet: WalletClient;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  private readonly wallet: WalletClient<any, Chain, PrivateKeyAccount>;
   private readonly publicClient: PublicClient;
   private readonly account: PrivateKeyAccount;
   private readonly chainId: number;
@@ -201,6 +199,7 @@ export class MandateWallet {
 
     // 4. Sign + broadcast locally (private key stays here)
     const txHash = await this.wallet.sendTransaction({
+      account:               this.account,
       to,
       data:                  calldata === '0x' ? undefined : calldata,
       value:                 BigInt(valueWei),
@@ -208,8 +207,7 @@ export class MandateWallet {
       maxFeePerGas:          BigInt(maxFeePerGas),
       maxPriorityFeePerGas:  BigInt(maxPriorityFeePerGas),
       nonce,
-      type: 'eip1559',
-    });
+    } as Parameters<typeof this.wallet.sendTransaction>[0]);
 
     // 5. Post txHash to Mandate (triggers envelope verification)
     await this.client.postEvent(intentId, txHash);

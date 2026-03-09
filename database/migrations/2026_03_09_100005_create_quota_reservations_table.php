@@ -13,7 +13,7 @@ return new class extends Migration {
             $table->string('window_key', 10);  // '2026-03-09' | '2026-03'
             $table->decimal('reserved_usd', 18, 6)->default(0);
             $table->decimal('confirmed_usd', 18, 6)->default(0);
-            $table->timestamp('updated_at')->useCurrent()->useCurrentOnUpdate();
+            $table->timestamp('updated_at')->useCurrent();
 
             $table->primary(['agent_id', 'window_type', 'window_key']);
         });

@@ -22,10 +22,12 @@ class IntentStateMachineService
     public function transition(
         TxIntent $intent,
         string   $newStatus,
-        string   $actorId,
+        ?string  $actorId,
         string   $actorRole,
         array    $metadata = []
     ): TxIntent {
+        $actorId ??= 'system';
+
         DB::transaction(function () use ($intent, $newStatus, $actorId, $actorRole, $metadata) {
             $updates = ['status' => $newStatus];
 

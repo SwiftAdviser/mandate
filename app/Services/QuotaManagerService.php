@@ -53,18 +53,29 @@ class QuotaManagerService
         $monthlyKey = now()->format('Y-m');
 
         foreach ([['daily', $dailyKey], ['monthly', $monthlyKey]] as [$type, $key]) {
-            DB::table('quota_reservations')
-                ->upsert(
-                    [
-                        'agent_id'     => $agentId,
-                        'window_type'  => $type,
-                        'window_key'   => $key,
-                        'reserved_usd' => $amountUsd,
-                        'confirmed_usd'=> 0,
-                    ],
-                    ['agent_id', 'window_type', 'window_key'],
-                    ['reserved_usd' => DB::raw("quota_reservations.reserved_usd + {$amountUsd}")]
-                );
+            // Use manual insert-or-update for cross-DB compat (SQLite, PG)
+            $existing = DB::table('quota_reservations')
+                ->where('agent_id', $agentId)
+                ->where('window_type', $type)
+                ->where('window_key', $key)
+                ->first();
+
+            if ($existing) {
+                DB::table('quota_reservations')
+                    ->where('agent_id', $agentId)
+                    ->where('window_type', $type)
+                    ->where('window_key', $key)
+                    ->update(['reserved_usd' => DB::raw("reserved_usd + {$amountUsd}")]);
+            } else {
+                DB::table('quota_reservations')->insertOrIgnore([
+                    'agent_id'      => $agentId,
+                    'window_type'   => $type,
+                    'window_key'    => $key,
+                    'reserved_usd'  => $amountUsd,
+                    'confirmed_usd' => 0,
+                    'updated_at'    => now(),
+                ]);
+            }
         }
     }
 
@@ -79,14 +90,15 @@ class QuotaManagerService
         $dailyKey   = now()->format('Y-m-d');
         $monthlyKey = now()->format('Y-m');
 
+        // MAX(0, x) works in both SQLite and PostgreSQL; GREATEST() is PG-only
+        $clamp = "CASE WHEN reserved_usd > {$amountUsd} THEN reserved_usd - {$amountUsd} ELSE 0 END";
+
         foreach ([['daily', $dailyKey], ['monthly', $monthlyKey]] as [$type, $key]) {
             DB::table('quota_reservations')
                 ->where('agent_id', $agentId)
                 ->where('window_type', $type)
                 ->where('window_key', $key)
-                ->update([
-                    'reserved_usd' => DB::raw("GREATEST(0, reserved_usd - {$amountUsd})"),
-                ]);
+                ->update(['reserved_usd' => DB::raw($clamp)]);
         }
     }
 
@@ -101,13 +113,15 @@ class QuotaManagerService
         $dailyKey   = $intent->created_at->format('Y-m-d');
         $monthlyKey = $intent->created_at->format('Y-m');
 
+        $clamp = "CASE WHEN reserved_usd > {$amountUsd} THEN reserved_usd - {$amountUsd} ELSE 0 END";
+
         foreach ([['daily', $dailyKey], ['monthly', $monthlyKey]] as [$type, $key]) {
             DB::table('quota_reservations')
                 ->where('agent_id', $agentId)
                 ->where('window_type', $type)
                 ->where('window_key', $key)
                 ->update([
-                    'reserved_usd'  => DB::raw("GREATEST(0, reserved_usd - {$amountUsd})"),
+                    'reserved_usd'  => DB::raw($clamp),
                     'confirmed_usd' => DB::raw("confirmed_usd + {$amountUsd}"),
                 ]);
         }

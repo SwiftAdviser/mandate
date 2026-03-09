@@ -15,7 +15,9 @@
   },
   "scripts": {
     "build": "tsup src/index.ts --format esm,cjs --dts --clean",
-    "dev": "tsup src/index.ts --format esm,cjs --dts --watch"
+    "dev": "tsup src/index.ts --format esm,cjs --dts --watch",
+    "test": "vitest run",
+    "test:watch": "vitest"
   },
   "peerDependencies": {
     "viem": ">=2.0.0"
@@ -26,7 +28,8 @@
   "devDependencies": {
     "tsup": "^8.0.0",
     "typescript": "^5.0.0",
-    "viem": "^2.0.0"
+    "viem": "^2.0.0",
+    "vitest": "^2.0.0"
   },
   "keywords": ["agent", "wallet", "policy", "circuit-breaker", "web3", "mandate"],
   "license": "MIT"
