@@ -1,0 +1,33 @@
+{
+  "name": "@mandate/sdk",
+  "version": "0.1.0",
+  "description": "Policy layer for agent wallets. Not a wallet — guardrails for existing wallets.",
+  "type": "module",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "scripts": {
+    "build": "tsup src/index.ts --format esm,cjs --dts --clean",
+    "dev": "tsup src/index.ts --format esm,cjs --dts --watch"
+  },
+  "peerDependencies": {
+    "viem": ">=2.0.0"
+  },
+  "peerDependenciesMeta": {
+    "viem": { "optional": true }
+  },
+  "devDependencies": {
+    "tsup": "^8.0.0",
+    "typescript": "^5.0.0",
+    "viem": "^2.0.0"
+  },
+  "keywords": ["agent", "wallet", "policy", "circuit-breaker", "web3", "mandate"],
+  "license": "MIT"
+}
