@@ -19,6 +19,7 @@
     },
     "dependencies": {
         "@inertiajs/react": "^2.3.17",
+        "@privy-io/react-auth": "^3.16.0",
         "@types/react": "^19.2.14",
         "@types/react-dom": "^19.2.3",
         "@vitejs/plugin-react": "^5.1.4",

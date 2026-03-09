@@ -1,0 +1,29 @@
+{
+  "name": "@mandate/acp-plugin",
+  "version": "0.1.0",
+  "description": "Mandate policy enforcement for ACP (Agent Commerce Protocol) by Virtuals Protocol — validates spend limits before approving ACP job payments",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "scripts": {
+    "build": "tsup src/index.ts --format esm --dts --clean",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "dependencies": {
+    "@mandate/sdk": "workspace:*"
+  },
+  "devDependencies": {
+    "tsup": "^8.0.0",
+    "typescript": "^5.0.0",
+    "vitest": "^2.0.0"
+  },
+  "keywords": ["mandate", "acp", "virtuals", "agent-commerce-protocol", "spending-limits"],
+  "license": "MIT"
+}
