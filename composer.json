@@ -13,6 +13,7 @@
         "laravel/horizon": "^5.45",
         "laravel/sanctum": "^4.3",
         "laravel/tinker": "^2.10.1",
+        "predis/predis": "^2.3",
         "tightenco/ziggy": "^2.6",
         "web3p/ethereum-tx": "^0.4.3"
     },
