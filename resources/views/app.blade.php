@@ -5,6 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title inertia>Mandate — Policy Layer for Agent Wallets</title>
+    <script>
+        window.__APP_NAME__ = "{{ config('app.name') }}";
+        window.__PRIVY_APP_ID__ = "{{ config('mandate.privy.app_id') }}";
+    </script>
     @viteReactRefresh
     @vite(['resources/css/app.css', 'resources/js/app.tsx'])
     @inertiaHead

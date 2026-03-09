@@ -7,6 +7,9 @@ use Illuminate\Support\Facades\Route;
 // Landing — public
 Route::get('/', fn () => \Inertia\Inertia::render('Landing'));
 
+// Login — public
+Route::get('/login', fn () => \Inertia\Inertia::render('Login'));
+
 // Claim page — open (user has claimUrl, no Privy login yet)
 Route::get('/claim', [DashboardController::class, 'claim']);
 

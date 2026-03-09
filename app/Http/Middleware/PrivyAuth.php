@@ -16,7 +16,10 @@ class PrivyAuth
             ?? $request->cookie('privy-token');
 
         if (!$token) {
-            return response()->json(['error' => 'Privy authentication required.'], 401);
+            if ($request->expectsJson()) {
+                return response()->json(['error' => 'Privy authentication required.'], 401);
+            }
+            return redirect('/login');
         }
 
         $verificationKey = config('mandate.privy.verification_key');
@@ -43,7 +46,10 @@ class PrivyAuth
             $request->attributes->set('privy_claims', $decoded);
 
         } catch (\Exception $e) {
-            return response()->json(['error' => 'Invalid or expired token.'], 401);
+            if ($request->expectsJson()) {
+                return response()->json(['error' => 'Invalid or expired token.'], 401);
+            }
+            return redirect('/login');
         }
 
         return $next($request);
