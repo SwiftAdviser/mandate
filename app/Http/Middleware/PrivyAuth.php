@@ -4,8 +4,10 @@ namespace App\Http\Middleware;
 
 use Closure;
 use Firebase\JWT\JWT;
-use Firebase\JWT\Key;
+use Firebase\JWT\JWK;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
 class PrivyAuth
@@ -22,23 +24,23 @@ class PrivyAuth
             return redirect('/login');
         }
 
-        $verificationKey = config('mandate.privy.verification_key');
-        $appId           = config('mandate.privy.app_id');
+        $appId = config('mandate.privy.app_id');
 
-        if (!$verificationKey || !$appId) {
-            Log::error('Privy verification key or App ID not configured.');
+        if (!$appId) {
+            Log::error('Privy App ID not configured.');
             return response()->json(['error' => 'Authentication not configured.'], 500);
         }
 
         try {
-            $decoded = JWT::decode($token, new Key($verificationKey, 'ES256'));
+            $keys = $this->fetchJwks($appId);
+            $decoded = JWT::decode($token, $keys);
 
             if ($decoded->iss !== 'privy.io') {
-                return response()->json(['error' => 'Invalid token issuer.'], 401);
+                return $this->unauthenticated($request, 'Invalid token issuer.');
             }
 
             if ($decoded->aud !== $appId) {
-                return response()->json(['error' => 'Invalid token audience.'], 401);
+                return $this->unauthenticated($request, 'Invalid token audience.');
             }
 
             $request->attributes->set('privy_did', $decoded->sub);
@@ -46,12 +48,27 @@ class PrivyAuth
             $request->attributes->set('privy_claims', $decoded);
 
         } catch (\Exception $e) {
-            if ($request->expectsJson()) {
-                return response()->json(['error' => 'Invalid or expired token.'], 401);
-            }
-            return redirect('/login');
+            return $this->unauthenticated($request, 'Invalid or expired token.');
         }
 
         return $next($request);
+    }
+
+    private function fetchJwks(string $appId): array
+    {
+        $jwks = Cache::remember("privy_jwks_{$appId}", 300, function () use ($appId) {
+            $resp = Http::timeout(5)->get("https://auth.privy.io/api/v1/apps/{$appId}/jwks.json");
+            return $resp->json();
+        });
+
+        return JWK::parseKeySet($jwks);
+    }
+
+    private function unauthenticated(Request $request, string $message): mixed
+    {
+        if ($request->expectsJson()) {
+            return response()->json(['error' => $message], 401);
+        }
+        return redirect('/login');
     }
 }
