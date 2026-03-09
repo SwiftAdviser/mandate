@@ -22,3 +22,6 @@
 Homestead.json
 Homestead.yaml
 Thumbs.db
+packages/sdk/node_modules/
+packages/sdk/dist/
+/tmp/
