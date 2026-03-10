@@ -280,6 +280,30 @@ const PRICING: PricingTier[] = [
   },
 ];
 
+/* ── What You Can Build items ────────────────────────────────────────────── */
+const BUILD_ITEMS = [
+  {
+    num: '01',
+    title: 'Autonomous DeFi',
+    description: 'Monitor yields across protocols, execute trades on Base, and rebalance liquidity 24/7. Agent detects a better opportunity at 3am — it acts immediately, because you already set the rules.',
+  },
+  {
+    num: '02',
+    title: 'The Machine Economy',
+    description: 'Agents that pay for their own compute, data, and storage using the x402 protocol. Acquire API keys, purchase premium data streams, pay for storage — entirely autonomously.',
+  },
+  {
+    num: '03',
+    title: 'Agentic Commerce',
+    description: 'Participate in creator economies. Send payments between agents and users. Monetize agent-generated content — all without manual approval on every transaction.',
+  },
+  {
+    num: '04',
+    title: 'Multi-Chain Operations',
+    description: 'Deploy on Base, manage positions wherever opportunities exist. One policy set, enforced across every chain your agent touches.',
+  },
+];
+
 /* ── Main page ───────────────────────────────────────────────────────────── */
 export default function Landing() {
   const [navOpaque, setNavOpaque] = useState(false);
@@ -300,6 +324,7 @@ export default function Landing() {
           .hero-visual    { width: 100% !important; margin-top: 48px; }
           .nav-center     { display: none !important; }
           .caps-grid      { grid-template-columns: 1fr !important; }
+          .build-grid     { grid-template-columns: 1fr !important; }
           .pricing-grid   { grid-template-columns: 1fr !important; }
         }
       `}</style>
@@ -417,6 +442,59 @@ export default function Landing() {
                     ))}
                   </div>
                 </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ── What You Can Build ───────────────────────────────────────────── */}
+      <section style={{
+        padding: '96px 0',
+        borderTop: '1px solid var(--border-dim)',
+        background: 'var(--bg-surface)',
+      }}>
+        <div style={section}>
+          <div style={{
+            fontFamily: 'var(--font-mono)', fontSize: 11,
+            color: 'var(--amber)', letterSpacing: '0.1em',
+            textTransform: 'uppercase', marginBottom: 16,
+          }}>
+            What You Can Build
+          </div>
+          <h2 style={{
+            fontFamily: 'var(--font-display)', fontStyle: 'italic',
+            fontSize: 'clamp(26px, 2.8vw, 40px)',
+            fontWeight: 300, letterSpacing: '-0.03em', lineHeight: 1.1,
+            margin: '0 0 56px', color: 'var(--text-primary)',
+          }}>
+            Once agents can hold money,<br />entirely new categories emerge.
+          </h2>
+
+          <div className="build-grid" style={{
+            display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '0 80px',
+          }}>
+            {BUILD_ITEMS.map(({ num, title, description }) => (
+              <div key={num} style={{
+                borderTop: '1px solid var(--border-dim)',
+                paddingTop: 28,
+                paddingBottom: 48,
+              }}>
+                <div style={{
+                  fontFamily: 'var(--font-mono)', fontSize: 11,
+                  color: 'var(--amber)', letterSpacing: '0.1em',
+                  marginBottom: 12,
+                }}>{num}</div>
+                <h3 style={{
+                  fontFamily: 'var(--font-display)', fontSize: 22,
+                  fontWeight: 400, letterSpacing: '-0.02em',
+                  color: 'var(--text-primary)', margin: '0 0 14px',
+                }}>{title}</h3>
+                <p style={{
+                  fontFamily: 'var(--font-sans)', fontSize: 15,
+                  color: 'var(--text-secondary)', lineHeight: 1.7,
+                  margin: 0,
+                }}>{description}</p>
               </div>
             ))}
           </div>
