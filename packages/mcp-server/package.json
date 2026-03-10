@@ -10,7 +10,8 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "@cloudflare/agents": "^0.0.16"
+    "@cloudflare/agents": "^0.0.16",
+    "@mandate/guard": "workspace:*"
   },
   "devDependencies": {
     "@cloudflare/workers-types": "^4.0.0",
