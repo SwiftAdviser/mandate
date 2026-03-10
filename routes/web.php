@@ -7,6 +7,9 @@ use Illuminate\Support\Facades\Route;
 // Landing — public
 Route::get('/', fn () => \Inertia\Inertia::render('Landing'));
 
+// Integrations — public
+Route::get('/integrations', fn () => \Inertia\Inertia::render('Integrations'));
+
 // Login — public
 Route::get('/login', fn () => \Inertia\Inertia::render('Login'));
 
