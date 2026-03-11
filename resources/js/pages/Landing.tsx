@@ -8,14 +8,6 @@ const NAV_LINKS = [
   { label: 'Docs', href: '#' },
 ];
 
-/* ── Stats data ──────────────────────────────────────────────────────────── */
-const STATS = [
-  { value: 2847, suffix: '', label: 'agents protected', decimals: 0 },
-  { value: 12.4, suffix: 'M', label: 'in spend controlled', prefix: '$', decimals: 1 },
-  { value: 50, suffix: 'ms', label: 'validation', prefix: '< ', decimals: 0 },
-  { value: 99.97, suffix: '%', label: 'uptime', decimals: 2 },
-];
-
 /* ── Capabilities ────────────────────────────────────────────────────────── */
 const CAPABILITIES = [
   {
@@ -34,8 +26,8 @@ const CAPABILITIES = [
   },
   {
     num: '03',
-    title: 'Human-in-the-Loop',
-    description: 'Transactions above threshold wait for human approval. Slack, webhook, or email.',
+    title: 'Approval Gates',
+    description: 'Transactions above threshold wait for your sign-off. Slack, webhook, or email.',
     tags: ['Any threshold', 'Slack · webhook'],
     featured: false,
   },
@@ -45,23 +37,23 @@ const CAPABILITIES = [
 const BUILD_ITEMS = [
   {
     num: '01',
-    title: 'Autonomous DeFi',
-    description: 'Monitor yields across protocols, execute trades on Base, and rebalance liquidity 24/7. Agent detects a better opportunity at 3am — it acts immediately, because you already set the rules.',
+    title: 'DeFi on autopilot',
+    description: 'Monitor yields, execute trades on Base, rebalance liquidity 24/7. Agent spots a better opportunity at 3am — it acts immediately, because you already set the rules.',
   },
   {
     num: '02',
     title: 'The Machine Economy',
-    description: 'Agents that pay for their own compute, data, and storage using the x402 protocol. Acquire API keys, purchase premium data streams, pay for storage — entirely autonomously.',
+    description: 'Agents that pay for their own compute, data, and storage via the x402 protocol. Acquire API keys, buy data feeds, pay for storage — no human needed per transaction.',
   },
   {
     num: '03',
-    title: 'Agentic Commerce',
-    description: 'Participate in creator economies. Send payments between agents and users. Monetize agent-generated content — all without manual approval on every transaction.',
+    title: 'Agent-to-Human Payments',
+    description: 'Sell on creator platforms. Send payments between agents and users. Monetize agent output — without approving every transaction by hand.',
   },
   {
     num: '04',
     title: 'Multi-Chain Operations',
-    description: 'Deploy on Base, manage positions wherever opportunities exist. One policy set, enforced across every chain your agent touches.',
+    description: 'Deploy on Base, manage positions wherever the opportunity is. One policy set, enforced across every chain your agent touches.',
   },
 ];
 
@@ -95,107 +87,6 @@ const PRICING = [
     badge: null,
   },
 ];
-
-/* ── Kinetic counter hook ────────────────────────────────────────────────── */
-function useKineticCounter(target: number, decimals: number, started: boolean) {
-  const [val, setVal] = useState(0);
-  const raf = useRef<number>(0);
-  const start = useRef<number>(0);
-
-  useEffect(() => {
-    if (!started) return;
-    const duration = 1800;
-    start.current = performance.now();
-
-    function tick(now: number) {
-      const elapsed = now - start.current;
-      const progress = Math.min(elapsed / duration, 1);
-      // ease-out cubic
-      const eased = 1 - Math.pow(1 - progress, 3);
-      setVal(parseFloat((eased * target).toFixed(decimals)));
-      if (progress < 1) {
-        raf.current = requestAnimationFrame(tick);
-      }
-    }
-
-    raf.current = requestAnimationFrame(tick);
-    return () => cancelAnimationFrame(raf.current);
-  }, [target, decimals, started]);
-
-  return val;
-}
-
-/* ── Single stat counter ─────────────────────────────────────────────────── */
-function StatCounter({
-  value, suffix, label, prefix = '', decimals, started,
-}: {
-  value: number; suffix: string; label: string;
-  prefix?: string; decimals: number; started: boolean;
-}) {
-  const count = useKineticCounter(value, decimals, started);
-  const display = decimals > 0 ? count.toFixed(decimals) : Math.floor(count).toLocaleString();
-
-  return (
-    <div style={{ textAlign: 'center' }}>
-      <div style={{
-        fontFamily: 'var(--font-jet)',
-        fontSize: 'clamp(20px, 2.5vw, 28px)',
-        fontWeight: 500,
-        color: 'var(--text-primary)',
-        letterSpacing: '-0.02em',
-        lineHeight: 1,
-        marginBottom: 6,
-      }}>
-        {prefix}{display}{suffix}
-      </div>
-      <div style={{
-        fontFamily: 'var(--font-jet)',
-        fontSize: 11,
-        color: 'var(--text-dim)',
-        letterSpacing: '0.06em',
-        textTransform: 'uppercase',
-      }}>
-        {label}
-      </div>
-    </div>
-  );
-}
-
-/* ── Stats bar ───────────────────────────────────────────────────────────── */
-function StatsBar() {
-  const [visible, setVisible] = useState(false);
-  const ref = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    const el = ref.current;
-    if (!el) return;
-    const obs = new IntersectionObserver(
-      ([entry]) => { if (entry.isIntersecting) { setVisible(true); obs.disconnect(); } },
-      { threshold: 0.3 }
-    );
-    obs.observe(el);
-    return () => obs.disconnect();
-  }, []);
-
-  return (
-    <div ref={ref} style={{
-      borderTop: '1px solid var(--border-hair)',
-      borderBottom: '1px solid var(--border-hair)',
-      padding: '28px 0',
-      background: 'rgba(15,17,21,0.5)',
-    }}>
-      <div style={{
-        maxWidth: 1200, margin: '0 auto', padding: '0 24px',
-        display: 'flex', alignItems: 'center', justifyContent: 'space-around',
-        gap: 32, flexWrap: 'wrap',
-      }}>
-        {STATS.map((s) => (
-          <StatCounter key={s.label} {...s} started={visible} />
-        ))}
-      </div>
-    </div>
-  );
-}
 
 /* ── CardIncident (from original Landing.tsx) ────────────────────────────── */
 function CardIncident({ blocked }: { blocked: boolean }) {
@@ -549,7 +440,7 @@ export default function LandingV3() {
                   display: 'inline-block', width: 6, height: 6, borderRadius: '50%',
                   background: 'var(--btc-orange)',
                 }} />
-                Policy engine for autonomous agents
+                Spend control for agent wallets
               </div>
 
               {/* H1 */}
@@ -566,35 +457,6 @@ export default function LandingV3() {
                 <span style={{ color: 'var(--btc-orange)' }}>money.</span>{' '}
                 Sleep fine.
               </h1>
-
-              {/* Divider */}
-              <div style={{
-                width: '100%', height: 1,
-                background: 'linear-gradient(90deg, rgba(247,147,26,0.2) 0%, transparent 70%)',
-                marginBottom: 20,
-              }} />
-
-              {/* Mini stats row */}
-              <div className="fade-up fade-up-3" style={{
-                display: 'flex', gap: 28, marginBottom: 28, flexWrap: 'wrap',
-              }}>
-                {[
-                  { val: '2,847', lbl: 'agents' },
-                  { val: '$12.4M', lbl: 'controlled' },
-                  { val: '99.97%', lbl: 'uptime' },
-                ].map(({ val, lbl }) => (
-                  <div key={lbl} style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                    <span style={{
-                      fontFamily: 'var(--font-jet)', fontSize: 16, fontWeight: 500,
-                      color: 'var(--text-primary)', letterSpacing: '-0.02em',
-                    }}>{val}</span>
-                    <span style={{
-                      fontFamily: 'var(--font-jet)', fontSize: 10,
-                      color: 'var(--text-dim)', letterSpacing: '0.06em', textTransform: 'uppercase',
-                    }}>{lbl}</span>
-                  </div>
-                ))}
-              </div>
 
               {/* Subtext */}
               <p className="fade-up fade-up-3" style={{
@@ -660,9 +522,6 @@ export default function LandingV3() {
           </div>
         </div>
       </section>
-
-      {/* ── Stats bar ─────────────────────────────────────────────────────── */}
-      <StatsBar />
 
       {/* ── Capabilities ──────────────────────────────────────────────────── */}
       <section id="capabilities" style={{ padding: '104px 0' }}>
@@ -819,8 +678,8 @@ export default function LandingV3() {
               fontWeight: 700, letterSpacing: '-0.03em', lineHeight: 1.1,
               margin: '0 0 56px', color: 'var(--text-primary)',
             }}>
-              Once agents can hold money,<br />
-              <span style={{ color: 'var(--text-secondary)', fontWeight: 500 }}>entirely new categories emerge.</span>
+              What wasn't possible before<br />
+              <span style={{ color: 'var(--text-secondary)', fontWeight: 500 }}>wallets had policy.</span>
             </h2>
           </div>
 
@@ -878,7 +737,7 @@ export default function LandingV3() {
               fontWeight: 700, letterSpacing: '-0.03em', lineHeight: 1.1,
               margin: 0, color: 'var(--text-primary)',
             }}>
-              Start free. Scale when ready.
+              Free while testing.<br />Real pricing when you go live.
             </h2>
           </div>
 
@@ -1076,7 +935,7 @@ export default function LandingV3() {
             <span style={{
               fontFamily: 'var(--font-jet)', fontSize: 10,
               color: 'var(--text-dim)', letterSpacing: '0.08em',
-            }}>· Built for the agentic web</span>
+            }}>· For agents that handle money</span>
           </div>
 
           <div style={{ display: 'flex', gap: 28 }}>
