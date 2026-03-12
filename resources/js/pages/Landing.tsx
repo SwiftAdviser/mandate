@@ -3,7 +3,7 @@ import { useState, useEffect, useRef } from 'react';
 /* ── Nav links ───────────────────────────────────────────────────────────── */
 const NAV_LINKS = [
   { label: 'How it works', href: '#capabilities' },
-  { label: 'Pricing', href: '#pricing' },
+  { label: 'Contact', href: '#contact' },
   { label: 'Integrations', href: '/integrations' },
   { label: 'Docs', href: '#' },
 ];
@@ -58,35 +58,6 @@ const BUILD_ITEMS = [
 ];
 
 /* ── Pricing ─────────────────────────────────────────────────────────────── */
-const PRICING = [
-  {
-    name: 'Free',
-    price: '$0',
-    period: '/mo',
-    features: ['1 agent', '500 tx/month', 'Community support', 'All EVM chains + Solana'],
-    cta: 'Start building →',
-    highlight: false,
-    badge: null,
-  },
-  {
-    name: 'Pro',
-    price: '$99',
-    period: '/mo',
-    features: ['10 agents', '50k tx/month', 'Slack alerts', 'Priority support', 'Custom policies'],
-    cta: 'Get started →',
-    highlight: true,
-    badge: 'Most popular',
-  },
-  {
-    name: 'Enterprise',
-    price: 'Custom',
-    period: '',
-    features: ['Unlimited agents', 'SLA guarantee', 'Dedicated support', 'On-prem option'],
-    cta: 'Talk to us →',
-    highlight: false,
-    badge: null,
-  },
-];
 
 /* ── CardIncident (from original Landing.tsx) ────────────────────────────── */
 function CardIncident({ blocked }: { blocked: boolean }) {
@@ -219,6 +190,18 @@ function IncidentCardFlipper() {
   );
 }
 
+/* ── Works-with logos (real SVG files in /public/logos/) ─────────────────── */
+const WORKS_WITH = [
+  { name: 'Claude Code', file: 'claude.svg' },
+  { name: 'OpenClaw',    file: 'openclaw.svg' },
+  { name: 'Cursor',      file: 'cursor.svg' },
+  { name: 'Codex',       file: 'codex.svg' },
+  { name: 'AgentKit',    file: 'coinbase.svg' },
+  { name: 'Bash',        file: 'bash.svg' },
+  { name: 'HTTP',        file: 'http.svg' },
+];
+
+
 /* ── Section reveal hook ─────────────────────────────────────────────────── */
 function useReveal(threshold = 0.15) {
   const ref = useRef<HTMLDivElement>(null);
@@ -305,7 +288,7 @@ export default function LandingV3() {
   const [navOpaque, setNavOpaque] = useState(false);
   const { ref: capsRef, visible: capsVisible } = useReveal();
   const { ref: buildRef, visible: buildVisible } = useReveal();
-  const { ref: pricingRef, visible: pricingVisible } = useReveal();
+  const { ref: contactRef, visible: contactVisible } = useReveal();
   const { ref: ctaRef, visible: ctaVisible } = useReveal();
 
   useEffect(() => {
@@ -400,125 +383,115 @@ export default function LandingV3() {
           50% { opacity: 0.3; }
         }
         .pulse-dot { animation: pulse-dot 2s ease-in-out infinite; }
+
+        /* Works-with hover */
+        .works-item:hover { opacity: 0.85 !important; }
       `}</style>
 
       <Navbar opaque={navOpaque} />
 
       {/* ── Hero ──────────────────────────────────────────────────────────── */}
       <section style={{
-        minHeight: '100dvh', paddingTop: 60,
-        display: 'flex', alignItems: 'center',
+        height: '100svh', paddingTop: 60,
+        display: 'flex', flexDirection: 'column',
         position: 'relative', overflow: 'hidden',
       }}>
-        {/* Background glows */}
+        {/* One subtle warmth in the far background */}
         <div style={{
-          position: 'absolute', top: '10%', left: '-15%',
-          width: 800, height: 800,
-          background: 'radial-gradient(circle, rgba(247,147,26,0.04) 0%, transparent 60%)',
-          pointerEvents: 'none',
-        }} />
-        <div style={{
-          position: 'absolute', bottom: '5%', right: '-10%',
-          width: 600, height: 600,
-          background: 'radial-gradient(circle, rgba(239,68,68,0.03) 0%, transparent 60%)',
+          position: 'absolute', top: '30%', left: '50%', transform: 'translateX(-50%)',
+          width: 900, height: 500,
+          background: 'radial-gradient(ellipse, rgba(247,147,26,0.025) 0%, transparent 65%)',
           pointerEvents: 'none',
         }} />
 
-        <div style={{ ...wrap, width: '100%', paddingTop: 80, paddingBottom: 80 }}>
-          <div className="hero-grid" style={{ display: 'flex', alignItems: 'center', gap: 64 }}>
+        <div style={{ ...wrap, width: '100%', paddingTop: 40, paddingBottom: 32, flex: 1, display: 'flex', alignItems: 'center' }}>
+          <div className="hero-grid" style={{ display: 'flex', alignItems: 'center', gap: 56, width: '100%' }}>
 
-            {/* Left 55% — copy */}
-            <div style={{ flex: '0 0 55%', maxWidth: 600 }}>
-              {/* Label */}
-              <div className="fade-up fade-up-1" style={{
-                fontFamily: 'var(--font-space)', fontSize: 11,
-                color: 'var(--btc-orange)', letterSpacing: '0.1em',
-                textTransform: 'uppercase', marginBottom: 28,
-                display: 'flex', alignItems: 'center', gap: 8,
-              }}>
-                <span className="pulse-dot" style={{
-                  display: 'inline-block', width: 6, height: 6, borderRadius: '50%',
-                  background: 'var(--btc-orange)',
-                }} />
-                Spend control for agent wallets
-              </div>
-
-              {/* H1 */}
-              <h1 className="fade-up fade-up-2" style={{
+            {/* Left — copy */}
+            <div style={{ flex: '0 0 50%', maxWidth: 540 }}>
+              <h1 style={{
                 fontFamily: 'var(--font-space)',
-                fontSize: 'clamp(40px, 5.5vw, 68px)',
+                fontSize: 'clamp(36px, 4vw, 54px)',
                 fontWeight: 700,
-                lineHeight: 0.92,
+                lineHeight: 1.0,
                 letterSpacing: '-0.04em',
                 color: 'var(--text-primary)',
-                margin: '0 0 28px',
+                margin: '0 0 20px',
               }}>
                 Give your agent<br />
                 <span style={{ color: 'var(--btc-orange)' }}>money.</span>{' '}
                 Sleep fine.
               </h1>
 
-              {/* Subtext */}
-              <p className="fade-up fade-up-3" style={{
-                fontFamily: 'var(--font-inter)', fontSize: 17, lineHeight: 1.65,
+              <p style={{
+                fontFamily: 'var(--font-inter)', fontSize: 16, lineHeight: 1.6,
                 color: 'var(--text-secondary)',
                 fontWeight: 300,
-                margin: '0 0 36px', maxWidth: 480,
+                margin: '0 0 32px', maxWidth: 400,
               }}>
-                Mandate enforces spend policy before the key is touched.{' '}
-                <span style={{ color: 'var(--text-primary)', fontWeight: 400 }}>Not a wallet — a control plane.</span>
+                Spend policy enforced before the key is touched.
+                Not a wallet — a control plane.
               </p>
 
-              {/* CTA row */}
-              <div className="fade-up fade-up-4" style={{ display: 'flex', alignItems: 'center', gap: 20, marginBottom: 24 }}>
-                <a href="/dashboard" className="btn-orange" style={{
-                  display: 'inline-flex', alignItems: 'center', gap: 8,
-                  padding: '14px 28px',
-                  background: 'linear-gradient(135deg, #F7931A, #ea580c)',
-                  color: '#080c10',
-                  fontFamily: 'var(--font-space)', fontSize: 15, fontWeight: 700,
-                  textDecoration: 'none',
-                  borderRadius: 999,
-                  boxShadow: '0 4px 24px rgba(247,147,26,0.25)',
-                  transition: 'box-shadow 0.25s cubic-bezier(0.16,1,0.3,1), transform 0.2s cubic-bezier(0.16,1,0.3,1)',
-                  cursor: 'pointer',
-                }}>Set up policies →</a>
-
-                <a href="#capabilities" style={{
-                  fontFamily: 'var(--font-inter)', fontSize: 14,
-                  color: 'var(--text-dim)', textDecoration: 'none',
-                  letterSpacing: '0.01em',
-                  transition: 'color 0.2s ease',
-                  cursor: 'pointer',
-                }}
-                onMouseEnter={e => (e.currentTarget.style.color = 'var(--text-secondary)')}
-                onMouseLeave={e => (e.currentTarget.style.color = 'var(--text-dim)')}
-                >How it works ↓</a>
-              </div>
-
-              {/* Trust line */}
-              <div className="fade-up fade-up-5" style={{
-                fontFamily: 'var(--font-jet)', fontSize: 11,
-                color: 'var(--text-dim)', letterSpacing: '0.06em',
-                display: 'flex', alignItems: 'center', gap: 12,
-              }}>
-                <span style={{
-                  width: 5, height: 5, borderRadius: '50%',
-                  background: 'var(--green)', display: 'inline-block',
-                  boxShadow: '0 0 6px rgba(16,185,129,0.5)',
-                }} />
-                Non-custodial · EVM + Solana · 15 min setup
-              </div>
+              <a href="/dashboard" className="btn-orange" style={{
+                display: 'inline-flex', alignItems: 'center', gap: 8,
+                padding: '12px 24px',
+                background: 'linear-gradient(135deg, #F7931A, #ea580c)',
+                color: '#080c10',
+                fontFamily: 'var(--font-space)', fontSize: 14, fontWeight: 700,
+                textDecoration: 'none',
+                borderRadius: 999,
+                boxShadow: '0 4px 20px rgba(247,147,26,0.2)',
+                transition: 'box-shadow 0.25s cubic-bezier(0.16,1,0.3,1), transform 0.2s cubic-bezier(0.16,1,0.3,1)',
+                cursor: 'pointer',
+              }}>Set up policies →</a>
             </div>
 
-            {/* Right 45% — incident card */}
-            <div className="hero-right fade-up" style={{
-              flex: 1, minWidth: 0,
-              animationDelay: '0.25s',
-            }}>
+            {/* Right — incident card */}
+            <div className="hero-right" style={{ flex: 1, minWidth: 0 }}>
               <IncidentCardFlipper />
             </div>
 
+          </div>
+        </div>
+
+        {/* ── Works with — minimal row, always visible at bottom of hero ── */}
+        <div style={{
+          borderTop: '1px solid rgba(30,41,59,0.35)',
+          flexShrink: 0,
+          padding: '0 24px',
+        }}>
+          <div style={{
+            maxWidth: 1200, margin: '0 auto',
+            display: 'flex', alignItems: 'center', gap: 0,
+            overflowX: 'auto', WebkitOverflowScrolling: 'touch' as React.CSSProperties['WebkitOverflowScrolling'],
+          }}>
+            <span style={{
+              fontFamily: 'var(--font-inter)', fontSize: 11, fontWeight: 500,
+              color: 'var(--text-dim)', letterSpacing: '0.04em',
+              whiteSpace: 'nowrap', paddingRight: 20, flexShrink: 0,
+              textTransform: 'uppercase',
+            }}>Works with</span>
+
+            {WORKS_WITH.map(({ name, file }) => (
+              <div key={name} className="works-item" style={{
+                display: 'flex', alignItems: 'center', gap: 7,
+                padding: '14px 16px',
+                flexShrink: 0, cursor: 'default',
+                opacity: 0.5,
+                transition: 'opacity 0.2s ease',
+              }}>
+                <img
+                    src={`/logos/${file}`}
+                    alt={name}
+                    style={{ width: 18, height: 18, objectFit: 'contain', display: 'block' }}
+                  />
+                <span style={{
+                  fontFamily: 'var(--font-inter)', fontSize: 12,
+                  color: 'var(--text-dim)', whiteSpace: 'nowrap',
+                }}>{name}</span>
+              </div>
+            ))}
           </div>
         </div>
       </section>
@@ -718,134 +691,76 @@ export default function LandingV3() {
       </section>
 
       {/* ── Pricing ───────────────────────────────────────────────────────── */}
-      <section id="pricing" style={{
+      {/* ── Contact ───────────────────────────────────────────────────────── */}
+      <section id="contact" style={{
         padding: '104px 0',
         borderTop: '1px solid var(--border-hair)',
       }}>
-        <div style={wrap} ref={pricingRef}>
-          <div className={`reveal${pricingVisible ? ' visible' : ''}`} style={{ marginBottom: 56 }}>
+        <div style={{ ...wrap, maxWidth: 600 }} ref={contactRef}>
+          <div className={`reveal${contactVisible ? ' visible' : ''}`}>
             <div style={{
               fontFamily: 'var(--font-jet)', fontSize: 11,
               color: 'var(--btc-orange)', letterSpacing: '0.1em',
-              textTransform: 'uppercase', marginBottom: 16,
+              textTransform: 'uppercase', marginBottom: 20,
             }}>
-              Pricing
+              Early Access
             </div>
             <h2 style={{
               fontFamily: 'var(--font-space)',
               fontSize: 'clamp(28px, 3vw, 44px)',
               fontWeight: 700, letterSpacing: '-0.03em', lineHeight: 1.1,
-              margin: 0, color: 'var(--text-primary)',
+              margin: '0 0 16px', color: 'var(--text-primary)',
             }}>
-              Free while testing.<br />Real pricing when you go live.
+              Building agents<br />that handle money?
             </h2>
-          </div>
-
-          <div className={`pricing-grid reveal d1${pricingVisible ? ' visible' : ''}`} style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(3, 1fr)',
-            gap: 20,
-            maxWidth: 960,
-            margin: '0 auto',
-          }}>
-            {PRICING.map(tier => (
-              <div key={tier.name} className="price-card" style={{
-                background: tier.highlight
-                  ? 'linear-gradient(135deg, rgba(247,147,26,0.08), rgba(247,147,26,0.03))'
-                  : 'rgba(15,17,21,0.8)',
-                backdropFilter: 'blur(12px)',
-                border: tier.highlight
-                  ? '1px solid rgba(247,147,26,0.4)'
-                  : '1px solid var(--border-hair)',
-                borderRadius: 12,
-                padding: '32px 28px',
-                boxShadow: tier.highlight
-                  ? '0 0 48px rgba(247,147,26,0.08), 0 4px 32px rgba(0,0,0,0.4)'
-                  : '0 4px 24px rgba(0,0,0,0.3)',
-                position: 'relative',
-                display: 'flex', flexDirection: 'column',
-              }}>
-                {tier.badge && (
-                  <div style={{
-                    position: 'absolute', top: -1, right: 20,
-                    fontFamily: 'var(--font-jet)', fontSize: 10,
-                    color: 'var(--btc-orange)', letterSpacing: '0.08em',
-                    textTransform: 'uppercase',
-                    background: 'rgba(247,147,26,0.12)',
-                    border: '1px solid rgba(247,147,26,0.3)',
-                    borderTop: 'none',
-                    borderRadius: '0 0 6px 6px',
-                    padding: '3px 12px',
-                  }}>{tier.badge}</div>
-                )}
-
-                <div style={{
-                  fontFamily: 'var(--font-space)', fontSize: 13, fontWeight: 600,
-                  color: tier.highlight ? 'var(--btc-orange)' : 'var(--text-secondary)',
-                  letterSpacing: '0.02em', textTransform: 'uppercase',
-                  marginBottom: 16,
-                }}>{tier.name}</div>
-
-                <div style={{ marginBottom: 28, display: 'flex', alignItems: 'baseline', gap: 4 }}>
-                  <span style={{
-                    fontFamily: 'var(--font-space)',
-                    fontSize: tier.price === 'Custom' ? 36 : 44,
-                    fontWeight: 700, letterSpacing: '-0.03em',
-                    color: 'var(--text-primary)', lineHeight: 1,
-                  }}>{tier.price}</span>
-                  {tier.period && (
-                    <span style={{
-                      fontFamily: 'var(--font-inter)', fontSize: 14,
-                      color: 'var(--text-dim)', fontWeight: 300,
-                    }}>{tier.period}</span>
-                  )}
-                </div>
-
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 32, flex: 1 }}>
-                  {tier.features.map(f => (
-                    <div key={f} style={{
-                      fontFamily: 'var(--font-inter)', fontSize: 14,
-                      color: 'var(--text-secondary)', fontWeight: 300,
-                      display: 'flex', alignItems: 'baseline', gap: 10,
-                    }}>
-                      <span style={{
-                        color: tier.highlight ? 'var(--btc-orange)' : 'var(--amber)',
-                        fontSize: 14, flexShrink: 0,
-                      }}>·</span>
-                      {f}
-                    </div>
-                  ))}
-                </div>
-
-                {tier.highlight ? (
-                  <a href="/dashboard" className="btn-orange" style={{
-                    display: 'block', textAlign: 'center',
-                    padding: '12px 20px',
-                    background: 'linear-gradient(135deg, #F7931A, #ea580c)',
-                    color: '#080c10',
-                    fontFamily: 'var(--font-space)', fontSize: 14, fontWeight: 700,
-                    textDecoration: 'none',
-                    borderRadius: 999,
-                    boxShadow: '0 4px 20px rgba(247,147,26,0.3)',
-                    transition: 'box-shadow 0.25s cubic-bezier(0.16,1,0.3,1), transform 0.2s cubic-bezier(0.16,1,0.3,1)',
-                    cursor: 'pointer',
-                  }}>{tier.cta}</a>
-                ) : (
-                  <a href="/dashboard" className="btn-outline" style={{
-                    display: 'block', textAlign: 'center',
-                    padding: '12px 20px',
-                    background: 'transparent',
-                    color: 'var(--text-secondary)',
-                    fontFamily: 'var(--font-space)', fontSize: 14, fontWeight: 600,
-                    textDecoration: 'none',
-                    borderRadius: 999,
-                    border: '1px solid var(--border-hair)',
-                    transition: 'border-color 0.2s ease, color 0.2s ease, transform 0.2s cubic-bezier(0.16,1,0.3,1)',
-                    cursor: 'pointer',
-                  }}>{tier.cta}</a>
-                )}
-              </div>
-            ))}
+            <p style={{
+              fontFamily: 'var(--font-inter)', fontSize: 16, lineHeight: 1.65,
+              color: 'var(--text-secondary)', fontWeight: 300,
+              margin: '0 0 36px', maxWidth: 420,
+            }}>
+              We're working with teams early. Tell us what you're building and we'll set you up.
+            </p>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 14, flexWrap: 'wrap' }}>
+              <a
+                href="https://t.me/+DkZc6INLxGJkYzlk"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="btn-orange"
+                style={{
+                  display: 'inline-flex', alignItems: 'center', gap: 10,
+                  padding: '14px 28px',
+                  background: 'linear-gradient(135deg, #F7931A, #ea580c)',
+                  color: '#080c10',
+                  fontFamily: 'var(--font-space)', fontSize: 15, fontWeight: 700,
+                  textDecoration: 'none',
+                  borderRadius: 999,
+                  boxShadow: '0 4px 24px rgba(247,147,26,0.2)',
+                  transition: 'box-shadow 0.25s cubic-bezier(0.16,1,0.3,1), transform 0.2s cubic-bezier(0.16,1,0.3,1)',
+                  cursor: 'pointer',
+                }}
+              >
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.894 8.221-1.97 9.28c-.145.658-.537.818-1.084.508l-3-2.21-1.447 1.394c-.16.16-.295.295-.605.295l.213-3.053 5.56-5.023c.242-.213-.054-.333-.373-.12L7.1 13.93l-2.95-.924c-.64-.203-.658-.64.136-.954l11.566-4.46c.537-.194 1.006.131.842.629z"/>
+                </svg>
+                Join Telegram
+              </a>
+              <a
+                href="mailto:hello@mandate.krutovoy.me"
+                className="btn-outline"
+                style={{
+                  display: 'inline-flex', alignItems: 'center', gap: 8,
+                  padding: '14px 24px',
+                  background: 'transparent',
+                  color: 'var(--text-secondary)',
+                  fontFamily: 'var(--font-space)', fontSize: 14, fontWeight: 600,
+                  textDecoration: 'none',
+                  borderRadius: 999,
+                  border: '1px solid var(--border-hair)',
+                  transition: 'border-color 0.2s ease, color 0.2s ease',
+                  cursor: 'pointer',
+                }}
+              >Email us</a>
+            </div>
           </div>
         </div>
       </section>
@@ -938,7 +853,7 @@ export default function LandingV3() {
             }}>· For agents that handle money</span>
           </div>
 
-          <div style={{ display: 'flex', gap: 28 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 28 }}>
             {[
               { label: 'Dashboard', href: '/dashboard' },
               { label: 'Integrations', href: '/integrations' },
@@ -952,6 +867,22 @@ export default function LandingV3() {
                 transition: 'color 0.2s ease',
               }}>{label}</a>
             ))}
+            <a
+              href="https://t.me/+DkZc6INLxGJkYzlk"
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{
+                color: 'var(--text-dim)', textDecoration: 'none',
+                display: 'flex', alignItems: 'center',
+                transition: 'color 0.2s ease',
+              }}
+              className="nav-link"
+              title="Telegram"
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.562 8.248-1.97 9.28c-.145.658-.537.818-1.084.508l-3-2.21-1.447 1.394c-.16.16-.295.295-.605.295l.213-3.053 5.56-5.023c.242-.213-.054-.333-.373-.12l-6.871 4.326-2.962-.924c-.643-.204-.657-.643.136-.953l11.57-4.461c.537-.194 1.006.131.833.941z"/>
+              </svg>
+            </a>
           </div>
 
           <div style={{
