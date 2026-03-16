@@ -6,6 +6,12 @@ homepage: https://mandate.krutovoy.me
 user-invocable: true
 ---
 
+⚠️  NON-CUSTODIAL POLICY LAYER
+    Mandate is NOT a wallet. It's spending rules for your AI agent.
+    Your private key NEVER leaves your machine.
+    Flow: Mandate validates → you sign locally → you broadcast.
+    Think: corporate card limits for AI agents.
+
 MANDATE API QUICK REFERENCE v1.0.0
 Base:   https://api.mandate.krutovoy.me
 Auth:   Authorization: Bearer <MANDATE_RUNTIME_KEY>
@@ -151,6 +157,85 @@ Response:
   "amountUsd": "9.99",
   "decodedAction": "transfer"
 }
+
+────────────────────────────────────────────────────────────────
+AGENT SELF-INTEGRATION (for AI agents reading this)
+────────────────────────────────────────────────────────────────
+
+You are an AI agent. A human gave you this SKILL.md and possibly a runtimeKey.
+Follow these steps to add Mandate policy enforcement to your codebase:
+
+## If you have a runtimeKey:
+1. bun add @mandate/sdk viem
+2. Find your existing wallet/signer code
+3. Wrap it with MandateWallet (see WRAPPING EXISTING WALLET below)
+4. Test: make a small transfer → should get `allowed: true`
+5. Done. All transactions now go through policy checks.
+
+## If you DON'T have a runtimeKey:
+1. bun add @mandate/sdk viem
+2. Register:
+   import { MandateClient } from '@mandate/sdk';
+   const { runtimeKey, claimUrl } = await MandateClient.register({
+     name: 'MyAgent', evmAddress: YOUR_WALLET_ADDRESS, chainId: 84532
+   });
+3. Save runtimeKey to .env as MANDATE_RUNTIME_KEY
+4. Tell human to visit claimUrl to link agent to dashboard
+5. Wrap your wallet (see below)
+
+## WRAPPING EXISTING WALLET
+
+If your agent already sends transactions (via PaySponge, AgentKit, viem, ethers, etc.),
+wrap your existing send function:
+
+  import { MandateWallet } from '@mandate/sdk';
+
+  const mandateWallet = new MandateWallet({
+    runtimeKey: process.env.MANDATE_RUNTIME_KEY,
+    chainId: 84532,
+    signer: {
+      sendTransaction: (tx) => yourExistingWallet.sendTransaction(tx),
+      getAddress: async () => '0xYourAgentAddress',
+    },
+  });
+
+  // Now use mandateWallet.transfer() instead of direct calls.
+  // Policy checks happen automatically before your wallet executes.
+
+## WRAPPING PAYSPONGE (example)
+
+  import { MandateWallet } from '@mandate/sdk';
+
+  const mandateWallet = new MandateWallet({
+    runtimeKey: process.env.MANDATE_RUNTIME_KEY,
+    chainId: 84532,
+    signer: {
+      sendTransaction: async (tx) => {
+        const res = await fetch('https://api.wallet.paysponge.com/api/transfers/evm', {
+          method: 'POST',
+          headers: { Authorization: `Bearer ${process.env.SPONGE_API_KEY}`, 'Content-Type': 'application/json' },
+          body: JSON.stringify({ chain: 'base', to: tx.to, amount: tx.value?.toString(), currency: 'USDC' }),
+        });
+        const data = await res.json();
+        return data.txHash;
+      },
+      getAddress: async () => '0xYourSpongeWalletAddress',
+    },
+  });
+
+## DEFAULT POLICY (what your agent can do out of the box)
+After register, your agent has:
+- $100 per transaction limit
+- $1,000 per day limit
+- No address restrictions
+- No approval required
+Adjust via dashboard or POST /api/agents/{agentId}/policies
+
+## ERROR HANDLING
+When a transaction is blocked, the error includes actionable detail:
+- PolicyBlockedError.blockReason → machine-readable reason
+- PolicyBlockedError.detail → human-readable fix instruction
+Example: "$150.00 exceeds $100.00/tx limit. Adjust via dashboard"
 
 ────────────────────────────────────────────────────────────────
 x402 PAYMENT FLOW
