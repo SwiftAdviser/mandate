@@ -7,6 +7,7 @@ use App\Jobs\VerifyIntentEnvelope;
 use App\Models\TxIntent;
 use App\Services\CircuitBreakerService;
 use App\Services\IntentStateMachineService;
+use App\Services\IntentSummaryService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -15,6 +16,7 @@ class IntentController extends Controller
     public function __construct(
         private IntentStateMachineService $stateMachine,
         private CircuitBreakerService     $circuitBreaker,
+        private IntentSummaryService      $summary,
     ) {}
 
     /**
@@ -88,6 +90,7 @@ class IntentController extends Controller
             'gasUsed'          => $intent->gas_used,
             'amountUsd'        => $intent->amount_usd_computed,
             'decodedAction'    => $intent->decoded_action,
+            'summary'          => $this->summary->summarize($intent),
             'blockReason'      => $intent->block_reason,
             'requiresApproval' => $intent->status === TxIntent::STATUS_APPROVAL_PENDING,
             'approvalId'       => $intent->approvalQueue?->id,
@@ -100,14 +103,14 @@ class IntentController extends Controller
      */
     public function cancel(Request $request, string $intentId): JsonResponse
     {
-        $privyDid = $request->attributes->get('privy_did');
-        $intent   = TxIntent::find($intentId);
+        $userId = auth()->id();
+        $intent = TxIntent::find($intentId);
 
         if (!$intent || $intent->isTerminal()) {
             return response()->json(['error' => 'Intent not found or already terminal.'], 404);
         }
 
-        $this->stateMachine->transition($intent, TxIntent::STATUS_FAILED, $privyDid, 'user', [
+        $this->stateMachine->transition($intent, TxIntent::STATUS_FAILED, $userId, 'user', [
             'block_reason' => 'Cancelled by operator',
         ]);
 

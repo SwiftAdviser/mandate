@@ -14,8 +14,8 @@ class CircuitBreakerController extends Controller
 
     public function toggle(Request $request, string $agentId): JsonResponse
     {
-        $agent    = Agent::findOrFail($agentId);
-        $active   = $this->cb->toggle($agent);
+        $agent = Agent::where('id', $agentId)->where('user_id', auth()->id())->firstOrFail();
+        $active = $this->cb->toggle($agent);
         $agent->refresh();
 
         return response()->json([
@@ -27,7 +27,8 @@ class CircuitBreakerController extends Controller
 
     public function status(Request $request, string $agentId): JsonResponse
     {
-        $agent = Agent::findOrFail($agentId);
+        $agent = Agent::where('id', $agentId)->where('user_id', auth()->id())->firstOrFail();
+
         return response()->json([
             'agentId'              => $agent->id,
             'circuitBreakerActive' => $agent->circuit_breaker_active,

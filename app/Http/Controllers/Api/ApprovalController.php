@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Models\Agent;
 use App\Models\ApprovalQueue;
 use App\Models\TxIntent;
 use App\Services\IntentStateMachineService;
@@ -15,7 +16,10 @@ class ApprovalController extends Controller
 
     public function index(Request $request): JsonResponse
     {
+        $userId = auth()->id();
+
         $pending = ApprovalQueue::with(['intent', 'agent'])
+            ->whereHas('agent', fn ($q) => $q->where('user_id', $userId))
             ->where('status', ApprovalQueue::STATUS_PENDING)
             ->where('expires_at', '>', now())
             ->orderBy('created_at')
@@ -41,12 +45,12 @@ class ApprovalController extends Controller
             return response()->json(['error' => 'Approval request has expired.'], 410);
         }
 
-        $privyDid = $request->attributes->get('privy_did');
-        $intent   = $approval->intent;
+        $userId = auth()->id();
+        $intent = $approval->intent;
 
         $approval->update([
             'status'              => $data['decision'],
-            'decided_by_user_id'  => $privyDid,
+            'decided_by_user_id'  => $userId,
             'decision_note'       => $data['note'] ?? null,
             'decided_at'          => now(),
         ]);
@@ -55,7 +59,7 @@ class ApprovalController extends Controller
             ? TxIntent::STATUS_APPROVED
             : TxIntent::STATUS_FAILED;
 
-        $this->stateMachine->transition($intent, $newIntentStatus, $privyDid, 'user', [
+        $this->stateMachine->transition($intent, $newIntentStatus, $userId, 'user', [
             'approval_id' => $approvalId,
             'decision'    => $data['decision'],
             'note'        => $data['note'] ?? null,

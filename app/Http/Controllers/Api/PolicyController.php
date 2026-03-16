@@ -12,7 +12,7 @@ class PolicyController extends Controller
 {
     public function index(Request $request, string $agentId): JsonResponse
     {
-        $agent    = Agent::findOrFail($agentId);
+        $agent = Agent::where('id', $agentId)->where('user_id', auth()->id())->firstOrFail();
         $policies = $agent->policies()->orderByDesc('created_at')->get();
 
         return response()->json(['policies' => $policies]);
@@ -20,7 +20,7 @@ class PolicyController extends Controller
 
     public function store(Request $request, string $agentId): JsonResponse
     {
-        $agent = Agent::findOrFail($agentId);
+        $agent = Agent::where('id', $agentId)->where('user_id', auth()->id())->firstOrFail();
 
         $data = $request->validate([
             'spendLimitPerTxUsd'      => ['sometimes', 'nullable', 'numeric', 'min:0'],
@@ -63,7 +63,9 @@ class PolicyController extends Controller
 
     public function show(string $agentId, string $policyId): JsonResponse
     {
+        Agent::where('id', $agentId)->where('user_id', auth()->id())->firstOrFail();
         $policy = Policy::where('agent_id', $agentId)->findOrFail($policyId);
+
         return response()->json($policy);
     }
 }
