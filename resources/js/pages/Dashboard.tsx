@@ -79,7 +79,14 @@ function CircuitBreakerToggle({ agent }: { agent: Agent }) {
     if (loading) return;
     setLoading(true);
     try {
-      const res = await fetch(`/api/agents/${agent.id}/circuit-break`, { method: 'POST' });
+      const xsrf = document.cookie.match(/XSRF-TOKEN=([^;]+)/)?.[1];
+      const res = await fetch(`/api/agents/${agent.id}/circuit-break`, {
+        method: 'POST',
+        headers: {
+          'X-XSRF-TOKEN': xsrf ? decodeURIComponent(xsrf) : '',
+          'Accept': 'application/json',
+        },
+      });
       const data = await res.json();
       setActive(data.circuitBreakerActive);
     } finally {
