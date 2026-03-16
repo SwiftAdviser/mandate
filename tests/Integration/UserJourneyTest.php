@@ -7,9 +7,11 @@
 namespace Tests\Integration;
 
 use App\Console\Commands\ReconcileIntents;
+use App\Models\Agent;
 use App\Models\Policy;
 use App\Models\TokenRegistry;
 use App\Models\TxIntent;
+use App\Models\User;
 use App\Services\IntentStateMachineService;
 use App\Services\QuotaManagerService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -98,6 +100,8 @@ class UserJourneyTest extends TestCase
                 'data' => [['prices' => [['value' => '1.00']]]],
             ], 200),
         ]);
+
+        config(['mandate.reputation.enabled' => false]);
 
         TokenRegistry::create([
             'chain_id'  => self::CHAIN,
@@ -198,6 +202,10 @@ class UserJourneyTest extends TestCase
         $runtimeKey = $reg['runtimeKey'];
         $h = $this->authHeader($runtimeKey);
 
+        // Link agent to a user for admin endpoints
+        $user = User::factory()->create();
+        Agent::where('id', $agentId)->update(['user_id' => $user->id]);
+
         // Require approval above $5 (our $10 transfer triggers it)
         Policy::where('agent_id', $agentId)->update(['require_approval_above_usd' => 5.00]);
 
@@ -215,7 +223,7 @@ class UserJourneyTest extends TestCase
             ->assertStatus(200)->assertJsonPath('status', 'approval_pending');
 
         // Admin approves
-        $this->withoutMiddleware(\App\Http\Middleware\PrivyAuth::class)
+        $this->actingAs($user)
             ->postJson("/api/approvals/$approvalId/decide", ['decision' => 'approved', 'note' => 'OK'])
             ->assertStatus(200)
             ->assertJsonPath('decision', 'approved')
@@ -237,12 +245,16 @@ class UserJourneyTest extends TestCase
         $runtimeKey = $reg['runtimeKey'];
         $h = $this->authHeader($runtimeKey);
 
+        // Link agent to a user for admin endpoints
+        $user = User::factory()->create();
+        Agent::where('id', $agentId)->update(['user_id' => $user->id]);
+
         // Validate passes initially
         $this->withHeaders($h)->postJson('/api/validate', $this->payload(['nonce' => 0]))
             ->assertStatus(200)->assertJsonPath('allowed', true);
 
         // Trip circuit breaker (toggle: false → true)
-        $this->withoutMiddleware(\App\Http\Middleware\PrivyAuth::class)
+        $this->actingAs($user)
             ->postJson("/api/agents/$agentId/circuit-break")
             ->assertStatus(200)->assertJsonPath('circuitBreakerActive', true);
 
@@ -251,7 +263,7 @@ class UserJourneyTest extends TestCase
             ->assertStatus(403);
 
         // Reset circuit breaker (toggle: true → false)
-        $this->withoutMiddleware(\App\Http\Middleware\PrivyAuth::class)
+        $this->actingAs($user)
             ->postJson("/api/agents/$agentId/circuit-break")
             ->assertStatus(200)->assertJsonPath('circuitBreakerActive', false);
 

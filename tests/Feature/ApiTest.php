@@ -8,6 +8,7 @@ use App\Models\ApprovalQueue;
 use App\Models\Policy;
 use App\Models\TokenRegistry;
 use App\Models\TxIntent;
+use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Queue;
@@ -20,6 +21,8 @@ class ApiTest extends TestCase
 
     private const USDC_ADDRESS = '0x036cbd53842c5426634e7929541ec2318f3dcf7e';
     private const CHAIN_ID     = 84532;
+
+    private User $user;
 
     protected function setUp(): void
     {
@@ -40,6 +43,8 @@ class ApiTest extends TestCase
             ], 200),
         ]);
 
+        config(['mandate.reputation.enabled' => false]);
+
         // Seed USDC into token_registry so PriceOracleService can resolve it
         TokenRegistry::create([
             'chain_id'  => self::CHAIN_ID,
@@ -48,6 +53,8 @@ class ApiTest extends TestCase
             'decimals'  => 6,
             'is_stable' => true,
         ]);
+
+        $this->user = User::factory()->create();
     }
 
     // -------------------------------------------------------------------------
@@ -61,6 +68,7 @@ class ApiTest extends TestCase
             'name'        => 'TestAgent',
             'evm_address' => '0xabcdef1234567890abcdef1234567890abcdef12',
             'chain_id'    => self::CHAIN_ID,
+            'user_id'     => $this->user->id,
         ], $overrides));
     }
 
@@ -384,16 +392,15 @@ class ApiTest extends TestCase
     }
 
     // -------------------------------------------------------------------------
-    // Circuit breaker (admin route — bypass PrivyAuth)
+    // Circuit breaker (admin route)
     // -------------------------------------------------------------------------
 
     public function test_circuit_breaker_toggle(): void
     {
         $agent = $this->createAgent(['circuit_breaker_active' => false]);
 
-        // Toggle ON via admin route, bypassing Privy JWT validation
-        $toggleResponse = $this->withoutMiddleware(\App\Http\Middleware\PrivyAuth::class)
-            ->withHeaders(['X-Privy-Did' => 'did:privy:test'])
+        // Toggle ON
+        $toggleResponse = $this->actingAs($this->user)
             ->postJson("/api/agents/{$agent->id}/circuit-break");
 
         $toggleResponse->assertStatus(200)
@@ -404,7 +411,7 @@ class ApiTest extends TestCase
         $this->assertTrue($agent->circuit_breaker_active);
 
         // Toggle OFF
-        $toggleResponse2 = $this->withoutMiddleware(\App\Http\Middleware\PrivyAuth::class)
+        $toggleResponse2 = $this->actingAs($this->user)
             ->postJson("/api/agents/{$agent->id}/circuit-break");
 
         $toggleResponse2->assertStatus(200)
@@ -412,7 +419,7 @@ class ApiTest extends TestCase
     }
 
     // -------------------------------------------------------------------------
-    // Approvals (admin route — bypass PrivyAuth)
+    // Approvals (admin route)
     // -------------------------------------------------------------------------
 
     public function test_approve_decision_transitions_intent_to_approved(): void
@@ -456,8 +463,7 @@ class ApiTest extends TestCase
             'expires_at' => now()->addHour(),
         ]);
 
-        // Manually inject privy_did attribute (PrivyAuth middleware is bypassed)
-        $response = $this->withoutMiddleware(\App\Http\Middleware\PrivyAuth::class)
+        $response = $this->actingAs($this->user)
             ->postJson("/api/approvals/{$approval->id}/decide", [
                 'decision' => 'approved',
                 'note'     => 'Looks good',

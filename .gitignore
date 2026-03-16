@@ -26,3 +26,5 @@ packages/*/node_modules/
 packages/*/dist/
 packages/hooks/*/node_modules/
 /tmp/
+.worktrees/
+.gstack/
