@@ -36,6 +36,7 @@ export {
   PolicyBlockedError,
   MandateBlockedError,
   ApprovalRequiredError,
+  RiskBlockedError,
 } from './types.js';
 export type {
   MandateConfig,

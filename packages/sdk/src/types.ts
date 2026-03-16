@@ -88,6 +88,13 @@ export class ApprovalRequiredError extends MandateError {
   }
 }
 
+export class RiskBlockedError extends MandateError {
+  constructor(reason: string) {
+    super(`Transaction blocked by risk assessment: ${reason}`, 422, reason);
+    this.name = 'RiskBlockedError';
+  }
+}
+
 /** Any wallet that can send transactions. Wrap your existing wallet with this. */
 export interface ExternalSigner {
   /** Send a signed transaction. Return the tx hash. */

@@ -108,7 +108,7 @@ class ApiTest extends TestCase
             json_encode($merged['accessList'] ?? []),
         ]);
 
-        $merged['intentHash'] = '0x' . hash('sha3-256', $packed);
+        $merged['intentHash'] = '0x' . \kornrunner\Keccak::hash($packed, 256);
 
         return $merged;
     }

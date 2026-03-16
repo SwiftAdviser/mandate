@@ -51,7 +51,7 @@ class UserJourneyTest extends TestCase
             $p['txType'] ?? 2,
             json_encode($p['accessList'] ?? []),
         ]);
-        return '0x' . hash('sha3-256', $packed);
+        return '0x' . \kornrunner\Keccak::hash($packed, 256);
     }
 
     /** Build a valid payload with correct intentHash. */
