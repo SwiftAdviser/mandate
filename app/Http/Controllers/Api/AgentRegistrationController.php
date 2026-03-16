@@ -15,42 +15,48 @@ class AgentRegistrationController extends Controller
     public function register(Request $request): JsonResponse
     {
         $data = $request->validate([
-            'name'                             => ['required', 'string', 'max:100'],
-            'evmAddress'                       => ['required', 'string', 'regex:/^0x[a-fA-F0-9]{40}$/'],
-            'chainId'                          => ['required', 'integer'],
-            'defaultPolicy'                    => ['sometimes', 'array'],
+            'name' => ['required', 'string', 'max:100'],
+            'evmAddress' => ['required', 'string', 'regex:/^0x[a-fA-F0-9]{40}$/'],
+            'chainId' => ['required', 'integer'],
+            'defaultPolicy' => ['sometimes', 'array'],
             'defaultPolicy.spendLimitPerTxUsd' => ['sometimes', 'numeric', 'min:0'],
-            'defaultPolicy.spendLimitPerDayUsd'=> ['sometimes', 'numeric', 'min:0'],
+            'defaultPolicy.spendLimitPerDayUsd' => ['sometimes', 'numeric', 'min:0'],
         ]);
 
         $claimCode = strtoupper(Str::random(8));
 
         $agent = Agent::create([
-            'name'        => $data['name'],
+            'name' => $data['name'],
             'evm_address' => strtolower($data['evmAddress']),
-            'chain_id'    => $data['chainId'],
-            'claim_code'  => $claimCode,
+            'chain_id' => $data['chainId'],
+            'claim_code' => $claimCode,
         ]);
 
         // Default policy
         $policyDefaults = $data['defaultPolicy'] ?? [];
+        $defaultPolicy = [
+            'spendLimitPerTxUsd' => $policyDefaults['spendLimitPerTxUsd'] ?? 100,
+            'spendLimitPerDayUsd' => $policyDefaults['spendLimitPerDayUsd'] ?? 1000,
+        ];
+
         Policy::create([
-            'agent_id'                => $agent->id,
-            'spend_limit_per_tx_usd'  => $policyDefaults['spendLimitPerTxUsd'] ?? 100,
-            'spend_limit_per_day_usd' => $policyDefaults['spendLimitPerDayUsd'] ?? 1000,
-            'is_active'               => true,
+            'agent_id' => $agent->id,
+            'spend_limit_per_tx_usd' => $defaultPolicy['spendLimitPerTxUsd'],
+            'spend_limit_per_day_usd' => $defaultPolicy['spendLimitPerDayUsd'],
+            'is_active' => true,
         ]);
 
         [$rawKey] = AgentApiKey::generate($agent);
 
-        $claimUrl = config('mandate.dashboard_url', url('/')) . '/claim?code=' . $claimCode;
+        $claimUrl = config('mandate.dashboard_url', url('/')).'/claim?code='.$claimCode;
 
         return response()->json([
-            'agentId'    => $agent->id,
+            'agentId' => $agent->id,
             'runtimeKey' => $rawKey,
-            'claimUrl'   => $claimUrl,
+            'claimUrl' => $claimUrl,
             'evmAddress' => $agent->evm_address,
-            'chainId'    => $agent->chain_id,
+            'chainId' => $agent->chain_id,
+            'defaultPolicy' => $defaultPolicy,
         ], 201);
     }
 
@@ -64,21 +70,56 @@ class AgentRegistrationController extends Controller
             ->whereNull('claimed_at')
             ->first();
 
-        if (!$agent) {
+        if (! $agent) {
             return response()->json(['error' => 'Invalid or already used claim code.'], 404);
         }
 
-        $privyDid = $request->attributes->get('privy_did');
-
         $agent->update([
-            'org_id'     => $privyDid, // link to Privy user
+            'user_id' => auth()->id(),
             'claimed_at' => now(),
         ]);
 
         return response()->json([
-            'agentId'   => $agent->id,
-            'claimed'   => true,
+            'agentId' => $agent->id,
+            'claimed' => true,
             'claimedAt' => $agent->claimed_at,
         ]);
+    }
+
+    public function create(Request $request): JsonResponse
+    {
+        $data = $request->validate([
+            'name' => ['required', 'string', 'max:100'],
+            'evmAddress' => ['required', 'string', 'regex:/^0x[a-fA-F0-9]{40}$/'],
+            'chainId' => ['required', 'integer'],
+            'defaultPolicy' => ['sometimes', 'array'],
+            'defaultPolicy.spendLimitPerTxUsd' => ['sometimes', 'numeric', 'min:0'],
+            'defaultPolicy.spendLimitPerDayUsd' => ['sometimes', 'numeric', 'min:0'],
+        ]);
+
+        $agent = Agent::create([
+            'user_id' => auth()->id(),
+            'name' => $data['name'],
+            'evm_address' => strtolower($data['evmAddress']),
+            'chain_id' => $data['chainId'],
+            'claimed_at' => now(),
+        ]);
+
+        $policyDefaults = $data['defaultPolicy'] ?? [];
+        Policy::create([
+            'agent_id' => $agent->id,
+            'spend_limit_per_tx_usd' => $policyDefaults['spendLimitPerTxUsd'] ?? 100,
+            'spend_limit_per_day_usd' => $policyDefaults['spendLimitPerDayUsd'] ?? 1000,
+            'is_active' => true,
+        ]);
+
+        [$rawKey] = AgentApiKey::generate($agent);
+
+        return response()->json([
+            'agentId' => $agent->id,
+            'runtimeKey' => $rawKey,
+            'evmAddress' => $agent->evm_address,
+            'chainId' => $agent->chain_id,
+        ], 201);
     }
 }
