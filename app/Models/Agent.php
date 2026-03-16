@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 
@@ -12,7 +13,7 @@ class Agent extends Model
     use HasUuids;
 
     protected $fillable = [
-        'org_id',
+        'user_id',
         'name',
         'evm_address',
         'chain_id',
@@ -21,13 +22,25 @@ class Agent extends Model
         'circuit_breaker_active',
         'circuit_breaker_tripped_at',
         'circuit_breaker_reason',
+        'notification_webhooks',
+        'eip8004_agent_id',
+        'reputation_score',
+        'reputation_checked_at',
     ];
 
     protected $casts = [
         'claimed_at'                 => 'datetime',
         'circuit_breaker_active'     => 'boolean',
         'circuit_breaker_tripped_at' => 'datetime',
+        'notification_webhooks'      => 'array',
+        'reputation_score'           => 'float',
+        'reputation_checked_at'      => 'datetime',
     ];
+
+    public function user(): BelongsTo
+    {
+        return $this->belongsTo(User::class);
+    }
 
     public function apiKeys(): HasMany
     {

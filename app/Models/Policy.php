@@ -25,6 +25,7 @@ class Policy extends Model
         'max_value_wei',
         'schedule',
         'is_active',
+        'risk_scan_enabled',
         'version',
     ];
 
@@ -39,6 +40,7 @@ class Policy extends Model
         'require_approval_selectors' => 'array',
         'schedule'                   => 'array',
         'is_active'                  => 'boolean',
+        'risk_scan_enabled'          => 'boolean',
     ];
 
     public function agent(): BelongsTo
