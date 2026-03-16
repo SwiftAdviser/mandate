@@ -5,6 +5,7 @@ import {
   CircuitBreakerError,
   PolicyBlockedError,
   ApprovalRequiredError,
+  RiskBlockedError,
 } from '../types.js';
 import type { IntentPayload } from '../types.js';
 
@@ -91,6 +92,25 @@ describe('MandateClient#validate', () => {
     const err = await makeClient().validate(PAYLOAD).catch(e => e);
     expect(err).toBeInstanceOf(PolicyBlockedError);
     expect(err.blockReason).toBe('per_tx_limit_exceeded');
+  });
+
+  it('throws RiskBlockedError on 422 with aegis_ blockReason', async () => {
+    mockFetch(422, { blockReason: 'aegis_critical_risk' });
+
+    const err = await makeClient().validate(PAYLOAD).catch(e => e);
+    expect(err).toBeInstanceOf(RiskBlockedError);
+    expect(err.blockReason).toBe('aegis_critical_risk');
+  });
+
+  it('includes riskLevel in ValidateResult', async () => {
+    mockFetch(200, {
+      allowed: true, intentId: 'i-1', requiresApproval: false,
+      approvalId: null, blockReason: null, riskLevel: 'LOW', riskDegraded: false,
+    });
+
+    const result = await makeClient().validate(PAYLOAD);
+    expect(result.riskLevel).toBe('LOW');
+    expect(result.riskDegraded).toBe(false);
   });
 
   it('throws ApprovalRequiredError when requiresApproval=true', async () => {

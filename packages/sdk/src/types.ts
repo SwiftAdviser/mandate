@@ -36,6 +36,7 @@ export interface IntentStatus {
   gasUsed: string | null;
   amountUsd: string | null;
   decodedAction: string | null;
+  summary: string | null;
   blockReason: string | null;
   requiresApproval: boolean;
   approvalId: string | null;
