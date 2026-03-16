@@ -25,6 +25,7 @@ export interface ValidateResult {
   requiresApproval: boolean;
   approvalId: string | null;
   blockReason: string | null;
+  blockDetail?: string | null;
 }
 
 export interface IntentStatus {
@@ -68,9 +69,11 @@ export class CircuitBreakerError extends MandateError {
 }
 
 export class PolicyBlockedError extends MandateError {
-  constructor(reason: string) {
+  public readonly detail?: string;
+  constructor(reason: string, detail?: string) {
     super(`Transaction blocked by policy: ${reason}`, 422, reason);
     this.name = 'PolicyBlockedError';
+    this.detail = detail;
   }
 }
 
@@ -82,6 +85,22 @@ export class ApprovalRequiredError extends MandateError {
     super('Transaction requires human approval. Poll /status until approved.', 202, 'approval_required');
     this.name = 'ApprovalRequiredError';
   }
+}
+
+/** Any wallet that can send transactions. Wrap your existing wallet with this. */
+export interface ExternalSigner {
+  /** Send a signed transaction. Return the tx hash. */
+  sendTransaction(tx: {
+    to: `0x${string}`;
+    data: `0x${string}`;
+    value: bigint;
+    gas: bigint;
+    maxFeePerGas?: bigint;
+    maxPriorityFeePerGas?: bigint;
+    nonce?: number;
+  }): Promise<`0x${string}`>;
+  /** Return the wallet's address. */
+  getAddress(): Promise<`0x${string}`> | `0x${string}`;
 }
 
 /** Alias for PolicyBlockedError — used by integration adapters */

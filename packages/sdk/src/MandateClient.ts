@@ -4,7 +4,7 @@ import type {
 } from './types.js';
 import {
   ApprovalRequiredError, CircuitBreakerError,
-  MandateError, PolicyBlockedError,
+  MandateError, PolicyBlockedError, RiskBlockedError,
 } from './types.js';
 
 const DEFAULT_BASE = 'https://api.mandate.krutovoy.me';
@@ -53,7 +53,11 @@ export class MandateClient {
 
     if (res.status === 422) {
       const data = await res.json();
-      throw new PolicyBlockedError(data.blockReason ?? 'unknown');
+      const reason = data.blockReason ?? 'unknown';
+      if (reason.startsWith('aegis_')) {
+        throw new RiskBlockedError(reason);
+      }
+      throw new PolicyBlockedError(reason, data.blockDetail);
     }
 
     if (!res.ok) {
@@ -87,6 +91,36 @@ export class MandateClient {
       throw new MandateError(data.error ?? 'Status fetch failed', res.status);
     }
     return res.json();
+  }
+
+  /**
+   * Poll intent status until approval decision (approved/confirmed/failed/expired).
+   * Use after catching ApprovalRequiredError to wait for human decision.
+   */
+  async waitForApproval(
+    intentId: string,
+    opts: {
+      timeoutMs?: number;
+      intervalMs?: number;
+      onPoll?: (status: IntentStatus) => void;
+    } = {},
+  ): Promise<IntentStatus> {
+    const timeout  = opts.timeoutMs  ?? 3600_000; // 1h — matches server approval TTL
+    const interval = opts.intervalMs ?? 5_000;
+    const deadline = Date.now() + timeout;
+
+    while (Date.now() < deadline) {
+      const status = await this.getStatus(intentId);
+      opts.onPoll?.(status);
+
+      if (status.status === 'approved' || status.status === 'confirmed') return status;
+      if (status.status === 'failed')  throw new MandateError(`Intent failed: ${status.blockReason ?? 'rejected'}`, 422, status.blockReason ?? 'failed');
+      if (status.status === 'expired') throw new MandateError('Approval expired', 408, 'expired');
+
+      await sleep(interval);
+    }
+
+    throw new MandateError('Timeout waiting for approval', 408, 'timeout');
   }
 
   /**
