@@ -1,18 +1,13 @@
 /**
- * MandateWallet — high-level class for agent developers.
+ * MandateWallet — policy enforcement wrapper for YOUR wallet.
  *
- * Works ON TOP of viem (or any compatible signer).
- * Private key stays local — never sent to Mandate API.
+ * NOT a custodial wallet. Mandate never receives your private key.
+ * Your key stays local. Mandate validates intent metadata against your policy
+ * BEFORE you sign and broadcast.
  *
- * Compatible with: AgentKit (as action provider), GOAT SDK, Privy server wallets, raw viem.
+ * Like a corporate card with spending rules — your money, our guardrails.
  *
- * @example
- * const wallet = new MandateWallet({
- *   runtimeKey: process.env.MANDATE_RUNTIME_KEY!,
- *   privateKey:  process.env.AGENT_PRIVATE_KEY! as `0x${string}`,
- *   chainId: 84532,
- * });
- * const { txHash, status } = await wallet.transfer(recipientAddress, '10000000', USDC_BASE_SEPOLIA);
+ * Also exported as `MandateGuard` if you prefer clearer naming.
  */
 
 import {
@@ -30,7 +25,8 @@ import { privateKeyToAccount } from 'viem/accounts';
 import { baseSepolia, base } from 'viem/chains';
 import { MandateClient } from './MandateClient.js';
 import { computeIntentHash } from './intentHash.js';
-import type { IntentStatus, MandateConfig } from './types.js';
+import { ApprovalRequiredError } from './types.js';
+import type { IntentStatus, IntentPayload, MandateConfig, ExternalSigner } from './types.js';
 
 const ERC20_ABI = [
   {
@@ -53,9 +49,11 @@ const DEFAULT_RPC: Record<number, string> = {
 };
 
 export interface MandateWalletConfig extends MandateConfig {
-  /** Agent private key — stays local, never sent to API */
-  privateKey: `0x${string}`;
   chainId: number;
+  /** Variant 1: raw private key (current behavior) */
+  privateKey?: `0x${string}`;
+  /** Variant 2: external signer (any wallet that can send txs) */
+  signer?: ExternalSigner;
   /** Optional: custom RPC URL */
   rpcUrl?: string;
 }
@@ -69,23 +67,37 @@ export interface TransferResult {
 export class MandateWallet {
   private readonly client: MandateClient;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  private readonly wallet: WalletClient<any, Chain, PrivateKeyAccount>;
+  private readonly wallet?: WalletClient<any, Chain, PrivateKeyAccount>;
   private readonly publicClient: PublicClient;
-  private readonly account: PrivateKeyAccount;
+  private readonly account?: PrivateKeyAccount;
+  private readonly externalSigner?: ExternalSigner;
   private readonly chainId: number;
+  private cachedAddress?: `0x${string}`;
 
   constructor(config: MandateWalletConfig) {
-    this.client       = new MandateClient(config);
-    this.account      = privateKeyToAccount(config.privateKey);
-    this.chainId      = config.chainId;
-    const chain       = CHAINS[config.chainId];
-    const rpcUrl      = config.rpcUrl ?? DEFAULT_RPC[config.chainId] ?? 'https://sepolia.base.org';
+    if (!config.privateKey && !config.signer) {
+      throw new Error('MandateWalletConfig requires either privateKey or signer');
+    }
 
-    this.wallet = createWalletClient({
-      account:   this.account,
-      chain,
-      transport: http(rpcUrl),
-    });
+    this.client  = new MandateClient(config);
+    this.chainId = config.chainId;
+    const chain  = CHAINS[config.chainId];
+    const rpcUrl = config.rpcUrl ?? DEFAULT_RPC[config.chainId] ?? 'https://sepolia.base.org';
+
+    if (config.privateKey) {
+      this.account = privateKeyToAccount(config.privateKey);
+      this.wallet  = createWalletClient({
+        account:   this.account,
+        chain,
+        transport: http(rpcUrl),
+      });
+    } else if (config.signer) {
+      this.externalSigner = config.signer;
+      const addrResult = config.signer.getAddress();
+      if (typeof addrResult === 'string') {
+        this.cachedAddress = addrResult;
+      }
+    }
 
     this.publicClient = createPublicClient({
       chain,
@@ -94,7 +106,19 @@ export class MandateWallet {
   }
 
   get address(): `0x${string}` {
-    return this.account.address;
+    if (this.account) return this.account.address;
+    if (this.cachedAddress) return this.cachedAddress;
+    throw new Error('Address not yet resolved. Use getAddress() for external signers.');
+  }
+
+  async getAddress(): Promise<`0x${string}`> {
+    if (this.account) return this.account.address;
+    if (this.cachedAddress) return this.cachedAddress;
+    if (this.externalSigner) {
+      this.cachedAddress = await this.externalSigner.getAddress();
+      return this.cachedAddress;
+    }
+    throw new Error('No signer or private key configured');
   }
 
   /**
@@ -129,13 +153,6 @@ export class MandateWallet {
 
   /**
    * General-purpose: build, validate, sign, broadcast.
-   * Steps:
-   *   1. Estimate gas + nonce
-   *   2. Compute intentHash
-   *   3. POST /api/validate (policy check)
-   *   4. Sign + broadcast locally (private key never leaves)
-   *   5. POST /api/intents/{id}/events (envelope verify)
-   *   6. Optionally poll for confirmation
    */
   async sendTransaction(
     to: `0x${string}`,
@@ -143,30 +160,103 @@ export class MandateWallet {
     valueWei: string = '0',
     opts: { waitForConfirmation?: boolean } = {},
   ): Promise<TransferResult> {
-    // 1. Fetch nonce + fee data
+    const prepared = await this.prepareTransaction(to, calldata, valueWei);
+
+    const validation = await this.client.validate(prepared.payload);
+    const intentId = validation.intentId!;
+
+    return this.signBroadcastConfirm(intentId, to, calldata, valueWei, prepared, opts);
+  }
+
+  /**
+   * Like sendTransaction, but catches ApprovalRequiredError and waits for human decision.
+   */
+  async sendTransactionWithApproval(
+    to: `0x${string}`,
+    calldata: `0x${string}`,
+    valueWei: string = '0',
+    opts: {
+      waitForConfirmation?: boolean;
+      approvalTimeoutMs?: number;
+      onApprovalPending?: (intentId: string, approvalId: string) => void;
+      onApprovalPoll?: (status: IntentStatus) => void;
+    } = {},
+  ): Promise<TransferResult> {
+    const prepared = await this.prepareTransaction(to, calldata, valueWei);
+
+    let intentId: string;
+
+    try {
+      const validation = await this.client.validate(prepared.payload);
+      intentId = validation.intentId!;
+    } catch (err) {
+      if (!(err instanceof ApprovalRequiredError)) throw err;
+
+      intentId = err.intentId;
+      opts.onApprovalPending?.(err.intentId, err.approvalId);
+
+      await this.client.waitForApproval(intentId, {
+        timeoutMs: opts.approvalTimeoutMs,
+        onPoll: opts.onApprovalPoll,
+      });
+    }
+
+    return this.signBroadcastConfirm(intentId, to, calldata, valueWei, prepared, opts);
+  }
+
+  /**
+   * ERC20 transfer with approval wait support.
+   */
+  async transferWithApproval(
+    to: `0x${string}`,
+    rawAmount: string,
+    tokenAddress: `0x${string}`,
+    opts: Parameters<MandateWallet['sendTransactionWithApproval']>[3] = {},
+  ): Promise<TransferResult> {
+    const calldata = encodeFunctionData({
+      abi: ERC20_ABI,
+      functionName: 'transfer',
+      args: [to, BigInt(rawAmount)],
+    });
+
+    return this.sendTransactionWithApproval(tokenAddress, calldata, '0', opts);
+  }
+
+  private async prepareTransaction(
+    to: `0x${string}`,
+    calldata: `0x${string}`,
+    valueWei: string,
+  ): Promise<{
+    nonce: number;
+    gasLimit: string;
+    maxFeePerGas: string;
+    maxPriorityFeePerGas: string;
+    intentHash: `0x${string}`;
+    payload: IntentPayload;
+  }> {
+    const senderAddress = await this.getAddress();
+
     const [nonce, feeData] = await Promise.all([
-      this.publicClient.getTransactionCount({ address: this.account.address }),
+      this.publicClient.getTransactionCount({ address: senderAddress }),
       this.publicClient.estimateFeesPerGas(),
     ]);
 
     const maxFeePerGas         = feeData.maxFeePerGas?.toString()         ?? '1000000000';
     const maxPriorityFeePerGas = feeData.maxPriorityFeePerGas?.toString() ?? '1000000000';
 
-    // Estimate gas
     let gasLimit = '100000';
     try {
       const estimated = await this.publicClient.estimateGas({
-        account: this.account.address,
+        account: senderAddress,
         to,
         data:  calldata === '0x' ? undefined : calldata,
         value: BigInt(valueWei),
       });
-      gasLimit = (estimated * 12n / 10n).toString(); // +20% buffer
+      gasLimit = (estimated * 12n / 10n).toString();
     } catch {
       // Use default if estimation fails
     }
 
-    // 2. Compute intentHash
     const intentHash = computeIntentHash({
       chainId: this.chainId,
       nonce,
@@ -180,8 +270,7 @@ export class MandateWallet {
       accessList: [],
     });
 
-    // 3. Validate (throws on block/CB/approval-required)
-    const validation = await this.client.validate({
+    const payload: IntentPayload = {
       chainId: this.chainId,
       nonce,
       to,
@@ -193,26 +282,46 @@ export class MandateWallet {
       txType: 2,
       accessList: [],
       intentHash,
-    });
+    };
 
-    const intentId = validation.intentId!;
+    return { nonce, gasLimit, maxFeePerGas, maxPriorityFeePerGas, intentHash, payload };
+  }
 
-    // 4. Sign + broadcast locally (private key stays here)
-    const txHash = await this.wallet.sendTransaction({
-      account:               this.account,
-      to,
-      data:                  calldata === '0x' ? undefined : calldata,
-      value:                 BigInt(valueWei),
-      gas:                   BigInt(gasLimit),
-      maxFeePerGas:          BigInt(maxFeePerGas),
-      maxPriorityFeePerGas:  BigInt(maxPriorityFeePerGas),
-      nonce,
-    } as Parameters<typeof this.wallet.sendTransaction>[0]);
+  private async signBroadcastConfirm(
+    intentId: string,
+    to: `0x${string}`,
+    calldata: `0x${string}`,
+    valueWei: string,
+    prepared: Awaited<ReturnType<MandateWallet['prepareTransaction']>>,
+    opts: { waitForConfirmation?: boolean },
+  ): Promise<TransferResult> {
+    let txHash: Hash;
 
-    // 5. Post txHash to Mandate (triggers envelope verification)
+    if (this.externalSigner) {
+      txHash = await this.externalSigner.sendTransaction({
+        to,
+        data: calldata === '0x' ? '0x' as `0x${string}` : calldata,
+        value: BigInt(valueWei),
+        gas: BigInt(prepared.gasLimit),
+        maxFeePerGas: BigInt(prepared.maxFeePerGas),
+        maxPriorityFeePerGas: BigInt(prepared.maxPriorityFeePerGas),
+        nonce: prepared.nonce,
+      });
+    } else {
+      txHash = await this.wallet!.sendTransaction({
+        account:               this.account!,
+        to,
+        data:                  calldata === '0x' ? undefined : calldata,
+        value:                 BigInt(valueWei),
+        gas:                   BigInt(prepared.gasLimit),
+        maxFeePerGas:          BigInt(prepared.maxFeePerGas),
+        maxPriorityFeePerGas:  BigInt(prepared.maxPriorityFeePerGas),
+        nonce:                 prepared.nonce,
+      } as Parameters<typeof this.wallet.sendTransaction>[0]);
+    }
+
     await this.client.postEvent(intentId, txHash);
 
-    // 6. Optionally wait for on-chain confirmation
     const status = opts.waitForConfirmation !== false
       ? await this.client.waitForConfirmation(intentId)
       : await this.client.getStatus(intentId);
@@ -222,26 +331,20 @@ export class MandateWallet {
 
   /**
    * x402 payment flow.
-   * 1. Fetch the target URL (expects 402 response)
-   * 2. Parse X-Payment-Required header
-   * 3. Validate + sign ERC20 transfer
-   * 4. Retry original request with Payment-Signature header
    */
   async x402Pay(
     url: string,
     opts: { headers?: Record<string, string> } = {},
   ): Promise<Response> {
-    // 1. Hit the paywall
     const probe = await fetch(url, { headers: opts.headers });
 
     if (probe.status !== 402) {
-      return probe; // Already accessible
+      return probe;
     }
 
     const paymentHeader = probe.headers.get('X-Payment-Required') ?? probe.headers.get('X-Payment-Info');
     if (!paymentHeader) throw new Error('402 response missing X-Payment-Required header');
 
-    // 2. Parse payment requirements
     const payment = JSON.parse(paymentHeader) as {
       amount: string;
       currency: string;
@@ -252,14 +355,12 @@ export class MandateWallet {
 
     const tokenAddress = payment.tokenAddress ?? this.getDefaultUsdc(payment.chainId);
 
-    // 3. Execute transfer via Mandate policy check
     const { txHash } = await this.transfer(
       payment.paymentAddress,
       payment.amount,
       tokenAddress,
     );
 
-    // 4. Retry with payment proof
     return fetch(url, {
       headers: {
         ...opts.headers,

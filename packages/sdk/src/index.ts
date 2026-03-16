@@ -26,6 +26,7 @@
  */
 
 export { MandateWallet }    from './MandateWallet.js';
+export { MandateWallet as MandateGuard } from './MandateWallet.js';
 export type { MandateWalletConfig, TransferResult } from './MandateWallet.js';
 export { MandateClient }    from './MandateClient.js';
 export { computeIntentHash } from './intentHash.js';
@@ -42,6 +43,7 @@ export type {
   ValidateResult,
   IntentStatus,
   RegisterResult,
+  ExternalSigner,
 } from './types.js';
 
 // Convenience constants

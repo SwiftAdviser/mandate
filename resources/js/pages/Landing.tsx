@@ -1,11 +1,11 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 
 /* ── Nav links ───────────────────────────────────────────────────────────── */
 const NAV_LINKS = [
   { label: 'How it works', href: '#capabilities' },
   { label: 'Contact', href: '#contact' },
   { label: 'Integrations', href: '/integrations' },
-  { label: 'Docs', href: '#' },
+  { label: 'Docs', href: 'https://github.com/SwiftAdviser/mandate/tree/master/packages/sdk#readme' },
 ];
 
 /* ── Capabilities ────────────────────────────────────────────────────────── */
@@ -283,12 +283,61 @@ function Navbar({ opaque }: { opaque: boolean }) {
   );
 }
 
+/* ── Copyable install box ────────────────────────────────────────────────── */
+function CopyInstall() {
+  const [copied, setCopied] = useState(false);
+  const copy = useCallback(() => {
+    navigator.clipboard.writeText('bun add @mandate/sdk').then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1800);
+    });
+  }, []);
+
+  return (
+    <div style={{
+      display: 'inline-flex', alignItems: 'center', gap: 12,
+      background: '#0d1117', border: '1px solid rgba(247,147,26,0.18)',
+      borderRadius: 8, padding: '12px 16px',
+      fontFamily: 'var(--font-jet)', fontSize: 14,
+      color: 'var(--btc-orange)',
+      maxWidth: '100%',
+    }}>
+      <span style={{ letterSpacing: '0.02em', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+        <span style={{ color: 'var(--text-dim)', userSelect: 'none' }}>$ </span>bun add @mandate/sdk
+      </span>
+      <button
+        onClick={copy}
+        style={{
+          background: 'transparent', border: '1px solid rgba(247,147,26,0.25)',
+          borderRadius: 4, padding: '4px 10px',
+          fontFamily: 'var(--font-jet)', fontSize: 11,
+          color: copied ? 'var(--green)' : 'var(--text-dim)',
+          cursor: 'pointer', whiteSpace: 'nowrap',
+          transition: 'color 0.2s ease, border-color 0.2s ease',
+          letterSpacing: '0.04em',
+        }}
+      >{copied ? 'Copied!' : 'Copy'}</button>
+    </div>
+  );
+}
+
+/* ── Code snippet ───────────────────────────────────────────────────────── */
+const SDK_SNIPPET = `import { MandateWallet, MandateClient } from '@mandate/sdk';
+
+const { runtimeKey } = await MandateClient.register({
+  name: 'MyAgent', evmAddress: wallet.address, chainId: 84532
+});
+
+const mandate = new MandateWallet({ runtimeKey, signer: wallet, chainId: 84532 });
+await mandate.transfer(recipient, '5000000', USDC);`;
+
 /* ── Main landing page ───────────────────────────────────────────────────── */
 export default function LandingV3() {
   const [navOpaque, setNavOpaque] = useState(false);
   const { ref: capsRef, visible: capsVisible } = useReveal();
   const { ref: buildRef, visible: buildVisible } = useReveal();
   const { ref: contactRef, visible: contactVisible } = useReveal();
+  const { ref: devRef, visible: devVisible } = useReveal();
   const { ref: ctaRef, visible: ctaVisible } = useReveal();
 
   useEffect(() => {
@@ -375,6 +424,7 @@ export default function LandingV3() {
           .pricing-grid   { grid-template-columns: 1fr !important; max-width: 100% !important; }
           .stats-row      { gap: 24px !important; }
           .footer-inner   { flex-direction: column !important; gap: 16px !important; align-items: flex-start !important; }
+          .dev-code-box   { font-size: 11px !important; padding: 16px 14px !important; }
         }
 
         /* Pulse dot */
@@ -765,6 +815,105 @@ export default function LandingV3() {
         </div>
       </section>
 
+      {/* ── For Developers & AI Agents ────────────────────────────────────── */}
+      <section style={{
+        padding: '104px 0',
+        borderTop: '1px solid var(--border-hair)',
+        background: 'var(--void)',
+      }} ref={devRef}>
+        <div style={wrap}>
+          <div className={`reveal${devVisible ? ' visible' : ''}`}>
+            <div style={{
+              fontFamily: 'var(--font-jet)', fontSize: 11,
+              color: 'var(--btc-orange)', letterSpacing: '0.1em',
+              textTransform: 'uppercase', marginBottom: 20,
+            }}>
+              Integrate
+            </div>
+            <h2 style={{
+              fontFamily: 'var(--font-space)',
+              fontSize: 'clamp(28px, 3vw, 44px)',
+              fontWeight: 700, letterSpacing: '-0.03em', lineHeight: 1.1,
+              margin: '0 0 40px', color: 'var(--text-primary)',
+            }}>
+              For Developers &amp; AI Agents
+            </h2>
+          </div>
+
+          <div className={`reveal d1${devVisible ? ' visible' : ''}`} style={{ marginBottom: 32 }}>
+            <CopyInstall />
+          </div>
+
+          <div className={`dev-code-box reveal d2${devVisible ? ' visible' : ''}`} style={{
+            background: '#0d1117',
+            border: '1px solid rgba(30,41,59,0.5)',
+            borderRadius: 10,
+            padding: '24px 28px',
+            marginBottom: 32,
+            overflowX: 'auto',
+          }}>
+            <pre style={{
+              fontFamily: 'var(--font-jet)', fontSize: 13,
+              lineHeight: 1.7, color: 'var(--text-secondary)',
+              margin: 0, whiteSpace: 'pre',
+            }}>{SDK_SNIPPET}</pre>
+          </div>
+
+          <div className={`reveal d3${devVisible ? ' visible' : ''}`} style={{
+            fontFamily: 'var(--font-inter)', fontSize: 15,
+            color: 'var(--text-secondary)', fontWeight: 300,
+            lineHeight: 1.7, marginBottom: 32,
+          }}>
+            For AI agents: give your agent this{' '}
+            <a
+              href="https://mandate.krutovoy.me/SKILL.md"
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{ color: 'var(--btc-orange)', textDecoration: 'underline', textUnderlineOffset: 3 }}
+            >SKILL.md</a>
+          </div>
+
+          <div className={`reveal d4${devVisible ? ' visible' : ''}`} style={{ display: 'flex', gap: 16, flexWrap: 'wrap' }}>
+            <a
+              href="https://github.com/SwiftAdviser/mandate/tree/master/packages/sdk#readme"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="btn-outline"
+              style={{
+                display: 'inline-flex', alignItems: 'center', gap: 8,
+                padding: '12px 24px',
+                background: 'transparent',
+                color: 'var(--text-secondary)',
+                fontFamily: 'var(--font-space)', fontSize: 14, fontWeight: 600,
+                textDecoration: 'none',
+                borderRadius: 999,
+                border: '1px solid var(--border-hair)',
+                transition: 'border-color 0.2s ease, color 0.2s ease',
+                cursor: 'pointer',
+              }}
+            >SDK Docs</a>
+            <a
+              href="https://github.com/SwiftAdviser/mandate"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="btn-outline"
+              style={{
+                display: 'inline-flex', alignItems: 'center', gap: 8,
+                padding: '12px 24px',
+                background: 'transparent',
+                color: 'var(--text-secondary)',
+                fontFamily: 'var(--font-space)', fontSize: 14, fontWeight: 600,
+                textDecoration: 'none',
+                borderRadius: 999,
+                border: '1px solid var(--border-hair)',
+                transition: 'border-color 0.2s ease, color 0.2s ease',
+                cursor: 'pointer',
+              }}
+            >GitHub</a>
+          </div>
+        </div>
+      </section>
+
       {/* ── CTA band ──────────────────────────────────────────────────────── */}
       <section style={{
         padding: '104px 0',
@@ -857,7 +1006,7 @@ export default function LandingV3() {
             {[
               { label: 'Dashboard', href: '/dashboard' },
               { label: 'Integrations', href: '/integrations' },
-              { label: 'Docs', href: '#' },
+              { label: 'Docs', href: 'https://github.com/SwiftAdviser/mandate/tree/master/packages/sdk#readme' },
             ].map(({ label, href }) => (
               <a key={label} href={href} className="nav-link" style={{
                 color: 'var(--text-dim)', textDecoration: 'none',

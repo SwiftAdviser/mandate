@@ -1,5 +1,6 @@
+import CreateAgentModal from '@/components/CreateAgentModal';
 import DashboardLayout from '@/layouts/DashboardLayout';
-import { formatUsd, shortAddr, statusColor, timeAgo } from '@/lib/utils';
+import { formatUsd, riskColor, shortAddr, statusColor, timeAgo } from '@/lib/utils';
 import { useState } from 'react';
 
 /* ── Types ─────────────────────────────────────────────────────────────── */
@@ -14,6 +15,7 @@ interface QuotaWindow {
 interface RecentIntent {
   id: string; decoded_action: string | null; amount_usd_computed: string | null;
   status: string; to_address: string; created_at: string; tx_hash: string | null;
+  risk_level: string | null;
 }
 interface Props {
   agents: Agent[];
@@ -142,6 +144,7 @@ function CircuitBreakerToggle({ agent }: { agent: Agent }) {
 /* ── Page ──────────────────────────────────────────────────────────────── */
 export default function Dashboard({ agents, selected_agent, daily_quota, monthly_quota, recent_intents, total_confirmed_today, pending_approvals }: Props) {
   const agent = selected_agent;
+  const [showCreateModal, setShowCreateModal] = useState(false);
 
   return (
     <DashboardLayout>
@@ -200,6 +203,117 @@ export default function Dashboard({ agents, selected_agent, daily_quota, monthly
             )}
           </div>
         </div>
+
+        {/* Empty state — no agents */}
+        {agents.length === 0 && !agent && (
+          <div className="fade-up fade-up-1" style={{
+            background: 'var(--bg-surface)',
+            border: '1px solid var(--border)',
+            borderRadius: 14,
+            padding: '48px 40px',
+            textAlign: 'center',
+            maxWidth: 520,
+          }}>
+            <div style={{
+              fontFamily: 'var(--font-display)',
+              fontSize: 20,
+              fontWeight: 500,
+              color: 'var(--text-primary)',
+              letterSpacing: '-0.03em',
+              marginBottom: 8,
+            }}>
+              Welcome to Mandate
+            </div>
+            <div style={{
+              fontSize: 13,
+              color: 'var(--text-secondary)',
+              marginBottom: 28,
+              lineHeight: 1.6,
+            }}>
+              Choose how to get started:
+            </div>
+
+            {/* Create Agent CTA */}
+            <button
+              onClick={() => setShowCreateModal(true)}
+              style={{
+                padding: '12px 28px',
+                background: 'var(--amber)',
+                border: 'none',
+                borderRadius: 8,
+                color: '#000',
+                fontSize: 14,
+                fontWeight: 600,
+                fontFamily: 'var(--font-display)',
+                cursor: 'pointer',
+                letterSpacing: '-0.02em',
+                marginBottom: 8,
+              }}
+            >
+              Create Agent
+            </button>
+            <div style={{ fontSize: 11, color: 'var(--text-dim)', marginBottom: 32 }}>
+              Get a runtimeKey now
+            </div>
+
+            {/* Claim hint */}
+            <div style={{
+              fontSize: 12,
+              color: 'var(--text-secondary)',
+              lineHeight: 1.6,
+              marginBottom: 32,
+            }}>
+              Already have a runtimeKey?<br />
+              <span style={{ color: 'var(--text-dim)' }}>
+                Your agent will appear here after visiting the claim link.
+              </span>
+            </div>
+
+            {/* Quick Start */}
+            <div style={{
+              borderTop: '1px solid var(--border-dim)',
+              paddingTop: 24,
+              textAlign: 'left',
+            }}>
+              <div style={{
+                fontSize: 10,
+                color: 'var(--text-dim)',
+                fontFamily: 'var(--font-mono)',
+                textTransform: 'uppercase',
+                letterSpacing: '0.08em',
+                marginBottom: 12,
+              }}>
+                Quick Start
+              </div>
+              <div style={{
+                background: 'var(--bg-base)',
+                border: '1px solid var(--border-dim)',
+                borderRadius: 8,
+                padding: '12px 16px',
+                fontFamily: 'var(--font-mono)',
+                fontSize: 12,
+                color: 'var(--text-primary)',
+                marginBottom: 10,
+                textAlign: 'left',
+              }}>
+                bun add @mandate/sdk
+              </div>
+              <a
+                href="https://github.com/SwiftAdviser/mandate/tree/master/packages/sdk#readme"
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{
+                  fontSize: 11,
+                  color: 'var(--text-dim)',
+                  textDecoration: 'none',
+                  fontFamily: 'var(--font-mono)',
+                }}
+              >
+                See docs for integration guide →
+              </a>
+            </div>
+          </div>
+        )}
 
         {agent && (
           <>
@@ -303,7 +417,7 @@ export default function Dashboard({ agents, selected_agent, daily_quota, monthly
                 <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
                   <thead>
                     <tr style={{ borderBottom: '1px solid var(--border-dim)' }}>
-                      {['Action', 'Amount', 'Recipient', 'Status', 'Time'].map(h => (
+                      {['Action', 'Amount', 'Recipient', 'Risk', 'Status', 'Time'].map(h => (
                         <th key={h} style={{ padding: '10px 16px', textAlign: 'left', color: 'var(--text-dim)', fontWeight: 400, fontFamily: 'var(--font-mono)', fontSize: 10, textTransform: 'uppercase', letterSpacing: '0.06em' }}>{h}</th>
                       ))}
                     </tr>
@@ -319,6 +433,23 @@ export default function Dashboard({ agents, selected_agent, daily_quota, monthly
                         </td>
                         <td style={{ padding: '12px 16px', fontFamily: 'var(--font-mono)', color: 'var(--text-dim)', fontSize: 11 }}>
                           {shortAddr(intent.to_address)}
+                        </td>
+                        <td style={{ padding: '12px 16px' }}>
+                          {intent.risk_level && intent.risk_level !== 'SAFE' ? (
+                            <span style={{
+                              fontFamily: 'var(--font-mono)',
+                              fontSize: 10,
+                              color: riskColor(intent.risk_level),
+                              background: `${riskColor(intent.risk_level)}1a`,
+                              padding: '2px 8px',
+                              borderRadius: 4,
+                              border: `1px solid ${riskColor(intent.risk_level)}33`,
+                            }}>
+                              {intent.risk_level}
+                            </span>
+                          ) : (
+                            <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: 'var(--text-dim)' }}>—</span>
+                          )}
                         </td>
                         <td style={{ padding: '12px 16px' }}>
                           <span style={{
@@ -343,6 +474,10 @@ export default function Dashboard({ agents, selected_agent, daily_quota, monthly
               )}
             </div>
           </>
+        )}
+
+        {showCreateModal && (
+          <CreateAgentModal onClose={() => setShowCreateModal(false)} />
         )}
       </div>
     </DashboardLayout>
