@@ -1,3 +1,4 @@
+import { usePage } from '@inertiajs/react';
 import { useState } from 'react';
 
 interface Props {
@@ -9,11 +10,17 @@ interface Props {
 }
 
 export default function Claim({ claim_code, agent_name, evm_address, chain_id, already_claimed }: Props) {
+  const { auth } = usePage<{ auth: { user: any } }>().props;
   const [loading, setLoading] = useState(false);
   const [done, setDone] = useState(false);
   const [error, setError] = useState('');
 
   async function claim() {
+    if (!auth.user) {
+      window.location.href = `/login?redirect=${encodeURIComponent(`/claim?code=${claim_code}`)}`;
+      return;
+    }
+
     setLoading(true);
     setError('');
     try {
@@ -22,6 +29,10 @@ export default function Claim({ claim_code, agent_name, evm_address, chain_id, a
         headers: { 'Content-Type': 'application/json', 'X-XSRF-TOKEN': getCookie('XSRF-TOKEN') ?? '' },
         body: JSON.stringify({ claimCode: claim_code }),
       });
+      if (res.status === 401) {
+        window.location.href = `/login?redirect=${encodeURIComponent(`/claim?code=${claim_code}`)}`;
+        return;
+      }
       if (res.ok) { setDone(true); }
       else {
         const d = await res.json();
@@ -180,7 +191,7 @@ export default function Claim({ claim_code, agent_name, evm_address, chain_id, a
                   opacity: loading ? 0.7 : 1,
                 }}
               >
-                {loading ? 'Claiming…' : 'Claim agent'}
+                {loading ? 'Claiming…' : auth.user ? 'Claim agent' : 'Sign in & claim agent'}
               </button>
             </>
           )}

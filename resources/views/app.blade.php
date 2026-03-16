@@ -7,7 +7,6 @@
     <title inertia>Mandate — Policy Layer for Agent Wallets</title>
     <script>
         window.__APP_NAME__ = "{{ config('app.name') }}";
-        window.__PRIVY_APP_ID__ = "{{ config('mandate.privy.app_id') }}";
     </script>
     @viteReactRefresh
     @vite(['resources/css/app.css', 'resources/js/app.tsx'])

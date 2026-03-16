@@ -1,5 +1,5 @@
 import DashboardLayout from '@/layouts/DashboardLayout';
-import { formatUsd, shortAddr, timeAgo } from '@/lib/utils';
+import { formatUsd, riskColor, shortAddr, timeAgo } from '@/lib/utils';
 import { router } from '@inertiajs/react';
 import { useState } from 'react';
 
@@ -7,6 +7,8 @@ interface Intent {
   id: string; decoded_action: string | null;
   to_address: string; amount_usd_computed: string | null;
   calldata: string; chain_id: number; created_at: string;
+  risk_level: string | null; risk_degraded: boolean;
+  summary: string | null;
 }
 interface Approval {
   id: string; intent: Intent; agent: { id: string; name: string };
@@ -76,7 +78,7 @@ function ApprovalCard({ approval, onDecide }: { approval: Approval; onDecide: ()
       <div style={{ padding: '16px 20px', display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16, borderBottom: '1px solid var(--border-dim)' }}>
         <div>
           <div style={{ fontSize: 10, color: 'var(--text-dim)', fontFamily: 'var(--font-mono)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 4 }}>Action</div>
-          <div style={{ fontFamily: 'var(--font-mono)', fontSize: 12, color: 'var(--text-secondary)' }}>{intent.decoded_action ?? 'unknown'}</div>
+          <div style={{ fontFamily: 'var(--font-mono)', fontSize: 12, color: 'var(--text-secondary)' }}>{intent.summary ?? intent.decoded_action ?? 'unknown'}</div>
         </div>
         <div>
           <div style={{ fontSize: 10, color: 'var(--text-dim)', fontFamily: 'var(--font-mono)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 4 }}>Recipient</div>
@@ -87,6 +89,36 @@ function ApprovalCard({ approval, onDecide }: { approval: Approval; onDecide: ()
           <div style={{ fontFamily: 'var(--font-mono)', fontSize: 12, color: 'var(--text-secondary)' }}>{intent.chain_id}</div>
         </div>
       </div>
+
+      {/* Risk assessment */}
+      {intent.risk_level && intent.risk_level !== 'SAFE' && (
+        <div style={{
+          padding: '12px 20px',
+          borderBottom: '1px solid var(--border-dim)',
+          display: 'flex',
+          alignItems: 'center',
+          gap: 10,
+        }}>
+          <span style={{
+            fontFamily: 'var(--font-mono)',
+            fontSize: 10,
+            color: riskColor(intent.risk_level),
+            background: `${riskColor(intent.risk_level)}1a`,
+            padding: '2px 8px',
+            borderRadius: 4,
+            border: `1px solid ${riskColor(intent.risk_level)}33`,
+            textTransform: 'uppercase',
+            letterSpacing: '0.06em',
+          }}>
+            {intent.risk_level} RISK
+          </span>
+          {intent.risk_degraded && (
+            <span style={{ fontSize: 10, color: 'var(--text-dim)', fontFamily: 'var(--font-mono)' }}>
+              (degraded — scan incomplete)
+            </span>
+          )}
+        </div>
+      )}
 
       {/* Note + actions */}
       <div style={{ padding: '16px 20px', display: 'flex', gap: 12, alignItems: 'flex-end' }}>

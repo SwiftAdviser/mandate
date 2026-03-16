@@ -25,6 +25,17 @@ export function timeAgo(dateStr: string): string {
   return `${Math.floor(h / 24)}d ago`;
 }
 
+export function riskColor(level: string | null | undefined): string {
+  switch (level) {
+    case 'CRITICAL': return 'var(--red)';
+    case 'HIGH':     return '#f97316';
+    case 'MEDIUM':   return 'var(--amber)';
+    case 'LOW':      return 'var(--green)';
+    case 'SAFE':     return 'var(--text-dim)';
+    default:         return 'var(--text-dim)';
+  }
+}
+
 export function statusColor(status: string): string {
   switch (status) {
     case 'confirmed':        return 'var(--green)';

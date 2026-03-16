@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Agent;
 use App\Models\ApprovalQueue;
 use App\Models\TxIntent;
+use App\Services\IntentSummaryService;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -14,9 +15,9 @@ class DashboardController extends Controller
 {
     public function dashboard(Request $request): Response
     {
-        $privyDid = $request->attributes->get('privy_did');
+        $userId = auth()->id();
 
-        $agents = Agent::where('org_id', $privyDid)->get();
+        $agents = Agent::where('user_id', $userId)->get();
         $selectedAgent = $agents->first();
 
         $dailyQuota   = null;
@@ -38,17 +39,19 @@ class DashboardController extends Controller
                 ->where('window_key', now()->format('Y-m'))
                 ->first();
 
+            $summaryService = app(IntentSummaryService::class);
             $recentIntents = TxIntent::where('agent_id', $selectedAgent->id)
                 ->orderByDesc('created_at')
                 ->limit(20)
-                ->get(['id','decoded_action','amount_usd_computed','status','to_address','created_at','tx_hash']);
+                ->get(['id','decoded_action','decoded_token','decoded_raw_amount','decoded_recipient','amount_usd_computed','status','to_address','created_at','tx_hash','chain_id','value_wei','calldata','risk_level'])
+                ->map(fn ($i) => array_merge($i->toArray(), ['summary' => $summaryService->summarize($i)]));
 
             $totalToday = TxIntent::where('agent_id', $selectedAgent->id)
                 ->where('status', TxIntent::STATUS_CONFIRMED)
                 ->whereDate('created_at', today())
                 ->sum('amount_usd_computed');
 
-            $pendingApprovals = ApprovalQueue::whereHas('agent', fn ($q) => $q->where('org_id', $privyDid))
+            $pendingApprovals = ApprovalQueue::whereHas('agent', fn ($q) => $q->where('user_id', $userId))
                 ->where('status', ApprovalQueue::STATUS_PENDING)
                 ->where('expires_at', '>', now())
                 ->count();
@@ -67,14 +70,17 @@ class DashboardController extends Controller
 
     public function audit(Request $request): Response
     {
-        $privyDid = $request->attributes->get('privy_did');
-        $agentIds = Agent::where('org_id', $privyDid)->pluck('id');
+        $userId = auth()->id();
+        $agentIds = Agent::where('user_id', $userId)->pluck('id');
 
+        $summaryService = app(IntentSummaryService::class);
         $intents = TxIntent::whereIn('agent_id', $agentIds)
             ->when($request->status, fn ($q, $s) => $q->where('status', $s))
             ->when($request->action, fn ($q, $a) => $q->where('decoded_action', $a))
             ->orderByDesc('created_at')
-            ->paginate(50, ['id','decoded_action','amount_usd_computed','status','to_address','created_at','tx_hash','chain_id','intent_hash']);
+            ->paginate(50, ['id','decoded_action','decoded_token','decoded_raw_amount','decoded_recipient','amount_usd_computed','status','to_address','created_at','tx_hash','chain_id','intent_hash','value_wei','calldata','risk_level']);
+
+        $intents->through(fn ($i) => array_merge($i->toArray(), ['summary' => $summaryService->summarize($i)]));
 
         return Inertia::render('AuditLog', [
             'intents' => $intents,
@@ -84,24 +90,31 @@ class DashboardController extends Controller
 
     public function approvals(Request $request): Response
     {
-        $privyDid = $request->attributes->get('privy_did');
+        $userId = auth()->id();
 
+        $summaryService = app(IntentSummaryService::class);
         $approvals = ApprovalQueue::with(['intent', 'agent'])
-            ->whereHas('agent', fn ($q) => $q->where('org_id', $privyDid))
+            ->whereHas('agent', fn ($q) => $q->where('user_id', $userId))
             ->where('status', ApprovalQueue::STATUS_PENDING)
             ->where('expires_at', '>', now())
             ->orderBy('created_at')
             ->paginate(20);
+
+        $approvals->through(function ($a) use ($summaryService) {
+            if ($a->intent) {
+                $a->intent->setAttribute('summary', $summaryService->summarize($a->intent));
+            }
+            return $a;
+        });
 
         return Inertia::render('Approvals', ['approvals' => $approvals]);
     }
 
     public function policies(Request $request): Response
     {
-        $privyDid = $request->attributes->get('privy_did');
-        $agentId  = $request->query('agent');
+        $userId = auth()->id();
 
-        $agent = Agent::where('org_id', $privyDid)->first();
+        $agent = Agent::where('user_id', $userId)->first();
         $currentPolicy = $agent?->activePolicy()->first();
 
         return Inertia::render('PolicyBuilder', [

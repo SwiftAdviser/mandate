@@ -15,7 +15,7 @@ interface QuotaWindow {
 interface RecentIntent {
   id: string; decoded_action: string | null; amount_usd_computed: string | null;
   status: string; to_address: string; created_at: string; tx_hash: string | null;
-  risk_level: string | null;
+  risk_level: string | null; summary: string | null;
 }
 interface Props {
   agents: Agent[];
@@ -433,7 +433,7 @@ export default function Dashboard({ agents, selected_agent, daily_quota, monthly
                     {recent_intents.map((intent, i) => (
                       <tr key={intent.id} style={{ borderBottom: i < recent_intents.length - 1 ? '1px solid var(--border-dim)' : 'none' }}>
                         <td style={{ padding: '12px 16px', fontFamily: 'var(--font-mono)', color: 'var(--text-secondary)', fontSize: 11 }}>
-                          {intent.decoded_action ?? 'unknown'}
+                          {intent.summary ?? intent.decoded_action ?? 'unknown'}
                         </td>
                         <td style={{ padding: '12px 16px', fontFamily: 'var(--font-mono)', fontWeight: 500, color: 'var(--text-primary)', fontSize: 12 }}>
                           {intent.amount_usd_computed ? formatUsd(parseFloat(intent.amount_usd_computed)) : '—'}
