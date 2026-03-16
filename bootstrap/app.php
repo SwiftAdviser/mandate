@@ -12,8 +12,9 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
-        // privy-token is a raw JWT set by JS — exclude from Laravel's cookie encryption
-        $middleware->encryptCookies(except: ['privy-token']);
+        $middleware->web(append: [
+            \App\Http\Middleware\HandleInertiaRequests::class,
+        ]);
 
         $middleware->api(prepend: [
             \Laravel\Sanctum\Http\Middleware\EnsureFrontendRequestsAreStateful::class,
@@ -21,7 +22,6 @@ return Application::configure(basePath: dirname(__DIR__))
 
         $middleware->alias([
             'runtime.key' => \App\Http\Middleware\RuntimeKeyAuth::class,
-            'privy.auth'  => \App\Http\Middleware\PrivyAuth::class,
         ]);
     })
     ->withSchedule(function (\Illuminate\Console\Scheduling\Schedule $schedule): void {

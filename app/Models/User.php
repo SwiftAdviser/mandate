@@ -21,7 +21,14 @@ class User extends Authenticatable
         'name',
         'email',
         'password',
+        'github_id',
+        'avatar_url',
     ];
+
+    public function agents(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(\App\Models\Agent::class);
+    }
 
     /**
      * The attributes that should be hidden for serialization.

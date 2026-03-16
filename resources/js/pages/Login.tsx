@@ -1,25 +1,4 @@
-import { usePrivy } from '@privy-io/react-auth';
-import { useEffect, useState } from 'react';
-
 export default function Login() {
-    const { ready, authenticated, login, getAccessToken } = usePrivy();
-    const [redirecting, setRedirecting] = useState(false);
-
-    // After Privy auth, get JWT → store in cookie → redirect to dashboard
-    useEffect(() => {
-        if (!ready || !authenticated) return;
-
-        setRedirecting(true);
-        getAccessToken().then((token) => {
-            if (token) {
-                // Store token in cookie (30 min expiry, same path)
-                const expires = new Date(Date.now() + 30 * 60 * 1000).toUTCString();
-                document.cookie = `privy-token=${token}; path=/; expires=${expires}; SameSite=Lax`;
-            }
-            window.location.href = '/dashboard';
-        });
-    }, [ready, authenticated]);
-
     return (
         <div style={{
             minHeight: '100vh',
@@ -72,53 +51,41 @@ export default function Login() {
                     Manage your agent policies, approvals, and audit log.
                 </p>
 
-                {redirecting ? (
-                    <div style={{
+                <a
+                    href="/auth/github"
+                    style={{
                         display: 'flex',
                         alignItems: 'center',
+                        justifyContent: 'center',
                         gap: 10,
-                        color: 'var(--text-secondary)',
-                        fontSize: 14,
+                        width: '100%',
+                        padding: '13px 20px',
+                        background: 'var(--amber)',
+                        color: '#080c10',
+                        border: 'none',
+                        borderRadius: 6,
                         fontFamily: 'var(--font-mono)',
-                    }}>
-                        <span className="pulse-amber" style={{
-                            width: 6, height: 6, borderRadius: '50%',
-                            background: 'var(--amber)', display: 'inline-block',
-                        }} />
-                        Redirecting to dashboard…
-                    </div>
-                ) : (
-                    <button
-                        onClick={login}
-                        disabled={!ready}
-                        style={{
-                            width: '100%',
-                            padding: '13px 20px',
-                            background: !ready ? 'var(--bg-raised)' : 'var(--amber)',
-                            color: !ready ? 'var(--text-dim)' : '#080c10',
-                            border: 'none',
-                            borderRadius: 6,
-                            fontFamily: 'var(--font-mono)',
-                            fontSize: 14,
-                            fontWeight: 600,
-                            cursor: !ready ? 'not-allowed' : 'pointer',
-                            letterSpacing: '-0.01em',
-                            transition: 'opacity 0.15s, transform 0.15s',
-                        }}
-                        onMouseEnter={e => {
-                            if (ready) {
-                                e.currentTarget.style.opacity = '0.88';
-                                e.currentTarget.style.transform = 'translateY(-1px)';
-                            }
-                        }}
-                        onMouseLeave={e => {
-                            e.currentTarget.style.opacity = '1';
-                            e.currentTarget.style.transform = 'translateY(0)';
-                        }}
-                    >
-                        {!ready ? 'Loading…' : 'Continue →'}
-                    </button>
-                )}
+                        fontSize: 14,
+                        fontWeight: 600,
+                        cursor: 'pointer',
+                        letterSpacing: '-0.01em',
+                        textDecoration: 'none',
+                        transition: 'opacity 0.15s, transform 0.15s',
+                    }}
+                    onMouseEnter={e => {
+                        e.currentTarget.style.opacity = '0.88';
+                        e.currentTarget.style.transform = 'translateY(-1px)';
+                    }}
+                    onMouseLeave={e => {
+                        e.currentTarget.style.opacity = '1';
+                        e.currentTarget.style.transform = 'translateY(0)';
+                    }}
+                >
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/>
+                    </svg>
+                    Sign in with GitHub
+                </a>
 
                 <p style={{
                     fontSize: 12,
@@ -128,8 +95,6 @@ export default function Login() {
                     fontFamily: 'var(--font-mono)',
                     lineHeight: 1.6,
                 }}>
-                    Email · Wallet · Google
-                    <br />
                     <a href="/" style={{ color: 'var(--text-dim)', textDecoration: 'none' }}>
                         ← Back to landing
                     </a>
