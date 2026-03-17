@@ -505,7 +505,7 @@ export default function Dashboard({ agents, selected_agent, daily_quota, monthly
               marginTop: 16,
             }}>
               <div style={{ fontSize: 11, color: 'var(--text-dim)', fontFamily: 'var(--font-mono)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 14 }}>
-                What happens when your agent sends a transaction
+                What happens when your agent sends a transaction with Mandate
               </div>
               <LiveSimulationDemo />
             </div>
