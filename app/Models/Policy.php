@@ -26,6 +26,7 @@ class Policy extends Model
         'schedule',
         'is_active',
         'risk_scan_enabled',
+        'guard_rules',
         'version',
     ];
 

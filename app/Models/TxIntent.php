@@ -31,6 +31,7 @@ class TxIntent extends Model
         'tx_type', 'access_list',
         'decoded_action', 'decoded_token', 'decoded_recipient', 'decoded_raw_amount',
         'amount_usd_computed',
+        'reason',
         'risk_level', 'risk_assessment', 'risk_degraded',
         'status', 'block_reason', 'tx_hash', 'gas_used', 'block_number',
         'expires_at',

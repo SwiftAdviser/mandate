@@ -21,6 +21,7 @@ class PolicyEngineService
         private IntentStateMachineService $stateMachine,
         private AegisService $aegisService,
         private ReputationService $reputationService,
+        private ReasonScannerService $reasonScanner,
     ) {}
 
     /**
@@ -157,13 +158,36 @@ class PolicyEngineService
             }
         }
 
+        // Phase 1.5c: Reason Scanner (hardcoded patterns + LLM judge)
+        $reason = $payload['reason'] ?? null;
+        $reasonScan = null;
+        if ($reason) {
+            $reasonScan = $this->reasonScanner->scan(
+                $reason,
+                $policy,
+                $decoded,
+                $amountUsd,
+                $payload,
+                $riskAssessment,
+                $reputationResult,
+                $agent,
+            );
+
+            if ($reasonScan['action'] === 'block') {
+                return $this->block('reason_blocked', $reasonScan['explanation']);
+            }
+            if ($reasonScan['action'] === 'require_approval') {
+                $needsApproval = true;
+            }
+        }
+
         // ----- Phase 2: DB transaction -----
 
         $result = null;
 
         DB::transaction(function () use (
             $agent, $policy, $payload, $serverHash,
-            $decoded, $action, $amountUsd, $needsApproval, $riskAssessment, $reputationResult, &$result
+            $decoded, $action, $amountUsd, $needsApproval, $riskAssessment, $reputationResult, $reason, $reasonScan, &$result
         ) {
             // 13. INSERT intent — ON CONFLICT DO NOTHING
             $intentId = Str::uuid()->toString();
@@ -187,10 +211,12 @@ class PolicyEngineService
                 'decoded_recipient' => $decoded['recipient'] ?? null,
                 'decoded_raw_amount' => $decoded['raw_amount'] ?? null,
                 'amount_usd_computed' => $amountUsd,
+                'reason' => $reason,
                 'risk_level' => $riskAssessment['risk_level'] ?? null,
-                'risk_assessment' => ($riskAssessment || $reputationResult) ? json_encode(array_filter([
+                'risk_assessment' => ($riskAssessment || $reputationResult || $reasonScan) ? json_encode(array_filter([
                     'aegis' => $riskAssessment,
                     'reputation' => $reputationResult,
+                    'reason_scan' => $reasonScan,
                 ])) : null,
                 'risk_degraded' => $riskAssessment['degraded'] ?? false,
                 'status' => TxIntent::STATUS_RESERVED,
@@ -275,6 +301,8 @@ class PolicyEngineService
                     'risk_level' => $riskAssessment['risk_level'] ?? null,
                     'reputation_score' => $reputationResult['score'] ?? null,
                     'reputation_registered' => $reputationResult['registered'] ?? null,
+                    'reason' => $reason,
+                    'reason_scan_action' => $reasonScan['action'] ?? null,
                 ]),
                 'created_at' => now(),
             ]);

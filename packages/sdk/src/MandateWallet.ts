@@ -129,7 +129,7 @@ export class MandateWallet {
     to: `0x${string}`,
     rawAmount: string,
     tokenAddress: `0x${string}`,
-    opts: { waitForConfirmation?: boolean } = {},
+    opts: { waitForConfirmation?: boolean; reason?: string } = {},
   ): Promise<TransferResult> {
     const calldata = encodeFunctionData({
       abi: ERC20_ABI,
@@ -146,7 +146,7 @@ export class MandateWallet {
   async sendEth(
     to: `0x${string}`,
     valueWei: string,
-    opts: { waitForConfirmation?: boolean } = {},
+    opts: { waitForConfirmation?: boolean; reason?: string } = {},
   ): Promise<TransferResult> {
     return this.sendTransaction(to, '0x', valueWei, opts);
   }
@@ -158,9 +158,9 @@ export class MandateWallet {
     to: `0x${string}`,
     calldata: `0x${string}`,
     valueWei: string = '0',
-    opts: { waitForConfirmation?: boolean } = {},
+    opts: { waitForConfirmation?: boolean; reason?: string } = {},
   ): Promise<TransferResult> {
-    const prepared = await this.prepareTransaction(to, calldata, valueWei);
+    const prepared = await this.prepareTransaction(to, calldata, valueWei, opts.reason ?? 'No reason provided');
 
     const validation = await this.client.validate(prepared.payload);
     const intentId = validation.intentId!;
@@ -177,12 +177,13 @@ export class MandateWallet {
     valueWei: string = '0',
     opts: {
       waitForConfirmation?: boolean;
+      reason?: string;
       approvalTimeoutMs?: number;
       onApprovalPending?: (intentId: string, approvalId: string) => void;
       onApprovalPoll?: (status: IntentStatus) => void;
     } = {},
   ): Promise<TransferResult> {
-    const prepared = await this.prepareTransaction(to, calldata, valueWei);
+    const prepared = await this.prepareTransaction(to, calldata, valueWei, opts.reason ?? 'No reason provided');
 
     let intentId: string;
 
@@ -226,6 +227,7 @@ export class MandateWallet {
     to: `0x${string}`,
     calldata: `0x${string}`,
     valueWei: string,
+    reason: string = 'No reason provided',
   ): Promise<{
     nonce: number;
     gasLimit: string;
@@ -282,6 +284,7 @@ export class MandateWallet {
       txType: 2,
       accessList: [],
       intentHash,
+      reason,
     };
 
     return { nonce, gasLimit, maxFeePerGas, maxPriorityFeePerGas, intentHash, payload };
@@ -334,7 +337,7 @@ export class MandateWallet {
    */
   async x402Pay(
     url: string,
-    opts: { headers?: Record<string, string> } = {},
+    opts: { headers?: Record<string, string>; reason?: string } = {},
   ): Promise<Response> {
     const probe = await fetch(url, { headers: opts.headers });
 
@@ -359,6 +362,7 @@ export class MandateWallet {
       payment.paymentAddress,
       payment.amount,
       tokenAddress,
+      { reason: opts.reason ?? `x402 payment for ${url}` },
     );
 
     return fetch(url, {

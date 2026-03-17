@@ -16,6 +16,7 @@ interface RecentIntent {
   id: string; decoded_action: string | null; amount_usd_computed: string | null;
   status: string; to_address: string; created_at: string; tx_hash: string | null;
   risk_level: string | null; summary: string | null;
+  reason: string | null;
 }
 interface Props {
   agents: Agent[];
@@ -424,7 +425,7 @@ export default function Dashboard({ agents, selected_agent, daily_quota, monthly
                 <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
                   <thead>
                     <tr style={{ borderBottom: '1px solid var(--border-dim)' }}>
-                      {['Action', 'Amount', 'Recipient', 'Risk', 'Status', 'Time'].map(h => (
+                      {['Action', 'Amount', 'Reason', 'Recipient', 'Risk', 'Status', 'Time'].map(h => (
                         <th key={h} style={{ padding: '10px 16px', textAlign: 'left', color: 'var(--text-dim)', fontWeight: 400, fontFamily: 'var(--font-mono)', fontSize: 10, textTransform: 'uppercase', letterSpacing: '0.06em' }}>{h}</th>
                       ))}
                     </tr>
@@ -437,6 +438,9 @@ export default function Dashboard({ agents, selected_agent, daily_quota, monthly
                         </td>
                         <td style={{ padding: '12px 16px', fontFamily: 'var(--font-mono)', fontWeight: 500, color: 'var(--text-primary)', fontSize: 12 }}>
                           {intent.amount_usd_computed ? formatUsd(parseFloat(intent.amount_usd_computed)) : '—'}
+                        </td>
+                        <td style={{ padding: '12px 16px', color: 'var(--text-dim)', fontSize: 11, maxWidth: 180, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={intent.reason ?? ''}>
+                          {intent.reason ? intent.reason.slice(0, 30) + (intent.reason.length > 30 ? '…' : '') : '—'}
                         </td>
                         <td style={{ padding: '12px 16px', fontFamily: 'var(--font-mono)', color: 'var(--text-dim)', fontSize: 11 }}>
                           {shortAddr(intent.to_address)}

@@ -7,6 +7,7 @@ interface Intent {
   id: string; decoded_action: string | null; amount_usd_computed: string | null;
   status: string; to_address: string; created_at: string; tx_hash: string | null;
   chain_id: number; intent_hash: string; risk_level: string | null; summary: string | null;
+  reason: string | null;
 }
 interface Props {
   intents: { data: Intent[]; current_page: number; last_page: number };
@@ -74,7 +75,7 @@ export default function AuditLog({ intents, filters }: Props) {
           <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
             <thead>
               <tr style={{ borderBottom: '1px solid var(--border-dim)', background: 'var(--bg-raised)' }}>
-                {['Status', 'Risk', 'Action', 'Amount', 'Recipient', 'Chain', 'Tx Hash', 'Time'].map(h => (
+                {['Status', 'Risk', 'Action', 'Amount', 'Reason', 'Recipient', 'Chain', 'Tx Hash', 'Time'].map(h => (
                   <th key={h} style={{ padding: '11px 16px', textAlign: 'left', color: 'var(--text-dim)', fontWeight: 400, fontFamily: 'var(--font-mono)', fontSize: 10, textTransform: 'uppercase', letterSpacing: '0.06em', whiteSpace: 'nowrap' }}>{h}</th>
                 ))}
               </tr>
@@ -122,6 +123,9 @@ export default function AuditLog({ intents, filters }: Props) {
                   <td style={{ padding: '12px 16px', fontFamily: 'var(--font-mono)', fontWeight: 500, color: 'var(--text-primary)', fontSize: 12, whiteSpace: 'nowrap' }}>
                     {intent.amount_usd_computed ? formatUsd(parseFloat(intent.amount_usd_computed)) : '—'}
                   </td>
+                  <td style={{ padding: '12px 16px', color: 'var(--text-dim)', fontSize: 11, maxWidth: 200, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={intent.reason ?? ''}>
+                    {intent.reason ? intent.reason.slice(0, 40) + (intent.reason.length > 40 ? '…' : '') : '—'}
+                  </td>
                   <td style={{ padding: '12px 16px', fontFamily: 'var(--font-mono)', color: 'var(--text-dim)', fontSize: 11 }}>
                     {shortAddr(intent.to_address)}
                   </td>
@@ -140,7 +144,7 @@ export default function AuditLog({ intents, filters }: Props) {
               ))}
               {intents.data.length === 0 && (
                 <tr>
-                  <td colSpan={8} style={{ padding: '48px 24px', textAlign: 'center', color: 'var(--text-dim)', fontSize: 13 }}>
+                  <td colSpan={9} style={{ padding: '48px 24px', textAlign: 'center', color: 'var(--text-dim)', fontSize: 13 }}>
                     No intents match your filters.
                   </td>
                 </tr>

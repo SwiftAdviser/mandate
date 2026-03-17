@@ -68,6 +68,7 @@ class UserJourneyTest extends TestCase
             'maxPriorityFeePerGas' => '1000000000',
             'txType'               => 2,
             'accessList'           => [],
+            'reason'               => 'Test payment for integration test',
         ];
         $merged = array_merge($base, $overrides);
         $merged['intentHash'] = $this->intentHash($merged);

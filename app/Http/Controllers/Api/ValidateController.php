@@ -25,6 +25,7 @@ class ValidateController extends Controller
             'txType' => ['sometimes', 'integer'],
             'accessList' => ['sometimes', 'array'],
             'intentHash' => ['required', 'string', 'regex:/^0x[a-fA-F0-9]{64}$/'],
+            'reason' => ['required', 'string', 'max:1000'],
         ]);
 
         $agent = $request->attributes->get('agent');

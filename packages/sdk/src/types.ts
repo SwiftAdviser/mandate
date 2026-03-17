@@ -17,6 +17,7 @@ export interface IntentPayload {
   txType?: number;
   accessList?: unknown[];
   intentHash: `0x${string}`;
+  reason: string;
 }
 
 export interface ValidateResult {

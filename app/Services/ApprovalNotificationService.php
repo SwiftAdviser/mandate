@@ -45,6 +45,10 @@ class ApprovalNotificationService
 
         $summary = app(IntentSummaryService::class)->summarize($intent);
 
+        // Extract reason scan info from risk_assessment JSON
+        $riskData  = $intent->risk_assessment ?? [];
+        $guardScan = $riskData['reason_scan'] ?? null;
+
         return [
             'agent_name'    => $agent->name,
             'summary'       => $summary,
@@ -53,6 +57,8 @@ class ApprovalNotificationService
             'recipient'     => $intent->decoded_recipient ?? $intent->to_address,
             'chain_id'      => $intent->chain_id,
             'risk_level'    => $this->computeRiskLevel($amountUsd),
+            'reason'        => $intent->reason,
+            'guard_scan'    => $guardScan,
             'expires_at'    => $expiresAt?->toIso8601String(),
             'minutes_left'  => $expiresAt ? (int) now()->diffInMinutes($expiresAt, false) : null,
             'dashboard_url' => config('app.url', 'https://mandate.krutovoy.me') . '/approvals',
@@ -77,7 +83,7 @@ class ApprovalNotificationService
             default  => '⚪',
         };
 
-        return [
+        $blocks = [
             [
                 'type' => 'header',
                 'text' => ['type' => 'plain_text', 'text' => '🔐 Approval Required'],
@@ -86,28 +92,50 @@ class ApprovalNotificationService
                 'type' => 'section',
                 'text' => ['type' => 'mrkdwn', 'text' => "*Summary:* {$context['summary']}"],
             ],
-            [
-                'type'   => 'section',
-                'fields' => [
-                    ['type' => 'mrkdwn', 'text' => "*Agent:*\n{$context['agent_name']}"],
-                    ['type' => 'mrkdwn', 'text' => '*Amount:*\n$' . number_format($context['amount_usd'], 2)],
-                    ['type' => 'mrkdwn', 'text' => "*Action:*\n{$context['action']}"],
-                    ['type' => 'mrkdwn', 'text' => "*Recipient:*\n" . $this->truncateAddress($context['recipient'])],
-                    ['type' => 'mrkdwn', 'text' => "*Risk:*\n{$riskEmoji} {$context['risk_level']}"],
-                    ['type' => 'mrkdwn', 'text' => "*Expires:*\n{$context['minutes_left']} min"],
-                ],
+        ];
+
+        // Add reason (WHY) block if present
+        if (! empty($context['reason'])) {
+            $reason = substr($context['reason'], 0, 500);
+            $blocks[] = [
+                'type' => 'section',
+                'text' => ['type' => 'mrkdwn', 'text' => "*WHY:* _{$reason}_"],
+            ];
+        }
+
+        // Add guard scan explanation if present
+        if (! empty($context['guard_scan']['explanation'])) {
+            $guardExplanation = substr($context['guard_scan']['explanation'], 0, 200);
+            $blocks[] = [
+                'type' => 'section',
+                'text' => ['type' => 'mrkdwn', 'text' => "⚠️ *Guard:* {$guardExplanation}"],
+            ];
+        }
+
+        $blocks[] = [
+            'type'   => 'section',
+            'fields' => [
+                ['type' => 'mrkdwn', 'text' => "*Agent:*\n{$context['agent_name']}"],
+                ['type' => 'mrkdwn', 'text' => '*Amount:*\n$' . number_format($context['amount_usd'], 2)],
+                ['type' => 'mrkdwn', 'text' => "*Action:*\n{$context['action']}"],
+                ['type' => 'mrkdwn', 'text' => "*Recipient:*\n" . $this->truncateAddress($context['recipient'])],
+                ['type' => 'mrkdwn', 'text' => "*Risk:*\n{$riskEmoji} {$context['risk_level']}"],
+                ['type' => 'mrkdwn', 'text' => "*Expires:*\n{$context['minutes_left']} min"],
             ],
-            [
-                'type'     => 'actions',
-                'elements' => [
-                    [
-                        'type' => 'button',
-                        'text' => ['type' => 'plain_text', 'text' => 'Review in Dashboard →'],
-                        'url'  => $context['dashboard_url'],
-                    ],
+        ];
+
+        $blocks[] = [
+            'type'     => 'actions',
+            'elements' => [
+                [
+                    'type' => 'button',
+                    'text' => ['type' => 'plain_text', 'text' => 'Review in Dashboard →'],
+                    'url'  => $context['dashboard_url'],
                 ],
             ],
         ];
+
+        return $blocks;
     }
 
     public function formatTelegramMessage(array $context): string
@@ -122,10 +150,22 @@ class ApprovalNotificationService
         $amount = '$' . number_format($context['amount_usd'], 2);
         $addr   = $this->truncateAddress($context['recipient']);
 
-        return implode("\n", [
+        $lines = [
             '🔐 *Approval Required*',
             '',
             "*Summary:* {$context['summary']}",
+        ];
+
+        if (! empty($context['reason'])) {
+            $reason = substr($context['reason'], 0, 500);
+            $lines[] = "*WHY:* _{$reason}_";
+        }
+
+        if (! empty($context['guard_scan']['explanation'])) {
+            $lines[] = "⚠️ *Guard:* " . substr($context['guard_scan']['explanation'], 0, 200);
+        }
+
+        $lines = array_merge($lines, [
             "*Agent:* {$context['agent_name']}",
             "*Amount:* {$amount}",
             "*Action:* {$context['action']}",
@@ -135,6 +175,8 @@ class ApprovalNotificationService
             '',
             "[Review in Dashboard →]({$context['dashboard_url']})",
         ]);
+
+        return implode("\n", $lines);
     }
 
     public function sendTest(Agent $agent): void
@@ -146,6 +188,8 @@ class ApprovalNotificationService
             'recipient'     => '0x0000...test',
             'chain_id'      => $agent->chain_id ?? 84532,
             'risk_level'    => 'low',
+            'reason'        => 'Test notification — this is a sample reason',
+            'guard_scan'    => null,
             'expires_at'    => now()->addHour()->toIso8601String(),
             'minutes_left'  => 60,
             'dashboard_url' => config('app.url', 'https://mandate.krutovoy.me') . '/approvals',

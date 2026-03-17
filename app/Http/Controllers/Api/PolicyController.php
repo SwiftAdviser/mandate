@@ -35,6 +35,7 @@ class PolicyController extends Controller
             'maxGasLimit'             => ['sometimes', 'nullable', 'string'],
             'maxValueWei'             => ['sometimes', 'nullable', 'string'],
             'schedule'                => ['sometimes', 'nullable', 'array'],
+            'guardRules'              => ['sometimes', 'nullable', 'string', 'max:10000'],
         ]);
 
         // Deactivate current active policy
@@ -54,6 +55,7 @@ class PolicyController extends Controller
             'max_gas_limit'               => $data['maxGasLimit'] ?? null,
             'max_value_wei'               => $data['maxValueWei'] ?? null,
             'schedule'                    => $data['schedule'] ?? null,
+            'guard_rules'                 => $data['guardRules'] ?? null,
             'is_active'                   => true,
             'version'                     => ($agent->policies()->max('version') ?? 0) + 1,
         ]);

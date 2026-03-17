@@ -56,6 +56,12 @@ return [
         ],
     ],
 
+    'reason_scanner' => [
+        'llm_enabled' => env('REASON_SCANNER_LLM_ENABLED', false),
+        'model'       => env('REASON_SCANNER_MODEL', 'gpt-4o-mini'),
+        'api_key'     => env('REASON_SCANNER_API_KEY'),
+    ],
+
     'token_registry' => [
         ['chain_id' => 84532, 'address' => '0x036CbD53842c5426634e7929541eC2318f3dCF7e', 'symbol' => 'USDC', 'decimals' => 6, 'is_stable' => true],
         ['chain_id' => 8453,  'address' => '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913', 'symbol' => 'USDC', 'decimals' => 6, 'is_stable' => true],

@@ -43,7 +43,7 @@ class DashboardController extends Controller
             $recentIntents = TxIntent::where('agent_id', $selectedAgent->id)
                 ->orderByDesc('created_at')
                 ->limit(20)
-                ->get(['id','decoded_action','decoded_token','decoded_raw_amount','decoded_recipient','amount_usd_computed','status','to_address','created_at','tx_hash','chain_id','value_wei','calldata','risk_level'])
+                ->get(['id','decoded_action','decoded_token','decoded_raw_amount','decoded_recipient','amount_usd_computed','status','to_address','created_at','tx_hash','chain_id','value_wei','calldata','risk_level','reason'])
                 ->map(fn ($i) => array_merge($i->toArray(), ['summary' => $summaryService->summarize($i)]));
 
             $totalToday = TxIntent::where('agent_id', $selectedAgent->id)
@@ -78,7 +78,7 @@ class DashboardController extends Controller
             ->when($request->status, fn ($q, $s) => $q->where('status', $s))
             ->when($request->action, fn ($q, $a) => $q->where('decoded_action', $a))
             ->orderByDesc('created_at')
-            ->paginate(50, ['id','decoded_action','decoded_token','decoded_raw_amount','decoded_recipient','amount_usd_computed','status','to_address','created_at','tx_hash','chain_id','intent_hash','value_wei','calldata','risk_level']);
+            ->paginate(50, ['id','decoded_action','decoded_token','decoded_raw_amount','decoded_recipient','amount_usd_computed','status','to_address','created_at','tx_hash','chain_id','intent_hash','value_wei','calldata','risk_level','reason']);
 
         $intents->through(fn ($i) => array_merge($i->toArray(), ['summary' => $summaryService->summarize($i)]));
 

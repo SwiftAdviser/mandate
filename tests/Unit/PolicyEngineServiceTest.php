@@ -98,6 +98,7 @@ class PolicyEngineServiceTest extends TestCase
             'maxPriorityFeePerGas' => '1000000000',
             'txType' => 2,
             'accessList' => [],
+            'reason' => 'Test payment for March invoice',
         ];
 
         $merged = array_merge($base, $overrides);

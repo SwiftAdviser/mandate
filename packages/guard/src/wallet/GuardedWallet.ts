@@ -24,18 +24,20 @@ export class GuardedWallet {
     to: `0x${string}`,
     rawAmount: string,
     tokenAddress: `0x${string}`,
-    opts?: { waitForConfirmation?: boolean },
+    opts?: { waitForConfirmation?: boolean; reason?: string },
   ): Promise<TransferResult> {
     this.#checkInput(`transfer ${rawAmount} to ${to} token ${tokenAddress}`);
+    if (opts?.reason) this.#checkInput(opts.reason);
     return this.wallet.transfer(to, rawAmount, tokenAddress, opts);
   }
 
   async sendEth(
     to: `0x${string}`,
     valueWei: string,
-    opts?: { waitForConfirmation?: boolean },
+    opts?: { waitForConfirmation?: boolean; reason?: string },
   ): Promise<TransferResult> {
     this.#checkInput(`sendEth ${valueWei} to ${to}`);
+    if (opts?.reason) this.#checkInput(opts.reason);
     return this.wallet.sendEth(to, valueWei, opts);
   }
 
@@ -43,19 +45,20 @@ export class GuardedWallet {
     to: `0x${string}`,
     calldata: `0x${string}`,
     valueWei?: string,
-    opts?: { waitForConfirmation?: boolean },
+    opts?: { waitForConfirmation?: boolean; reason?: string },
   ): Promise<TransferResult> {
     // NOTE: raw calldata excluded from scan — ABI hex causes false positives.
     // Only scan metadata: function selector + address + value + length.
     this.#checkInput(
       `sendTransaction to=${to} selector=${calldata.slice(0, 10)} valueWei=${valueWei ?? '0'} calldataLength=${calldata.length}`,
     );
+    if (opts?.reason) this.#checkInput(opts.reason);
     return this.wallet.sendTransaction(to, calldata, valueWei, opts);
   }
 
   async x402Pay(
     url: string,
-    opts?: { headers?: Record<string, string> },
+    opts?: { headers?: Record<string, string>; reason?: string },
   ): Promise<Response> {
     this.#checkInput(`${url} ${JSON.stringify(opts?.headers ?? {})}`);
     const response = await this.wallet.x402Pay(url, opts);

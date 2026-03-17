@@ -24,6 +24,7 @@ const PAYLOAD: IntentPayload = {
   txType: 2,
   accessList: [],
   intentHash: '0x' + 'ab'.repeat(32) as `0x${string}`,
+  reason: 'Invoice #127 from Alice for March design work',
 };
 
 function makeClient(): MandateClient {
@@ -132,6 +133,20 @@ describe('MandateClient#validate', () => {
     mockFetch(500, { error: 'Server error' });
 
     await expect(makeClient().validate(PAYLOAD)).rejects.toThrow(MandateError);
+  });
+
+  it('sends reason in validate request body', async () => {
+    const spy = vi.fn().mockResolvedValue({
+      ok: true,
+      status: 200,
+      json: () => Promise.resolve({ allowed: true, intentId: 'i', requiresApproval: false, approvalId: null, blockReason: null }),
+    });
+    vi.stubGlobal('fetch', spy);
+
+    await makeClient().validate(PAYLOAD);
+
+    const body = JSON.parse(spy.mock.calls[0][1].body);
+    expect(body.reason).toBe('Invoice #127 from Alice for March design work');
   });
 
   it('sends Authorization header', async () => {

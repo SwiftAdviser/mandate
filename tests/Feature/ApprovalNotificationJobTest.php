@@ -55,6 +55,7 @@ class ApprovalNotificationJobTest extends TestCase
             'maxPriorityFeePerGas' => '1000000000',
             'txType'               => 2,
             'accessList'           => [],
+            'reason'               => 'Test payment for notification test',
         ];
 
         $merged = array_merge($base, $overrides);

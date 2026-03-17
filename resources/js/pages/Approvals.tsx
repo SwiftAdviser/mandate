@@ -9,6 +9,7 @@ interface Intent {
   calldata: string; chain_id: number; created_at: string;
   risk_level: string | null; risk_degraded: boolean;
   summary: string | null;
+  reason: string | null;
 }
 interface Approval {
   id: string; intent: Intent; agent: { id: string; name: string };
@@ -117,6 +118,31 @@ function ApprovalCard({ approval, onDecide }: { approval: Approval; onDecide: ()
               (degraded — scan incomplete)
             </span>
           )}
+        </div>
+      )}
+
+      {/* Agent's reason (WHY) */}
+      {intent.reason && (
+        <div style={{
+          padding: '12px 20px',
+          borderBottom: '1px solid var(--border-dim)',
+        }}>
+          <div style={{ fontSize: 10, color: 'var(--text-dim)', fontFamily: 'var(--font-mono)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 6 }}>
+            Why
+          </div>
+          <div style={{
+            padding: '10px 14px',
+            background: 'var(--bg-base)',
+            border: '1px solid var(--border-dim)',
+            borderRadius: 6,
+            borderLeft: '3px solid var(--amber-dim)',
+            fontSize: 13,
+            color: 'var(--text-primary)',
+            lineHeight: 1.6,
+            fontStyle: 'italic',
+          }}>
+            "{intent.reason}"
+          </div>
         </div>
       )}
 
