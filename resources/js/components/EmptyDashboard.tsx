@@ -191,8 +191,30 @@ export default function EmptyDashboard({ runtimeKey }: Props) {
         <ShieldVisual />
       </div>
 
+      {/* How It Works */}
+      <div className="fade-up fade-up-3" style={{ marginBottom: 16 }}>
+        <h2 style={{
+          fontFamily: 'var(--font-display)',
+          fontSize: 22,
+          fontWeight: 400,
+          letterSpacing: '-0.03em',
+          margin: 0,
+          color: 'var(--text-primary)',
+        }}>
+          How It Works
+        </h2>
+        <p style={{
+          marginTop: 6,
+          color: 'var(--text-dim)',
+          fontSize: 13,
+          lineHeight: 1.6,
+        }}>
+          Every transaction your agent makes passes through 8 intelligence checks — before the key is ever touched. Here's a real scenario.
+        </p>
+      </div>
+
       {/* Live simulation demo */}
-      <div className="fade-up fade-up-3" style={{
+      <div className="fade-up fade-up-4" style={{
         background: 'var(--bg-surface)',
         border: '1px solid var(--border)',
         borderRadius: 12,
