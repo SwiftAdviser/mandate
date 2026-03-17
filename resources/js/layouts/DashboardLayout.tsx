@@ -6,6 +6,7 @@ const NAV = [
   { href: '/agents',          label: 'Agents',         icon: '⬡' },
   { href: '/policies',        label: 'Policies',       icon: '⊞' },
   { href: '/approvals',       label: 'Approvals',      icon: '◎', badge: true },
+  { href: '/notifications',   label: 'Notifications',  icon: '⊘' },
   { href: '/audit',           label: 'Audit Log',      icon: '≡' },
 ];
 

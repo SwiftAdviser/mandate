@@ -123,6 +123,18 @@ class DashboardController extends Controller
         ]);
     }
 
+    public function notifications(Request $request): Response
+    {
+        $userId = auth()->id();
+        $agent = Agent::where('user_id', $userId)->first();
+
+        return Inertia::render('Notifications', [
+            'agent_id' => $agent?->id ?? '',
+            'agent_name' => $agent?->name ?? '',
+            'webhooks' => $agent?->notification_webhooks ?? [],
+        ]);
+    }
+
     public function claim(Request $request): Response
     {
         $code  = $request->query('code', '');
