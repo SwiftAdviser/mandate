@@ -9,7 +9,6 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "@mandate/guard": "workspace:*",
     "express": "^4.18.0"
   },
   "devDependencies": {

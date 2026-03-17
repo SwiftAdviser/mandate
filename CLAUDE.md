@@ -30,7 +30,6 @@ Tests use SQLite in-memory; no database setup needed.
 ```bash
 # Run tests for a specific package
 bun run --filter '@mandate/sdk' test
-bun run --filter '@mandate/guard' test
 bun run --filter '@mandate/mcp-server' test
 
 # Run all package tests
@@ -89,8 +88,8 @@ bun run build
 | Package | Description |
 |---|---|
 | `@mandate/sdk` | Core: `MandateClient` (low-level API), `MandateWallet` (high-level + viem signing), error types |
-| `@mandate/guard` | Prompt injection + credential leak scanner; `GuardedMandateWallet` wrapper |
 | `@mandate/mcp-server` | Cloudflare Workers MCP (search + execute tools, uses `@cloudflare/agents ^0.0.16`) |
+
 | `@mandate/eliza-plugin` | ElizaOS plugin |
 | `@mandate/goat-plugin` | GOAT SDK plugin with `@Tool()` decorator pattern |
 | `@mandate/agentkit-provider` | Coinbase AgentKit `WalletProvider` + `ActionProvider` |

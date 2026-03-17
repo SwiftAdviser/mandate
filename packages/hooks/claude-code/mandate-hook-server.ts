@@ -1,14 +1,10 @@
 import express from 'express';
 import type { Request, Response } from 'express';
-import { MandateGuard } from '@mandate/guard';
-
 const app = express();
 app.use(express.json());
 
 const MANDATE_API_URL = process.env.MANDATE_API_URL ?? 'http://localhost:8000';
 const MANDATE_RUNTIME_KEY = process.env.MANDATE_RUNTIME_KEY ?? '';
-
-const guard = new MandateGuard({ minSeverity: 'medium' });
 
 const PAYMENT_TOOLS = /^(Bash|mcp__.*transfer.*|mcp__.*payment.*)$/i;
 const PAYMENT_KEYWORDS = /\b(transfer|pay|send|0x[0-9a-fA-F]{40})\b/i;
@@ -23,11 +19,6 @@ app.post('/hook', async (req: Request, res: Response) => {
   const cmdStr = JSON.stringify(tool_input ?? '');
   if (!PAYMENT_KEYWORDS.test(cmdStr)) {
     return res.json({ decision: 'approve' });
-  }
-
-  const injScan = guard.scanInput(cmdStr);
-  if (!injScan.safe) {
-    return res.json({ decision: 'block', reason: `injection_detected:${injScan.threats[0].patternId}` });
   }
 
   try {
