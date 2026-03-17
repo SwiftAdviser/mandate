@@ -157,32 +157,47 @@ class ApprovalNotificationService
         $addr   = $this->truncateAddress($context['recipient']);
 
         $lines = [
-            '🔐 *Approval Required*',
+            '🔐 <b>Approval Required</b>',
             '',
-            "*Summary:* {$context['summary']}",
+            "<b>Summary:</b> {$context['summary']}",
         ];
 
         if (! empty($context['reason'])) {
-            $reason = substr($context['reason'], 0, 500);
-            $lines[] = "*WHY:* _{$reason}_";
+            $reason = htmlspecialchars(substr($context['reason'], 0, 500));
+            $lines[] = "<b>WHY:</b> <i>{$reason}</i>";
         }
 
         if (! empty($context['guard_scan']['explanation'])) {
-            $lines[] = "⚠️ *Guard:* " . substr($context['guard_scan']['explanation'], 0, 200);
+            $guard = htmlspecialchars(substr($context['guard_scan']['explanation'], 0, 200));
+            $lines[] = "⚠️ <b>Guard:</b> {$guard}";
         }
 
         $lines = array_merge($lines, [
-            "*Agent:* {$context['agent_name']}",
-            "*Amount:* {$amount}",
-            "*Action:* {$context['action']}",
-            "*Recipient:* `{$addr}`",
-            "*Risk:* {$riskEmoji} {$context['risk_level']}",
-            "*Expires:* {$context['minutes_left']} min",
-            '',
-            "[Review in Dashboard →]({$context['dashboard_url']})",
+            "<b>Agent:</b> {$context['agent_name']}",
+            "<b>Amount:</b> {$amount}",
+            "<b>Action:</b> {$context['action']}",
+            "<b>Recipient:</b> <code>{$addr}</code>",
+            "<b>Risk:</b> {$riskEmoji} {$context['risk_level']}",
+            "<b>Expires:</b> {$context['minutes_left']} min",
         ]);
 
         return implode("\n", $lines);
+    }
+
+    /**
+     * Build inline keyboard with Approve / Reject buttons for Telegram.
+     */
+    public function buildTelegramButtons(string $approvalId): array
+    {
+        return [
+            [
+                ['text' => '✅ Approve', 'callback_data' => "approve:{$approvalId}"],
+                ['text' => '❌ Reject', 'callback_data' => "reject:{$approvalId}"],
+            ],
+            [
+                ['text' => 'Review in Dashboard →', 'url' => config('app.url', 'https://mandate.krutovoy.me') . '/approvals'],
+            ],
+        ];
     }
 
     public function sendTest(Agent $agent): void
@@ -206,7 +221,12 @@ class ApprovalNotificationService
         foreach ($agent->notification_webhooks ?? [] as $webhook) {
             match ($webhook['type'] ?? null) {
                 'slack'    => $this->sendSlack($webhook['url'], $context),
-                'telegram' => $this->sendTelegram($webhook['bot_token'], $webhook['chat_id'], $context),
+                'telegram' => $this->sendTelegram(
+                    $webhook['bot_token'] ?: config('mandate.telegram.bot_token'),
+                    $webhook['chat_id'] ?? '',
+                    $context,
+                    $webhook['username'] ?? null,
+                ),
                 'custom'   => $this->sendCustomWebhook($webhook['url'], $webhook['secret'] ?? '', $context),
                 default    => null,
             };
@@ -236,12 +256,16 @@ class ApprovalNotificationService
         }
 
         $text = $this->formatTelegramMessage($context);
+        $buttons = $this->buildTelegramButtons($context['approval_id']);
 
-        Http::post("https://api.telegram.org/bot{$botToken}/sendMessage", [
-            'chat_id'    => $chatId,
-            'text'       => $text,
-            'parse_mode' => 'Markdown',
-        ]);
+        $payload = [
+            'chat_id'      => $chatId,
+            'text'         => $text,
+            'parse_mode'   => 'HTML',
+            'reply_markup' => ['inline_keyboard' => $buttons],
+        ];
+
+        Http::post("https://api.telegram.org/bot{$botToken}/sendMessage", $payload);
     }
 
     private function sendCustomWebhook(string $url, string $secret, array $context): void
