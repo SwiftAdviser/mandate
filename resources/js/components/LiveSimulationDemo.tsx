@@ -91,15 +91,15 @@ export default function LiveSimulationDemo() {
         <button
           onClick={() => setPhase(PHASE_ATTACK)}
           style={{
-            padding: '8px 16px', background: 'none',
-            border: '1px solid var(--border)', borderRadius: 6,
-            color: 'var(--text-secondary)', fontSize: 11, fontWeight: 500,
+            padding: '8px 18px', background: 'var(--accent-glow)',
+            border: '1px solid var(--accent-dim)', borderRadius: 6,
+            color: 'var(--accent)', fontSize: 11, fontWeight: 500,
             fontFamily: 'var(--font-mono)', cursor: 'pointer',
             display: 'flex', alignItems: 'center', gap: 6,
             transition: 'all 0.15s',
           }}
-          onMouseEnter={e => { e.currentTarget.style.borderColor = 'var(--accent-dim)'; e.currentTarget.style.color = 'var(--accent)'; }}
-          onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--border)'; e.currentTarget.style.color = 'var(--text-secondary)'; }}
+          onMouseEnter={e => { e.currentTarget.style.background = 'var(--accent)'; e.currentTarget.style.color = '#000'; }}
+          onMouseLeave={e => { e.currentTarget.style.background = 'var(--accent-glow)'; e.currentTarget.style.color = 'var(--accent)'; }}
         >
           <svg width="10" height="10" viewBox="0 0 16 16" fill="none">
             <path d="M4 2.5l10 5.5-10 5.5V2.5z" fill="currentColor"/>
