@@ -1,14 +1,16 @@
 import { Link, usePage } from '@inertiajs/react';
+import { LayoutDashboard, Bot, Shield, FileText, CheckCircle, Bell, ScrollText, Puzzle } from 'lucide-react';
 import { ReactNode, useState } from 'react';
 
 const NAV = [
-  { href: '/dashboard',       label: 'Overview',      icon: '◈' },
-  { href: '/agents',          label: 'Agents',         icon: '⬡' },
-  { href: '/policies',        label: 'Policies',       icon: '⊞' },
-  { href: '/mandate',          label: 'MANDATE.md',     icon: '◆' },
-  { href: '/approvals',       label: 'Approvals',      icon: '◎', badge: true },
-  { href: '/notifications',   label: 'Notifications',  icon: '⊘' },
-  { href: '/audit',           label: 'Audit Log',      icon: '≡' },
+  { href: '/dashboard',       label: 'Overview',      icon: LayoutDashboard },
+  { href: '/agents',          label: 'Agents',         icon: Bot },
+  { href: '/policies',        label: 'Policies',       icon: Shield },
+  { href: '/mandate',          label: 'MANDATE.md',     icon: FileText },
+  { href: '/approvals',       label: 'Approvals',      icon: CheckCircle, badge: true },
+  { href: '/notifications',   label: 'Notifications',  icon: Bell },
+  { href: '/audit',           label: 'Audit Log',      icon: ScrollText },
+  { href: '/integrations',    label: 'Integrations',   icon: Puzzle },
 ];
 
 export default function DashboardLayout({ children }: { children: ReactNode }) {
@@ -47,7 +49,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
         }}>
           <div style={{
             width: 28, height: 28, borderRadius: 6,
-            background: 'var(--amber)',
+            background: 'var(--accent)',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             flexShrink: 0,
           }}>
@@ -69,6 +71,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
         <nav style={{ flex: 1, padding: '12px 8px', overflow: 'auto' }}>
           {NAV.map(item => {
             const active = url.startsWith(item.href);
+            const Icon = item.icon;
             return (
               <Link
                 key={item.href}
@@ -80,9 +83,9 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
                   padding: collapsed ? '9px 10px' : '9px 12px',
                   borderRadius: 6,
                   marginBottom: 2,
-                  color: active ? 'var(--amber)' : 'var(--text-secondary)',
-                  background: active ? 'var(--amber-glow)' : 'transparent',
-                  border: `1px solid ${active ? 'var(--amber-dim)' : 'transparent'}`,
+                  color: active ? 'var(--accent)' : 'var(--text-secondary)',
+                  background: active ? 'var(--accent-glow)' : 'transparent',
+                  border: `1px solid ${active ? 'var(--accent-dim)' : 'transparent'}`,
                   fontSize: 13,
                   fontWeight: active ? 500 : 400,
                   textDecoration: 'none',
@@ -92,7 +95,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
                   justifyContent: collapsed ? 'center' : 'flex-start',
                 }}
               >
-                <span style={{ fontSize: 14, flexShrink: 0 }}>{item.icon}</span>
+                <Icon size={16} strokeWidth={1.8} style={{ flexShrink: 0 }} />
                 {!collapsed && <span>{item.label}</span>}
               </Link>
             );
@@ -119,7 +122,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
               {user.avatar_url ? (
                 <img src={user.avatar_url} alt="" style={{ width: 24, height: 24, borderRadius: '50%', flexShrink: 0 }} />
               ) : (
-                <div style={{ width: 24, height: 24, borderRadius: '50%', background: 'var(--amber)', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 700, color: '#000' }}>
+                <div style={{ width: 24, height: 24, borderRadius: '50%', background: 'var(--accent)', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 700, color: '#000' }}>
                   {user.name?.[0]?.toUpperCase() ?? '?'}
                 </div>
               )}

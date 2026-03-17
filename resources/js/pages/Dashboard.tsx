@@ -63,7 +63,7 @@ function QuotaBar({ used, limit, label }: { used: number; limit: number | null; 
         <div style={{
           height: '100%',
           width: `${pct}%`,
-          background: danger ? 'var(--red)' : 'var(--amber)',
+          background: danger ? 'var(--red)' : 'var(--accent)',
           borderRadius: 2,
           transition: 'width 0.6s ease',
         }} />
@@ -197,15 +197,15 @@ export default function Dashboard({ agents, selected_agent, daily_quota, monthly
                 alignItems: 'center',
                 gap: 8,
                 padding: '8px 14px',
-                background: 'var(--amber-glow)',
-                border: '1px solid var(--amber-dim)',
+                background: 'var(--accent-glow)',
+                border: '1px solid var(--accent-dim)',
                 borderRadius: 8,
-                color: 'var(--amber)',
+                color: 'var(--accent)',
                 fontSize: 12,
                 fontWeight: 500,
                 textDecoration: 'none',
               }}>
-                <span className="pulse-amber" style={{ display: 'inline-block', width: 6, height: 6, borderRadius: '50%', background: 'var(--amber)' }} />
+                <span className="pulse-accent" style={{ display: 'inline-block', width: 6, height: 6, borderRadius: '50%', background: 'var(--accent)' }} />
                 {pending_approvals} pending approval{pending_approvals > 1 ? 's' : ''}
               </a>
             )}
@@ -246,7 +246,7 @@ export default function Dashboard({ agents, selected_agent, daily_quota, monthly
               onClick={() => setShowCreateModal(true)}
               style={{
                 padding: '12px 28px',
-                background: 'var(--amber)',
+                background: 'var(--accent)',
                 border: 'none',
                 borderRadius: 8,
                 color: '#000',
@@ -340,7 +340,7 @@ export default function Dashboard({ agents, selected_agent, daily_quota, monthly
                 { label: 'Confirmed Today', value: formatUsd(total_confirmed_today) },
                 { label: 'Daily Quota Used', value: formatUsd(daily_quota ? parseFloat(daily_quota.reserved_usd) : 0) },
                 { label: 'Monthly Confirmed', value: formatUsd(monthly_quota ? parseFloat(monthly_quota.confirmed_usd) : 0) },
-                { label: 'Pending Approvals', value: String(pending_approvals), accent: pending_approvals > 0 ? 'var(--amber)' : undefined },
+                { label: 'Pending Approvals', value: String(pending_approvals), accent: pending_approvals > 0 ? 'var(--accent)' : undefined },
               ].map(s => (
                 <div key={s.label} style={{
                   padding: '20px 24px',
@@ -398,13 +398,13 @@ export default function Dashboard({ agents, selected_agent, daily_quota, monthly
                 <a href="/mandate" style={{
                   display: 'block',
                   padding: '14px 18px',
-                  background: 'var(--amber-glow)',
-                  border: '1px solid var(--amber-dim)',
+                  background: 'var(--accent-glow)',
+                  border: '1px solid var(--accent-dim)',
                   borderRadius: 10,
                   textDecoration: 'none',
                   transition: 'border-color 0.15s',
                 }}>
-                  <div style={{ fontSize: 11, color: 'var(--amber)', fontFamily: 'var(--font-mono)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>MANDATE.md</div>
+                  <div style={{ fontSize: 11, color: 'var(--accent)', fontFamily: 'var(--font-mono)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>MANDATE.md</div>
                   <div style={{ fontSize: 13, color: 'var(--text-primary)', marginTop: 6, fontWeight: 500 }}>Write AI guard rules →</div>
                 </a>
               </div>

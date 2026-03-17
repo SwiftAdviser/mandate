@@ -252,9 +252,9 @@ export default function PolicyBuilder({ agent_id, current_policy }: Props) {
                         border: '1px solid',
                         cursor: 'pointer',
                         transition: 'all 0.12s',
-                        background: form.scheduleDays.includes(d) ? 'var(--amber-glow)' : 'var(--bg-base)',
-                        borderColor: form.scheduleDays.includes(d) ? 'var(--amber-dim)' : 'var(--border)',
-                        color: form.scheduleDays.includes(d) ? 'var(--amber)' : 'var(--text-dim)',
+                        background: form.scheduleDays.includes(d) ? 'var(--accent-glow)' : 'var(--bg-base)',
+                        borderColor: form.scheduleDays.includes(d) ? 'var(--accent-dim)' : 'var(--border)',
+                        color: form.scheduleDays.includes(d) ? 'var(--accent)' : 'var(--text-dim)',
                       }}
                     >
                       {d.slice(0, 3)}
@@ -288,7 +288,7 @@ export default function PolicyBuilder({ agent_id, current_policy }: Props) {
                 {current_policy?.guard_rules ? 'Rules configured' : 'No rules set — write natural language rules for your AI guard'}
               </div>
             </div>
-            <span style={{ color: 'var(--amber)', fontSize: 14 }}>Edit rules →</span>
+            <span style={{ color: 'var(--accent)', fontSize: 14 }}>Edit rules →</span>
           </a>
 
           {/* Save */}
@@ -298,8 +298,8 @@ export default function PolicyBuilder({ agent_id, current_policy }: Props) {
               disabled={saving || saved}
               style={{
                 padding: '10px 24px',
-                background: saved ? 'var(--green-glow)' : 'var(--amber)',
-                border: `1px solid ${saved ? 'var(--green)' : 'var(--amber)'}`,
+                background: saved ? 'var(--green-glow)' : 'var(--accent)',
+                border: `1px solid ${saved ? 'var(--green)' : 'var(--accent)'}`,
                 borderRadius: 8,
                 color: saved ? 'var(--green)' : '#000',
                 fontWeight: 600,

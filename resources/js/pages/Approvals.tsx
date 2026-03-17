@@ -55,7 +55,7 @@ function ApprovalCard({ approval, onDecide }: { approval: Approval; onDecide: ()
         justifyContent: 'space-between',
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-          <span className="pulse-amber" style={{ display: 'inline-block', width: 7, height: 7, borderRadius: '50%', background: 'var(--amber)', flexShrink: 0 }} />
+          <span className="pulse-accent" style={{ display: 'inline-block', width: 7, height: 7, borderRadius: '50%', background: 'var(--accent)', flexShrink: 0 }} />
           <div>
             <div style={{ fontSize: 13, fontWeight: 500, color: 'var(--text-primary)' }}>
               {approval.agent.name}
@@ -135,7 +135,7 @@ function ApprovalCard({ approval, onDecide }: { approval: Approval; onDecide: ()
             background: 'var(--bg-base)',
             border: '1px solid var(--border-dim)',
             borderRadius: 6,
-            borderLeft: '3px solid var(--amber-dim)',
+            borderLeft: '3px solid var(--accent-dim)',
             fontSize: 13,
             color: 'var(--text-primary)',
             lineHeight: 1.6,
@@ -186,8 +186,8 @@ function ApprovalCard({ approval, onDecide }: { approval: Approval; onDecide: ()
           disabled={!!deciding}
           style={{
             padding: '8px 16px',
-            background: deciding === 'approved' ? 'var(--green-glow)' : 'var(--amber)',
-            border: `1px solid ${deciding === 'approved' ? 'var(--green)' : 'var(--amber)'}`,
+            background: deciding === 'approved' ? 'var(--green-glow)' : 'var(--accent)',
+            border: `1px solid ${deciding === 'approved' ? 'var(--green)' : 'var(--accent)'}`,
             borderRadius: 8,
             color: deciding === 'approved' ? 'var(--green)' : '#000',
             fontSize: 12,

@@ -204,7 +204,7 @@ export default function CreateAgentModal({ onClose }: Props) {
                   disabled={loading}
                   style={{
                     padding: '10px 20px',
-                    background: 'var(--amber)',
+                    background: 'var(--accent)',
                     border: 'none',
                     borderRadius: 8,
                     color: '#000',

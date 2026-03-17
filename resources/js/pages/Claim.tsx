@@ -80,7 +80,7 @@ export default function Claim({ claim_code, agent_name, evm_address, chain_id, a
         }}>
           <div style={{
             width: 24, height: 24, borderRadius: 5,
-            background: 'var(--amber)',
+            background: 'var(--accent)',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
           }}>
             <span style={{ color: '#000', fontSize: 12, fontWeight: 700, fontFamily: 'var(--font-display)' }}>M</span>
@@ -107,7 +107,7 @@ export default function Claim({ claim_code, agent_name, evm_address, chain_id, a
                 style={{
                   display: 'inline-block', marginTop: 24,
                   padding: '10px 24px',
-                  background: 'var(--amber)',
+                  background: 'var(--accent)',
                   borderRadius: 8,
                   color: '#000',
                   fontWeight: 600,
@@ -180,8 +180,8 @@ export default function Claim({ claim_code, agent_name, evm_address, chain_id, a
                 style={{
                   width: '100%',
                   padding: '12px',
-                  background: 'var(--amber)',
-                  border: '1px solid var(--amber)',
+                  background: 'var(--accent)',
+                  border: '1px solid var(--accent)',
                   borderRadius: 10,
                   color: '#000',
                   fontWeight: 600,

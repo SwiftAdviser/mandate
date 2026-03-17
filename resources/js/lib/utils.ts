@@ -29,7 +29,7 @@ export function riskColor(level: string | null | undefined): string {
   switch (level) {
     case 'CRITICAL': return 'var(--red)';
     case 'HIGH':     return '#f97316';
-    case 'MEDIUM':   return 'var(--amber)';
+    case 'MEDIUM':   return 'var(--accent)';
     case 'LOW':      return 'var(--green)';
     case 'SAFE':     return 'var(--text-dim)';
     default:         return 'var(--text-dim)';
@@ -40,8 +40,8 @@ export function statusColor(status: string): string {
   switch (status) {
     case 'confirmed':        return 'var(--green)';
     case 'broadcasted':      return 'var(--blue)';
-    case 'reserved':         return 'var(--amber)';
-    case 'approval_pending': return 'var(--amber)';
+    case 'reserved':         return 'var(--accent)';
+    case 'approval_pending': return 'var(--accent)';
     case 'approved':         return 'var(--blue)';
     case 'failed':           return 'var(--red)';
     case 'expired':          return 'var(--text-dim)';

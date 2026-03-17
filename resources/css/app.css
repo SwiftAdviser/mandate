@@ -16,20 +16,23 @@
 }
 
 :root {
-  --bg-base:    #080c10;
-  --bg-surface: #0d1219;
-  --bg-raised:  #111922;
-  --bg-hover:   #16202d;
-  --border:     #1c2a3a;
-  --border-dim: #141e2a;
+  --bg-base:    #09090b;
+  --bg-surface: #1C1C1E;
+  --bg-raised:  #252528;
+  --bg-hover:   #2c2c30;
+  --border:     #2a2a2e;
+  --border-dim: #1f1f23;
 
-  --text-primary:   #e8edf2;
-  --text-secondary: #7a8fa5;
-  --text-dim:       #3d5166;
+  --text-primary:   #FFFFFF;
+  --text-secondary: #a1a1aa;
+  --text-dim:       #52525b;
 
-  --amber:      #f59e0b;
-  --amber-dim:  #92610a;
-  --amber-glow: rgba(245, 158, 11, 0.12);
+  --accent:      #10b981;
+  --accent-dim:  #065f46;
+  --accent-glow: rgba(16, 185, 129, 0.12);
+
+  --secondary:      #6ee7b7;
+  --secondary-glow: rgba(110, 231, 183, 0.10);
 
   --red:        #ef4444;
   --red-dim:    #7f1d1d;
@@ -59,16 +62,16 @@ body {
 ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
 
 /* Selection */
-::selection { background: var(--amber-glow); color: var(--amber); }
+::selection { background: var(--accent-glow); color: var(--accent); }
 
 /* Monospace numbers */
 .mono { font-family: var(--font-mono); }
 .display { font-family: var(--font-display); }
 
 /* Status pulse */
-@keyframes pulse-amber {
-  0%, 100% { opacity: 1; box-shadow: 0 0 0 0 rgba(245,158,11,0.4); }
-  50% { opacity: 0.8; box-shadow: 0 0 0 6px rgba(245,158,11,0); }
+@keyframes pulse-accent {
+  0%, 100% { opacity: 1; box-shadow: 0 0 0 0 rgba(16,185,129,0.4); }
+  50% { opacity: 0.8; box-shadow: 0 0 0 6px rgba(16,185,129,0); }
 }
 @keyframes pulse-red {
   0%, 100% { opacity: 1; box-shadow: 0 0 0 0 rgba(239,68,68,0.5); }
@@ -79,9 +82,9 @@ body {
   50% { opacity: 0.8; box-shadow: 0 0 0 5px rgba(16,185,129,0); }
 }
 
-.pulse-amber { animation: pulse-amber 2s infinite; }
-.pulse-red   { animation: pulse-red   1.5s infinite; }
-.pulse-green { animation: pulse-green 3s infinite; }
+.pulse-accent { animation: pulse-accent 2s infinite; }
+.pulse-red    { animation: pulse-red   1.5s infinite; }
+.pulse-green  { animation: pulse-green 3s infinite; }
 
 /* Page entrance */
 @keyframes fade-up {

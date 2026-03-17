@@ -296,8 +296,8 @@ export default function Notifications({ agent_id, agent_name, webhooks: initial,
                 disabled={saving || saved}
                 style={{
                   padding: '10px 24px',
-                  background: saved ? 'var(--green-glow)' : 'var(--amber)',
-                  border: `1px solid ${saved ? 'var(--green)' : 'var(--amber)'}`,
+                  background: saved ? 'var(--green-glow)' : 'var(--accent)',
+                  border: `1px solid ${saved ? 'var(--green)' : 'var(--accent)'}`,
                   borderRadius: 8, color: saved ? 'var(--green)' : '#000',
                   fontWeight: 600, fontSize: 13,
                   cursor: saving ? 'wait' : 'pointer',

@@ -381,9 +381,9 @@ function IntegrationCard({
         display: 'flex', flexDirection: 'column', gap: 12,
         padding: '24px', textAlign: 'left', cursor: 'pointer',
         background: active ? 'var(--bg-raised)' : 'var(--bg-surface)',
-        border: `1px solid ${active ? 'var(--amber)' : 'var(--border)'}`,
+        border: `1px solid ${active ? 'var(--accent)' : 'var(--border)'}`,
         borderRadius: 4,
-        boxShadow: active ? '0 0 0 1px var(--amber), 0 0 16px rgba(245,158,11,0.1)' : 'none',
+        boxShadow: active ? '0 0 0 1px var(--accent), 0 0 16px rgba(16,185,129,0.1)' : 'none',
         transition: 'all 0.2s ease',
         width: '100%',
       }}
@@ -398,7 +398,7 @@ function IntegrationCard({
           }}>{item.framework}</div>
           <div style={{
             fontFamily: 'var(--font-mono)', fontSize: 11,
-            color: active ? 'var(--amber)' : 'var(--text-dim)',
+            color: active ? 'var(--accent)' : 'var(--text-dim)',
             letterSpacing: '0.02em',
           }}>{item.package}</div>
         </div>
@@ -410,7 +410,7 @@ function IntegrationCard({
       {item.hasSkill && (
         <div style={{
           fontFamily: 'var(--font-mono)', fontSize: 10,
-          color: 'var(--amber)', letterSpacing: '0.06em',
+          color: 'var(--accent)', letterSpacing: '0.06em',
           textTransform: 'uppercase', opacity: 0.8,
         }}>✦ Skill available</div>
       )}
@@ -451,7 +451,7 @@ function DetailPanel({ item }: { item: Integration }) {
         <div>
           <div style={{
             fontFamily: 'var(--font-mono)', fontSize: 14,
-            color: 'var(--amber)',
+            color: 'var(--accent)',
           }}>{item.package}</div>
           <div style={{
             fontFamily: 'var(--font-sans)', fontSize: 16,
@@ -482,7 +482,7 @@ function DetailPanel({ item }: { item: Integration }) {
               onClick={() => copy(`${item.id}-install`, item.install)}
               style={{
                 fontFamily: 'var(--font-mono)', fontSize: 11,
-                color: copied[`${item.id}-install`] ? 'var(--amber)' : 'var(--text-dim)',
+                color: copied[`${item.id}-install`] ? 'var(--accent)' : 'var(--text-dim)',
                 background: 'none', border: 'none', cursor: 'pointer',
                 padding: '4px 8px',
                 transition: 'color 0.15s',
@@ -515,7 +515,7 @@ function DetailPanel({ item }: { item: Integration }) {
                 onClick={() => copy(`${item.id}-code`, item.code)}
                 style={{
                   fontFamily: 'var(--font-mono)', fontSize: 11,
-                  color: copied[`${item.id}-code`] ? 'var(--amber)' : 'var(--text-dim)',
+                  color: copied[`${item.id}-code`] ? 'var(--accent)' : 'var(--text-dim)',
                   background: 'none', border: 'none', cursor: 'pointer',
                   padding: '4px 8px',
                   transition: 'color 0.15s',
@@ -538,7 +538,7 @@ function DetailPanel({ item }: { item: Integration }) {
                   <span key={i} style={{
                     display: 'block',
                     color: isComment ? 'var(--text-dim)'
-                         : isKey    ? 'var(--amber)'
+                         : isKey    ? 'var(--accent)'
                          : isString ? 'var(--text-secondary)'
                          : 'var(--text-primary)',
                   }}>{line}</span>
@@ -563,7 +563,7 @@ function DetailPanel({ item }: { item: Integration }) {
               }}>
                 <code style={{
                   fontFamily: 'var(--font-mono)', fontSize: 12,
-                  color: 'var(--amber)',
+                  color: 'var(--accent)',
                 }}>{ev.name}</code>
                 <span style={{
                   fontFamily: 'var(--font-mono)', fontSize: 12,
@@ -599,11 +599,11 @@ function DetailPanel({ item }: { item: Integration }) {
               style={{
                 display: 'inline-flex', alignItems: 'center', gap: 8,
                 padding: '10px 18px',
-                background: 'var(--amber-glow)',
-                border: '1px solid var(--amber-dim)',
+                background: 'var(--accent-glow)',
+                border: '1px solid var(--accent-dim)',
                 borderRadius: 4,
                 fontFamily: 'var(--font-mono)', fontSize: 13,
-                color: 'var(--amber)', cursor: 'pointer',
+                color: 'var(--accent)', cursor: 'pointer',
                 transition: 'opacity 0.15s',
               }}
               onMouseEnter={e => (e.currentTarget.style.opacity = '0.8')}
@@ -667,7 +667,7 @@ export default function Integrations() {
       {/* Navbar */}
       <nav style={{
         position: 'fixed', top: 0, left: 0, right: 0, zIndex: 100,
-        background: 'rgba(8,12,16,0.97)',
+        background: 'rgba(9,9,11,0.97)',
         backdropFilter: 'blur(16px)',
         borderBottom: '1px solid var(--border)',
       }}>
@@ -685,8 +685,8 @@ export default function Integrations() {
             }}>mandate</span>
             <span style={{
               fontSize: 9, fontFamily: 'var(--font-mono)',
-              background: 'var(--amber-glow)', color: 'var(--amber)',
-              border: '1px solid var(--amber-dim)',
+              background: 'var(--accent-glow)', color: 'var(--accent)',
+              border: '1px solid var(--accent-dim)',
               borderRadius: 3, padding: '2px 6px',
               letterSpacing: '0.08em', textTransform: 'uppercase',
             }}>beta</span>
@@ -695,7 +695,7 @@ export default function Integrations() {
           <a href="/dashboard" style={{
             display: 'inline-flex', alignItems: 'center', gap: 6,
             padding: '8px 16px',
-            background: 'var(--amber)', color: '#080c10',
+            background: 'var(--accent)', color: '#09090b',
             fontFamily: 'var(--font-mono)', fontSize: 13, fontWeight: 600,
             textDecoration: 'none', borderRadius: 4,
             letterSpacing: '-0.01em',
@@ -712,7 +712,7 @@ export default function Integrations() {
         <div style={{ paddingTop: 120, paddingBottom: 64 }}>
           <div className="fade-up fade-up-1" style={{
             fontFamily: 'var(--font-mono)', fontSize: 11,
-            color: 'var(--amber)', letterSpacing: '0.1em',
+            color: 'var(--accent)', letterSpacing: '0.1em',
             textTransform: 'uppercase', marginBottom: 20,
           }}>
             Agent Security Infrastructure
@@ -744,10 +744,10 @@ export default function Integrations() {
               onClick={() => { setFilter(tab.id); setSelected(null); }}
               style={{
                 fontFamily: 'var(--font-mono)', fontSize: 13,
-                color: filter === tab.id ? 'var(--amber)' : 'var(--text-dim)',
+                color: filter === tab.id ? 'var(--accent)' : 'var(--text-dim)',
                 background: 'none', border: 'none', cursor: 'pointer',
                 padding: '10px 16px',
-                borderBottom: `2px solid ${filter === tab.id ? 'var(--amber)' : 'transparent'}`,
+                borderBottom: `2px solid ${filter === tab.id ? 'var(--accent)' : 'transparent'}`,
                 marginBottom: -1,
                 transition: 'color 0.15s',
               }}

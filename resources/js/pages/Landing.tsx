@@ -669,7 +669,7 @@ export default function LandingV3() {
                   {tags.map(tag => (
                     <span key={tag} style={{
                       fontFamily: 'var(--font-jet)', fontSize: 11,
-                      color: 'var(--amber)',
+                      color: 'var(--accent)',
                       opacity: 0.7,
                     }}>{tag}</span>
                   ))}

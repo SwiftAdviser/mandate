@@ -19,7 +19,7 @@ export default function RuntimeKeyReveal({ runtimeKey, onDone }: Props) {
     <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
       <div style={{
         fontSize: 13,
-        color: 'var(--amber)',
+        color: 'var(--accent)',
         fontWeight: 500,
         fontFamily: 'var(--font-display)',
         letterSpacing: '-0.02em',
@@ -85,7 +85,7 @@ export default function RuntimeKeyReveal({ runtimeKey, onDone }: Props) {
           type="checkbox"
           checked={saved}
           onChange={e => setSaved(e.target.checked)}
-          style={{ accentColor: 'var(--amber)' }}
+          style={{ accentColor: 'var(--accent)' }}
         />
         I saved this key
       </label>
@@ -96,7 +96,7 @@ export default function RuntimeKeyReveal({ runtimeKey, onDone }: Props) {
           onClick={onDone}
           style={{
             padding: '10px 20px',
-            background: 'var(--amber)',
+            background: 'var(--accent)',
             border: 'none',
             borderRadius: 8,
             color: '#000',

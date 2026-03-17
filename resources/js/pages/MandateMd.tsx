@@ -83,7 +83,7 @@ export default function MandateMd({ agent_id, guard_rules }: Props) {
             MANDATE.md
           </h1>
           <p style={{ marginTop: 8, color: 'var(--text-dim)', fontSize: 13, lineHeight: 1.6, maxWidth: 600 }}>
-            Your rules in plain language. Every transaction the agent makes, the AI guard reads these rules alongside all intelligence layers to decide: <strong style={{ color: 'var(--green)' }}>allow</strong>, <strong style={{ color: 'var(--red)' }}>block</strong>, or <strong style={{ color: 'var(--amber)' }}>ask you</strong>.
+            Your rules in plain language. Every transaction the agent makes, the AI guard reads these rules alongside all intelligence layers to decide: <strong style={{ color: 'var(--green)' }}>allow</strong>, <strong style={{ color: 'var(--red)' }}>block</strong>, or <strong style={{ color: 'var(--accent)' }}>ask you</strong>.
           </p>
         </div>
 
@@ -189,8 +189,8 @@ export default function MandateMd({ agent_id, guard_rules }: Props) {
               disabled={saving || saved || !agent_id}
               style={{
                 padding: '10px 28px',
-                background: saved ? 'var(--green-glow)' : 'var(--amber)',
-                border: `1px solid ${saved ? 'var(--green)' : 'var(--amber)'}`,
+                background: saved ? 'var(--green-glow)' : 'var(--accent)',
+                border: `1px solid ${saved ? 'var(--green)' : 'var(--accent)'}`,
                 borderRadius: 8,
                 color: saved ? 'var(--green)' : '#000',
                 fontWeight: 600,
