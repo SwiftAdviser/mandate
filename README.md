@@ -3,7 +3,7 @@
 </p>
 
 <p align="center">
-  <a href="https://app.mandate.md">Dashboard</a> &middot;
+  <a href="https://app.mandate.md/dashboard">Dashboard</a> &middot;
   <a href="https://app.mandate.md/SKILL.md">SKILL.md</a> &middot;
   <a href="https://www.npmjs.com/package/@mandate.md/sdk">SDK</a> &middot;
   <a href="https://www.npmjs.com/package/@mandate.md/cli">CLI</a>
@@ -209,7 +209,7 @@ TDD is mandatory. Write a failing test first.
 
 ## Links
 
-- **Live dashboard**: [app.mandate.md](https://app.mandate.md)
+- **Live dashboard**: [app.mandate.md/dashboard](https://app.mandate.md/dashboard)
 - **Agent skill file**: [app.mandate.md/SKILL.md](https://app.mandate.md/SKILL.md)
 - **npm SDK**: [@mandate.md/sdk](https://www.npmjs.com/package/@mandate.md/sdk)
 - **npm CLI**: [@mandate.md/cli](https://www.npmjs.com/package/@mandate.md/cli)

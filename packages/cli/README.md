@@ -136,6 +136,6 @@ mandate --mcp    # Start as MCP stdio server
 ## Links
 
 - [SKILL.md](https://app.mandate.md/SKILL.md) — Full API reference for AI agents
-- [Dashboard](https://app.mandate.md) — Configure policies
+- [Dashboard](https://app.mandate.md/dashboard) — Configure policies
 - [@mandate.md/sdk](https://www.npmjs.com/package/@mandate.md/sdk) — TypeScript SDK for programmatic use
 - [GitHub](https://github.com/SwiftAdviser/mandate)

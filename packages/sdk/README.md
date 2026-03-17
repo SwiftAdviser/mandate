@@ -176,6 +176,6 @@ import { MandateClient } from '@mandate.md/sdk/client';
 ## Links
 
 - [SKILL.md](https://app.mandate.md/SKILL.md) — Full API reference for AI agents
-- [Dashboard](https://app.mandate.md) — Configure policies
+- [Dashboard](https://app.mandate.md/dashboard) — Configure policies
 - [@mandate.md/cli](https://www.npmjs.com/package/@mandate.md/cli) — Agent-discoverable CLI
 - [GitHub](https://github.com/SwiftAdviser/mandate)
