@@ -38,6 +38,7 @@ class HandleInertiaRequests extends Middleware
             ],
             'pending_approvals' => $pendingApprovals,
             'agent_activated' => $agentActivated,
+            'app_url' => config('app.url'),
         ]);
     }
 }

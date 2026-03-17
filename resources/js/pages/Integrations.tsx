@@ -2,37 +2,6 @@ import DashboardLayout from '@/layouts/DashboardLayout';
 import { useState, useEffect, useRef } from 'react';
 
 /* ── Mandate skill file content ──────────────────────────────────────────── */
-const MANDATE_SKILL_MD = `---
-name: mandate
-description: Add Mandate policy enforcement to any supported agent framework or tool
----
-
-## What is Mandate
-Non-custodial policy layer for agent wallets. Set spend limits, require approval,
-and audit every payment before execution.
-
-## Supported integrations
-- OpenClaw: bun add @mandate/openclaw-plugin
-- Claude Code: cp mandate-hook.sh ~/.claude/hooks/ (PreToolUse hook)
-- MCP / Codex: npx wrangler deploy (Cloudflare Worker)
-- ElizaOS: bun add @mandate/eliza-plugin
-- Coinbase AgentKit: bun add @mandate/agentkit-provider @coinbase/agentkit
-- GOAT SDK: bun add @mandate/goat-plugin @goat-sdk/core
-- GAME SDK (Virtuals): bun add @mandate/game-plugin @virtuals-protocol/game
-- ACP (Virtuals): bun add @mandate/acp-plugin
-- Core (any stack): bun add @mandate/sdk
-
-## Required env var
-MANDATE_RUNTIME_KEY — from https://app.mandate.md/dashboard
-
-## Steps
-1. Install the package for your framework
-2. Wrap your wallet / tool call with the Mandate client
-3. Handle errors: PolicyBlockedError (blocked) and ApprovalRequiredError (pause + escalate)
-
-## Full docs
-https://github.com/SwiftAdviser/mandate/blob/master/docs/STACK.md
-`;
 
 /* ── Types ───────────────────────────────────────────────────────────────── */
 interface Integration {
@@ -49,8 +18,6 @@ interface Integration {
   lang: 'typescript' | 'bash' | 'json' | 'toml';
   envVars: { name: string; note: string }[];
   prerequisites: string[];
-  githubUrl: string;
-  hasSkill: boolean;
   comingSoon?: boolean;
 }
 
@@ -87,8 +54,6 @@ await agent.run('Send 10 USDC to alice.eth');`,
 
     ],
     prerequisites: ['local EVM wallet key required'],
-    githubUrl: 'https://github.com/SwiftAdviser/mandate/blob/master/docs/STACK.md',
-    hasSkill: true,
   },
   {
     id: 'claude-code',
@@ -121,8 +86,6 @@ await agent.run('Send 10 USDC to alice.eth');`,
       { name: 'MANDATE_API_URL', note: 'optional, defaults to hosted endpoint' },
     ],
     prerequisites: ['~/.claude/hooks directory'],
-    githubUrl: 'https://github.com/SwiftAdviser/mandate/blob/master/docs/STACK.md',
-    hasSkill: true,
   },
   {
     id: 'mcp',
@@ -144,8 +107,6 @@ env = { MANDATE_RUNTIME_KEY = "$MANDATE_RUNTIME_KEY" }
       { name: 'MANDATE_RUNTIME_KEY', note: 'from dashboard' },
     ],
     prerequisites: ['Cloudflare account required'],
-    githubUrl: 'https://github.com/SwiftAdviser/mandate/blob/master/docs/STACK.md',
-    hasSkill: true,
   },
   {
     id: 'eliza',
@@ -174,8 +135,6 @@ const runtime = new AgentRuntime({
 
     ],
     prerequisites: ['local EVM wallet key required'],
-    githubUrl: 'https://github.com/SwiftAdviser/mandate/blob/master/docs/STACK.md',
-    hasSkill: false,
   },
   {
     id: 'agentkit',
@@ -204,8 +163,6 @@ const agentKit = new AgentKit({ walletProvider });
       { name: 'MANDATE_RUNTIME_KEY', note: 'from dashboard' },
     ],
     prerequisites: ['local EVM wallet key required'],
-    githubUrl: 'https://github.com/SwiftAdviser/mandate/blob/master/docs/STACK.md',
-    hasSkill: false,
   },
   {
     id: 'goat',
@@ -235,8 +192,6 @@ const tools = await getOnChainTools({
       { name: 'MANDATE_RUNTIME_KEY', note: 'from dashboard' },
     ],
     prerequisites: ['local EVM wallet key required'],
-    githubUrl: 'https://github.com/SwiftAdviser/mandate/blob/master/docs/STACK.md',
-    hasSkill: false,
   },
   {
     id: 'game',
@@ -267,8 +222,6 @@ await agent.init();`,
       { name: 'MANDATE_RUNTIME_KEY', note: 'from dashboard' },
     ],
     prerequisites: ['local EVM wallet key required'],
-    githubUrl: 'https://github.com/SwiftAdviser/mandate/blob/master/docs/STACK.md',
-    hasSkill: false,
   },
   {
     id: 'acp',
@@ -296,8 +249,6 @@ export const agent = withMandate(acpClient, {
       { name: 'MANDATE_RUNTIME_KEY', note: 'from dashboard' },
     ],
     prerequisites: ['ACP API key required (AcpConfig.acpApiKey)'],
-    githubUrl: 'https://github.com/SwiftAdviser/mandate/blob/master/docs/STACK.md',
-    hasSkill: false,
   },
   {
     id: 'sdk',
@@ -334,8 +285,6 @@ try {
 
     ],
     prerequisites: ['local EVM wallet key required'],
-    githubUrl: 'https://github.com/SwiftAdviser/mandate/blob/master/docs/STACK.md',
-    hasSkill: false,
     comingSoon: true,
   },
 ];
@@ -347,16 +296,6 @@ const FILTER_TABS: { id: FilterCategory; label: string }[] = [
   { id: 'core', label: 'Core SDK' },
 ];
 
-/* ── Download skill helper ───────────────────────────────────────────────── */
-function downloadSkill() {
-  const blob = new Blob([MANDATE_SKILL_MD], { type: 'text/plain' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = 'mandate.skill.md';
-  a.click();
-  URL.revokeObjectURL(url);
-}
 
 /* ── Copy hook ───────────────────────────────────────────────────────────── */
 function useCopy() {
@@ -457,13 +396,6 @@ function IntegrationCard({
         fontFamily: 'var(--font-sans)', fontSize: 13,
         color: 'var(--text-secondary)', lineHeight: 1.5,
       }}>{item.tagline}</div>
-      {item.hasSkill && !isSoon && (
-        <div style={{
-          fontFamily: 'var(--font-mono)', fontSize: 10,
-          color: 'var(--accent)', letterSpacing: '0.06em',
-          textTransform: 'uppercase', opacity: 0.8,
-        }}>✦ Skill available</div>
-      )}
     </button>
   );
 }
@@ -492,10 +424,12 @@ function DetailModal({ item, runtimeKey, onClose }: { item: Integration; runtime
     toml: 'TOML',
   };
 
-  const fullText = `${item.quickStart}\nMANDATE_RUNTIME_KEY=${runtimeKey || '<your-runtime-key>'}`;
+  const SKILL_URL = 'https://app.mandate.md/SKILL.md';
+  const keyDisplay = runtimeKey || '<your-runtime-key>';
+  const activationText = `Follow ${SKILL_URL} to add Mandate to your ${item.framework} agent. Use this runtime_key: ${keyDisplay}`;
 
   async function copyQuickStart() {
-    await navigator.clipboard.writeText(fullText);
+    await navigator.clipboard.writeText(activationText);
     setMainCopied(true);
     setTimeout(() => setMainCopied(false), 2500);
   }
@@ -574,11 +508,10 @@ function DetailModal({ item, runtimeKey, onClose }: { item: Integration; runtime
             wordBreak: 'break-all',
             marginBottom: 16,
           }}>
-            <span style={{ color: 'var(--accent)' }}>{item.quickStart}</span>
-            {'\n'}
-            <span style={{ color: 'var(--text-dim)' }}>MANDATE_RUNTIME_KEY</span>
-            <span style={{ color: 'var(--text-dim)' }}>=</span>
-            <span style={{ color: 'var(--accent)', fontWeight: 600 }}>{runtimeKey || '<from dashboard>'}</span>
+            Follow{' '}
+            <span style={{ color: 'var(--accent)' }}>{SKILL_URL}</span>
+            {' '}to add Mandate to your {item.framework} agent. Use this runtime_key:{' '}
+            <span style={{ color: 'var(--accent)', fontWeight: 600 }}>{keyDisplay}</span>
           </div>
 
           {/* Big CTA */}
@@ -616,7 +549,7 @@ function DetailModal({ item, runtimeKey, onClose }: { item: Integration; runtime
                   <rect x="5" y="5" width="8" height="8" rx="1.5" stroke="currentColor" strokeWidth="1.5"/>
                   <path d="M3 11V3.5A1.5 1.5 0 014.5 2H11" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
                 </svg>
-                Copy &amp; share with your AI agent
+                Copy &amp; paste into agent chat
               </>
             )}
           </button>
@@ -630,7 +563,7 @@ function DetailModal({ item, runtimeKey, onClose }: { item: Integration; runtime
             fontFamily: 'var(--font-mono)',
           }}>
             {runtimeKey
-              ? 'Paste this into your agent\'s chat.'
+              ? 'The agent will self-integrate using SKILL.md.'
               : <>Get your runtime key from <a href="/dashboard" style={{ color: 'var(--accent)', textDecoration: 'none' }}>Dashboard</a></>
             }
           </div>

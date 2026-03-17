@@ -20,10 +20,14 @@ class ActivateController extends Controller
             'evm_address' => strtolower($data['evmAddress']),
         ]);
 
+        $dashboardUrl = config('app.url').'/dashboard?onboarding=1';
+
         return response()->json([
             'activated' => true,
             'agentId' => $agent->id,
             'evmAddress' => $agent->evm_address,
+            'onboardingUrl' => $dashboardUrl,
+            'message' => 'Agent activated. Tell your human to visit: '.$dashboardUrl,
         ]);
     }
 }
