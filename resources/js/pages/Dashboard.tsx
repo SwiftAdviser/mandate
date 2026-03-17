@@ -1,23 +1,15 @@
 import CreateAgentModal from '@/components/CreateAgentModal';
+import EmptyDashboard from '@/components/EmptyDashboard';
+import LiveSimulationDemo from '@/components/LiveSimulationDemo';
+import OnboardingWizard from '@/components/OnboardingWizard';
 import DashboardLayout from '@/layouts/DashboardLayout';
 import { formatUsd, riskColor, shortAddr, statusColor, timeAgo } from '@/lib/utils';
 import { Trash2 } from 'lucide-react';
 import { useState } from 'react';
 
-const INTELLIGENCE_LAYERS = [
-  { label: 'Transaction Simulation', desc: 'Asset movements, contract interactions, risk signals, anomalies' },
-  { label: 'Agent Reputation (EIP-8004)', desc: 'On-chain reputation score for the agent identity' },
-  { label: 'Spend Limit Proximity', desc: 'How close this tx brings the agent to daily/monthly limits' },
-  { label: 'Prompt Injection Scanner', desc: '18 patterns: instruction overrides, jailbreaks, encoding evasion' },
-  { label: 'Recipient Analysis', desc: 'First-time recipient detection, allowlist verification' },
-  { label: 'Calldata Decoding', desc: 'Decodes what the tx actually does, not what the agent claims' },
-  { label: 'Schedule & Context', desc: 'Operating hours compliance, time-of-day risk patterns' },
-  { label: 'Your Rules (MANDATE.md)', desc: 'Natural language rules the AI guard follows alongside all signals' },
-];
-
 /* ── Types ─────────────────────────────────────────────────────────────── */
 interface Agent {
-  id: string; name: string; evm_address: string; chain_id: number;
+  id: string; name: string; evm_address: string | null; chain_id: number | null;
   circuit_breaker_active: boolean; claimed_at: string | null;
 }
 interface QuotaWindow {
@@ -38,6 +30,8 @@ interface Props {
   recent_intents: RecentIntent[];
   total_confirmed_today: number;
   pending_approvals: number;
+  needs_onboarding: boolean;
+  first_visit_key: string | null;
 }
 
 /* ── Sub-components ─────────────────────────────────────────────────────── */
@@ -162,11 +156,12 @@ function CircuitBreakerToggle({ agent }: { agent: Agent }) {
 }
 
 /* ── Page ──────────────────────────────────────────────────────────────── */
-export default function Dashboard({ agents, selected_agent, daily_quota, monthly_quota, recent_intents, total_confirmed_today, pending_approvals }: Props) {
+export default function Dashboard({ agents, selected_agent, daily_quota, monthly_quota, recent_intents, total_confirmed_today, pending_approvals, needs_onboarding, first_visit_key }: Props) {
   const agent = selected_agent;
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [wizardDismissed, setWizardDismissed] = useState(false);
 
   async function deleteAgent() {
     if (!agent || deleting) return;
@@ -191,8 +186,8 @@ export default function Dashboard({ agents, selected_agent, daily_quota, monthly
     <DashboardLayout>
       <div style={{ padding: '32px 36px', maxWidth: 1100 }}>
 
-        {/* Header */}
-        <div className="fade-up" style={{ marginBottom: 32 }}>
+        {/* Header — only when agent exists and not first visit */}
+        {agent && !first_visit_key && <div className="fade-up" style={{ marginBottom: 32 }}>
           <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', flexWrap: 'wrap', gap: 16 }}>
             <div>
               <h1 style={{
@@ -204,22 +199,30 @@ export default function Dashboard({ agents, selected_agent, daily_quota, monthly
                 margin: 0,
                 lineHeight: 1.1,
               }}>
-                {agent ? agent.name : 'Overview'}
+                {agent.name}
               </h1>
               {agent && (
                 <div style={{ marginTop: 6, display: 'flex', alignItems: 'center', gap: 10 }}>
-                  <span style={{ fontFamily: 'var(--font-mono)', fontSize: 12, color: 'var(--text-dim)' }}>
-                    {shortAddr(agent.evm_address)}
-                  </span>
-                  <span style={{ fontSize: 10, color: 'var(--text-dim)' }}>·</span>
+                  {agent.evm_address && (
+                    <>
+                      <span style={{ fontFamily: 'var(--font-mono)', fontSize: 12, color: 'var(--text-dim)' }}>
+                        {shortAddr(agent.evm_address)}
+                      </span>
+                      <span style={{ fontSize: 10, color: 'var(--text-dim)' }}>·</span>
+                    </>
+                  )}
                   <span style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: agent.circuit_breaker_active ? 'var(--red)' : 'var(--green)', display: 'flex', alignItems: 'center', gap: 4 }}>
                     <span style={{ display: 'inline-block', width: 5, height: 5, borderRadius: '50%', background: 'currentColor' }} />
                     {agent.circuit_breaker_active ? 'tripped' : 'operational'}
                   </span>
-                  <span style={{ fontSize: 10, color: 'var(--text-dim)' }}>·</span>
-                  <span style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--text-dim)' }}>
-                    chain {agent.chain_id}
-                  </span>
+                  {agent.chain_id && (
+                    <>
+                      <span style={{ fontSize: 10, color: 'var(--text-dim)' }}>·</span>
+                      <span style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--text-dim)' }}>
+                        chain {agent.chain_id}
+                      </span>
+                    </>
+                  )}
                   <span style={{ fontSize: 10, color: 'var(--text-dim)' }}>·</span>
                   {confirmDelete ? (
                     <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
@@ -284,120 +287,14 @@ export default function Dashboard({ agents, selected_agent, daily_quota, monthly
               </a>
             )}
           </div>
-        </div>
+        </div>}
 
-        {/* Empty state — no agents */}
-        {agents.length === 0 && !agent && (
-          <div className="fade-up fade-up-1" style={{
-            background: 'var(--bg-surface)',
-            border: '1px solid var(--border)',
-            borderRadius: 14,
-            padding: '48px 40px',
-            textAlign: 'center',
-            maxWidth: 520,
-          }}>
-            <div style={{
-              fontFamily: 'var(--font-display)',
-              fontSize: 20,
-              fontWeight: 500,
-              color: 'var(--text-primary)',
-              letterSpacing: '-0.03em',
-              marginBottom: 8,
-            }}>
-              Welcome to Mandate
-            </div>
-            <div style={{
-              fontSize: 13,
-              color: 'var(--text-secondary)',
-              marginBottom: 28,
-              lineHeight: 1.6,
-            }}>
-              Choose how to get started:
-            </div>
-
-            {/* Create Agent CTA */}
-            <button
-              onClick={() => setShowCreateModal(true)}
-              style={{
-                padding: '12px 28px',
-                background: 'var(--accent)',
-                border: 'none',
-                borderRadius: 8,
-                color: '#000',
-                fontSize: 14,
-                fontWeight: 600,
-                fontFamily: 'var(--font-display)',
-                cursor: 'pointer',
-                letterSpacing: '-0.02em',
-                marginBottom: 8,
-              }}
-            >
-              Create Agent
-            </button>
-            <div style={{ fontSize: 11, color: 'var(--text-dim)', marginBottom: 32 }}>
-              Get a runtimeKey now
-            </div>
-
-            {/* Claim hint */}
-            <div style={{
-              fontSize: 12,
-              color: 'var(--text-secondary)',
-              lineHeight: 1.6,
-              marginBottom: 32,
-            }}>
-              Already have a runtimeKey?<br />
-              <span style={{ color: 'var(--text-dim)' }}>
-                Your agent will appear here after visiting the claim link.
-              </span>
-            </div>
-
-            {/* Quick Start */}
-            <div style={{
-              borderTop: '1px solid var(--border-dim)',
-              paddingTop: 24,
-              textAlign: 'left',
-            }}>
-              <div style={{
-                fontSize: 10,
-                color: 'var(--text-dim)',
-                fontFamily: 'var(--font-mono)',
-                textTransform: 'uppercase',
-                letterSpacing: '0.08em',
-                marginBottom: 12,
-              }}>
-                Quick Start
-              </div>
-              <div style={{
-                background: 'var(--bg-base)',
-                border: '1px solid var(--border-dim)',
-                borderRadius: 8,
-                padding: '12px 16px',
-                fontFamily: 'var(--font-mono)',
-                fontSize: 12,
-                color: 'var(--text-primary)',
-                marginBottom: 10,
-                textAlign: 'left',
-              }}>
-                bun add @mandate/sdk
-              </div>
-              <a
-                href="https://github.com/SwiftAdviser/mandate/tree/master/packages/sdk#readme"
-                target="_blank"
-                rel="noopener noreferrer"
-                style={{
-                  fontSize: 11,
-                  color: 'var(--text-dim)',
-                  textDecoration: 'none',
-                  fontFamily: 'var(--font-mono)',
-                }}
-              >
-                See docs for integration guide →
-              </a>
-            </div>
-          </div>
+        {/* First visit — show activation block */}
+        {first_visit_key && (
+          <EmptyDashboard runtimeKey={first_visit_key} />
         )}
 
-        {agent && (
+        {agent && !first_visit_key && (
           <>
             {/* Stats row */}
             <div className="fade-up fade-up-1" style={{
@@ -608,31 +505,19 @@ export default function Dashboard({ agents, selected_agent, daily_quota, monthly
               marginTop: 16,
             }}>
               <div style={{ fontSize: 11, color: 'var(--text-dim)', fontFamily: 'var(--font-mono)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 14 }}>
-                What your AI Guard sees on every transaction
+                What happens when your agent sends a transaction
               </div>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
-                {INTELLIGENCE_LAYERS.map((layer, i) => (
-                  <div key={i} style={{
-                    display: 'flex', gap: 8,
-                    padding: '10px 12px',
-                    background: 'var(--bg-base)',
-                    border: '1px solid var(--border-dim)',
-                    borderRadius: 6,
-                  }}>
-                    <span style={{ color: 'var(--green)', fontSize: 11, flexShrink: 0, marginTop: 1 }}>✓</span>
-                    <div>
-                      <div style={{ fontSize: 11, color: 'var(--text-primary)', fontWeight: 500 }}>{layer.label}</div>
-                      <div style={{ fontSize: 10, color: 'var(--text-dim)', marginTop: 2, lineHeight: 1.4 }}>{layer.desc}</div>
-                    </div>
-                  </div>
-                ))}
-              </div>
+              <LiveSimulationDemo />
             </div>
           </>
         )}
 
         {showCreateModal && (
           <CreateAgentModal onClose={() => setShowCreateModal(false)} />
+        )}
+
+        {needs_onboarding && agent && !wizardDismissed && !first_visit_key && (
+          <OnboardingWizard agent={agent} onComplete={() => setWizardDismissed(true)} />
         )}
       </div>
     </DashboardLayout>
