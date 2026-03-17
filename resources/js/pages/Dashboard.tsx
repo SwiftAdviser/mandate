@@ -4,6 +4,17 @@ import { formatUsd, riskColor, shortAddr, statusColor, timeAgo } from '@/lib/uti
 import { Trash2 } from 'lucide-react';
 import { useState } from 'react';
 
+const INTELLIGENCE_LAYERS = [
+  { label: 'Transaction Simulation', desc: 'Asset movements, contract interactions, risk signals, anomalies' },
+  { label: 'Agent Reputation (EIP-8004)', desc: 'On-chain reputation score for the agent identity' },
+  { label: 'Spend Limit Proximity', desc: 'How close this tx brings the agent to daily/monthly limits' },
+  { label: 'Prompt Injection Scanner', desc: '18 patterns: instruction overrides, jailbreaks, encoding evasion' },
+  { label: 'Recipient Analysis', desc: 'First-time recipient detection, allowlist verification' },
+  { label: 'Calldata Decoding', desc: 'Decodes what the tx actually does, not what the agent claims' },
+  { label: 'Schedule & Context', desc: 'Operating hours compliance, time-of-day risk patterns' },
+  { label: 'Your Rules (MANDATE.md)', desc: 'Natural language rules the AI guard follows alongside all signals' },
+];
+
 /* ── Types ─────────────────────────────────────────────────────────────── */
 interface Agent {
   id: string; name: string; evm_address: string; chain_id: number;
@@ -559,6 +570,63 @@ export default function Dashboard({ agents, selected_agent, daily_quota, monthly
                   </tbody>
                 </table>
               )}
+            </div>
+
+            {/* Integrate your agent */}
+            <div className="fade-up fade-up-4" style={{
+              background: 'var(--bg-surface)',
+              border: '1px solid var(--border)',
+              borderRadius: 12,
+              padding: '20px 24px',
+              marginTop: 20,
+            }}>
+              <div style={{ fontSize: 11, color: 'var(--text-dim)', fontFamily: 'var(--font-mono)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 14 }}>
+                Share this with your agent to integrate Mandate
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+                <div style={{ padding: '14px 16px', background: 'var(--bg-base)', border: '1px solid var(--border-dim)', borderRadius: 8 }}>
+                  <div style={{ fontSize: 11, color: 'var(--text-dim)', marginBottom: 6 }}>Install SDK</div>
+                  <div style={{ fontFamily: 'var(--font-mono)', fontSize: 12, color: 'var(--text-primary)' }}>bun add @mandate/sdk</div>
+                </div>
+                <a href="/integrations" style={{
+                  display: 'block', padding: '14px 16px',
+                  background: 'var(--bg-base)', border: '1px solid var(--border-dim)',
+                  borderRadius: 8, textDecoration: 'none',
+                }}>
+                  <div style={{ fontSize: 11, color: 'var(--text-dim)', marginBottom: 6 }}>Integration guides + SKILL.md</div>
+                  <div style={{ fontSize: 12, color: 'var(--accent)', fontWeight: 500 }}>View all integrations →</div>
+                </a>
+              </div>
+            </div>
+
+            {/* Intelligence layers */}
+            <div className="fade-up fade-up-5" style={{
+              background: 'var(--bg-surface)',
+              border: '1px solid var(--border)',
+              borderRadius: 12,
+              padding: '20px 24px',
+              marginTop: 16,
+            }}>
+              <div style={{ fontSize: 11, color: 'var(--text-dim)', fontFamily: 'var(--font-mono)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 14 }}>
+                What your AI Guard sees on every transaction
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+                {INTELLIGENCE_LAYERS.map((layer, i) => (
+                  <div key={i} style={{
+                    display: 'flex', gap: 8,
+                    padding: '10px 12px',
+                    background: 'var(--bg-base)',
+                    border: '1px solid var(--border-dim)',
+                    borderRadius: 6,
+                  }}>
+                    <span style={{ color: 'var(--green)', fontSize: 11, flexShrink: 0, marginTop: 1 }}>✓</span>
+                    <div>
+                      <div style={{ fontSize: 11, color: 'var(--text-primary)', fontWeight: 500 }}>{layer.label}</div>
+                      <div style={{ fontSize: 10, color: 'var(--text-dim)', marginTop: 2, lineHeight: 1.4 }}>{layer.desc}</div>
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
           </>
         )}
