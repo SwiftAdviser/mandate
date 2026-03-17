@@ -237,6 +237,7 @@ function Navbar({ opaque }: { opaque: boolean }) {
       }}>
         {/* Logo */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          <img src="/logo.png" alt="Mandate" style={{ width: 28, height: 28 }} />
           <span style={{
             fontFamily: 'var(--font-space)',
             fontSize: 20, fontWeight: 700,

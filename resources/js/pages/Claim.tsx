@@ -79,11 +79,9 @@ export default function Claim({ claim_code, agent_name, evm_address, chain_id, a
           background: 'var(--bg-raised)',
         }}>
           <div style={{
-            width: 24, height: 24, borderRadius: 5,
-            background: 'var(--accent)',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            width: 24, height: 24, flexShrink: 0,
           }}>
-            <span style={{ color: '#000', fontSize: 12, fontWeight: 700, fontFamily: 'var(--font-display)' }}>M</span>
+            <img src="/logo.png" alt="Mandate" style={{ width: 24, height: 24 }} />
           </div>
           <span style={{ fontFamily: 'var(--font-display)', fontSize: 14, color: 'var(--text-primary)' }}>mandate</span>
           <span style={{ marginLeft: 'auto', fontSize: 10, fontFamily: 'var(--font-mono)', color: 'var(--text-dim)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>

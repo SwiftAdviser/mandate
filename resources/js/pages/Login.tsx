@@ -11,16 +11,19 @@ export default function Login() {
         }}>
             {/* Logo */}
             <a href="/" style={{
-                fontFamily: 'var(--font-display)',
-                fontSize: 28,
-                fontWeight: 300,
-                fontStyle: 'italic',
-                color: 'var(--text-primary)',
+                display: 'flex', alignItems: 'center', gap: 12,
                 textDecoration: 'none',
-                letterSpacing: '-0.04em',
                 marginBottom: 48,
             }}>
-                mandate
+                <img src="/logo.png" alt="Mandate" style={{ width: 36, height: 36 }} />
+                <span style={{
+                    fontFamily: 'var(--font-display)',
+                    fontSize: 28,
+                    fontWeight: 300,
+                    fontStyle: 'italic',
+                    color: 'var(--text-primary)',
+                    letterSpacing: '-0.04em',
+                }}>mandate</span>
             </a>
 
             {/* Card */}

@@ -1,0 +1,19 @@
+{
+  "name": "@mandate/scanner",
+  "version": "0.1.0",
+  "description": "On-chain agent discovery CLI for Mandate ICP prospecting",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "scan": "bun src/index.ts scan",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "agent0-sdk": "^1.6.0",
+    "incur": "^0.3.2",
+    "viem": "^2.47.0"
+  },
+  "devDependencies": {
+    "vitest": "^3.1.1"
+  }
+}
