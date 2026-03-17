@@ -30,12 +30,18 @@
   │ days: Mon-Fri                    │
   │ hours: 9:00-17:00                │
   └──────────────────────────────────┘
+  ┌── Security ──────────────────────┐
+  │ risk_scan_enabled: on/off        │
+  │ max_gas_limit: 500000            │
+  │ max_value_wei: 1e18              │
+  └──────────────────────────────────┘
       ↓
 [4. Save] → POST /api/agents/{id}/policies
       ↓ Старая политика деактивируется, новая — активна
 [5. Версионирование] → version +1, старая сохраняется в истории
       ↓
 [6. Агент сразу работает по новым правилам]
+      ↓ Блокировки возвращают declineMessage с объяснением + подсказкой
 ```
 
 ## Этапы и точки контакта
@@ -60,22 +66,23 @@
 | Изменения не видны на timeline | Этап 6 | Низкая | Маркер "Policy v3 applied" в audit log |
 | Нет undo / rollback | Этап 4 | Средняя | "Revert to version X" button |
 
-## Параметры политики (текущие)
+## Параметры политики
 
-| Параметр | Тип | Пример | PolicyEngine check |
-|----------|-----|--------|-------------------|
+| Параметр | Тип | Пример | blockReason при нарушении |
+|----------|-----|--------|--------------------------|
 | `spend_limit_per_tx_usd` | decimal | 100.00 | `per_tx_limit_exceeded` |
-| `spend_limit_per_day_usd` | decimal | 1000.00 | `daily_limit_exceeded` |
-| `spend_limit_per_month_usd` | decimal | 10000.00 | `monthly_limit_exceeded` |
-| `allowed_addresses` | string[] | ["0x..."] | `address_not_in_allowlist` |
-| `allowed_contracts` | string[] | ["0x..."] | Contract allowlist |
-| `blocked_selectors` | string[] | ["0xa9059cbb"] | `blocked_selector` |
-| `require_approval_selectors` | string[] | ["0x095ea7b3"] | Triggers approval |
-| `require_approval_above_usd` | decimal | 500.00 | Triggers approval |
-| `max_gas_limit` | string | "500000" | Gas limit check |
-| `max_value_wei` | string | "1e18" | Native value check |
+| `spend_limit_per_day_usd` | decimal | 1000.00 | `daily_quota_exceeded` |
+| `spend_limit_per_month_usd` | decimal | 10000.00 | `monthly_quota_exceeded` |
+| `allowed_addresses` | string[] | ["0x..."] | `address_not_allowed` |
+| `blocked_selectors` | string[] | ["0xa9059cbb"] | `selector_blocked` |
+| `require_approval_selectors` | string[] | ["0x095ea7b3"] | → requiresApproval |
+| `require_approval_above_usd` | decimal | 500.00 | → requiresApproval |
+| `max_gas_limit` | string | "500000" | `gas_limit_exceeded` |
+| `max_value_wei` | string | "1e18" | `value_wei_exceeded` |
 | `schedule` | json | {days, hours} | `outside_schedule` |
-| `risk_scan_enabled` | bool | true | Aegis scan toggle |
+| `risk_scan_enabled` | bool | true | `aegis_critical_risk` / → requiresApproval |
+
+Все блокировки возвращают `declineMessage` с конструктивным объяснением и подсказкой для агента (см. CJM 3).
 
 ## Файлы в кодовой базе
 
@@ -83,3 +90,4 @@
 - API: `app/Http/Controllers/Api/PolicyController.php` → `store()`, `index()`, `show()`
 - Model: `app/Models/Policy.php`
 - Engine: `app/Services/PolicyEngineService.php`
+- Decline messages: `app/Services/PolicyEngineService.php` → `buildDeclineMessage()`

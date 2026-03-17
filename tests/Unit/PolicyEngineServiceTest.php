@@ -631,6 +631,57 @@ class PolicyEngineServiceTest extends TestCase
         $this->assertStringContainsString('not on the approved allowlist', $result['declineMessage']);
     }
 
+    // -------------------------------------------------------------------------
+    // Approval Reason Tests
+    // -------------------------------------------------------------------------
+
+    /** @test */
+    public function it_returns_approval_reason_for_amount_above_threshold(): void
+    {
+        [$agent] = $this->createAgentWithPolicy([
+            'spend_limit_per_tx_usd' => 1000,
+            'spend_limit_per_day_usd' => 10000,
+            'require_approval_above_usd' => 5.0,
+        ]);
+
+        $result = $this->service()->validate($agent, $this->buildPayload());
+
+        $this->assertTrue($result['allowed']);
+        $this->assertTrue($result['requiresApproval']);
+        $this->assertNotEmpty($result['approvalReason']);
+        $this->assertStringContainsString('approval threshold', $result['approvalReason']);
+        $this->assertStringContainsString('wallet owner has been notified', $result['approvalReason']);
+    }
+
+    /** @test */
+    public function it_returns_approval_reason_for_unregistered_agent(): void
+    {
+        $this->enableReputationWithFakes([
+            'https://gateway.thegraph.com/api/test/subgraphs/id/base-sepolia' => Http::response([
+                'data' => ['agents' => []],
+            ]),
+        ]);
+
+        [$agent] = $this->createAgentWithPolicy();
+        $result = $this->service()->validate($agent, $this->buildPayload());
+
+        $this->assertTrue($result['allowed']);
+        $this->assertTrue($result['requiresApproval']);
+        $this->assertNotEmpty($result['approvalReason']);
+        $this->assertStringContainsString('not registered on-chain', $result['approvalReason']);
+    }
+
+    /** @test */
+    public function it_returns_null_approval_reason_when_no_approval_needed(): void
+    {
+        [$agent] = $this->createAgentWithPolicy();
+        $result = $this->service()->validate($agent, $this->buildPayload());
+
+        $this->assertTrue($result['allowed']);
+        $this->assertFalse($result['requiresApproval']);
+        $this->assertNull($result['approvalReason']);
+    }
+
     /** @test */
     public function it_returns_block_detail_with_aegis_critical(): void
     {

@@ -11,7 +11,8 @@
 - `require_approval_above_usd` — сумма выше порога (например $500)
 - `require_approval_selectors` — вызов определённой функции контракта
 - Aegis risk scan вернул `HIGH` — принудительный approval
-- Reputation score агента низкий — unknown/unregistered agent
+- Reputation score агента низкий — unknown/unregistered agent (EIP-8004)
+- Reason scanner `require_approval` — подозрительный reason текст
 
 ## Путь
 
@@ -21,15 +22,24 @@
 [2. Intent → status: approval_pending]
       ↓ ApprovalQueue создан, TTL 1 час
 [3. Уведомление оператору]
-      ↓ Slack / Telegram / webhook (SendApprovalNotification job)
+      ↓ Slack / Telegram / Custom webhook (SendApprovalNotification job)
 [4. Оператор видит уведомление]
       ↓ переходит в дашборд
 [5. Approvals page] → карточка с деталями
-      ↓ видит: agent, action, amount, to, risk level, time left
+      ↓ видит: agent, action, amount, to, risk level, reason, time left
 [6. Решение: Approve / Reject]
       ↓ POST /api/approvals/{id}/decide
 [7a. Approved] → intent status → approved → агент может broadcast
 [7b. Rejected] → intent status → failed → агент получает ошибку
+
+Агент-сторона:
+[A. SDK throws ApprovalRequiredError]
+      ↓
+[B. waitForApproval(intentId)] → polling /status каждые 5s, TTL 1h
+      ↓
+[C. status=approved → продолжает sign + broadcast]
+    status=failed → throws MandateError ("rejected")
+    status=expired → throws MandateError ("expired")
 
 Альтернативный путь:
 [X. Таймаут] → approval expires → intent → expired → quota released
@@ -41,32 +51,32 @@
 |---|------|-------|----------|--------|---------|
 | 1 | Триггер | API (автоматически) | PolicyEngine решает что нужен approval | — | % approvals from total intents |
 | 2 | Создание | API | ApprovalQueue entry + intent state | — | — |
-| 3 | Уведомление | Slack / Telegram / Webhook | Карточка: agent, amount, action, risk, approve/reject links | Тревога | Notification delivery time |
+| 3 | Уведомление | Slack / Telegram / Webhook | Карточка: agent, amount, action, reason, risk, approve/reject links | Тревога | Notification delivery time |
 | 4 | Реакция | Телефон / Desktop | Оператор видит push/сообщение | Срочность | Time to see notification |
-| 5 | Обзор | Dashboard /approvals | Полная карточка: calldata, risk details, time left | Анализ | Time on approval page |
+| 5 | Обзор | Dashboard /approvals | Полная карточка: calldata, reason, risk details, time left | Анализ | Time on approval page |
 | 6 | Решение | Dashboard button | Approve / Reject + optional note | Ответственность | Decision time (notification → click) |
 | 7 | Результат | API → SDK | Агент продолжает или получает ошибку | Облегчение | Approval rate (approved vs rejected) |
 
 ## Pain Points
 
-| Проблема | Где | Серьёзность | Идея решения |
-|----------|-----|-------------|--------------|
-| Оператор не видит уведомление вовремя | Этап 3→4 | Критическая | Multi-channel: Slack + Telegram + Push. Escalation при неответе |
-| Непонятно зачем одобрять | Этап 5 | Высокая | Контекст в карточке: "Этот агент хочет X потому что Y" |
-| Нет mobile-friendly approve | Этап 6 | Высокая | Approve/reject по ссылке из уведомления (без открытия дашборда) |
+| Проблема | Где | Серьёзность | Статус |
+|----------|-----|-------------|--------|
+| ~~Оператор не видит уведомление вовремя~~ | ~~Этап 3→4~~ | ~~Критическая~~ | ✅ Решено: Slack + Telegram + Custom webhook |
+| ~~Агент не знает что ждать~~ | ~~Этап 2→7~~ | ~~Средняя~~ | ✅ Решено: `waitForApproval()` в SDK |
+| ~~Непонятно зачем одобрять~~ | ~~Этап 5~~ | ~~Высокая~~ | ✅ Решено: `reason` поле — "зачем агент это делает" |
+| Нет mobile-friendly approve | Этап 6 | Высокая | Approve/reject по ссылке из уведомления |
 | 1 час TTL может быть мало | Этап X | Средняя | Настраиваемый TTL в политике |
 | Нет истории решений | После 7 | Средняя | Audit log с фильтром по approvals |
-| Агент не знает что ждать | Этап 2→7 | Средняя | SDK: `waitForApproval()` с polling или WebSocket |
 
-## Notification Channels (текущее состояние)
+## Notification Channels
 
-| Канал | Статус | Формат |
-|-------|--------|--------|
-| Slack webhook | ✅ Реализован | Block Kit с кнопками |
-| Telegram bot | ✅ Реализован | Markdown с inline links |
-| Custom webhook | ✅ Реализован | JSON payload + HMAC signature |
-| Email | ❌ Не реализован | — |
-| Push (mobile) | ❌ Не реализован | — |
+| Канал | Статус | Формат | Настройка |
+|-------|--------|--------|-----------|
+| Slack webhook | ✅ Реализован | Block Kit с деталями | Dashboard → Notifications |
+| Telegram bot | ✅ Реализован | Markdown + inline links | @mandatemd_bot + chat_id |
+| Custom webhook | ✅ Реализован | JSON payload + HMAC signature | Dashboard → Notifications |
+| Email | ❌ Не реализован | — | — |
+| Push (mobile) | ❌ Не реализован | — | — |
 
 ## Ключевые метрики
 
@@ -83,5 +93,9 @@ False positive rate:   ?%  (approvals that should have been auto-allowed)
 - ApprovalQueue model: `app/Models/ApprovalQueue.php`
 - Decide: `app/Http/Controllers/Api/ApprovalController.php`
 - Dashboard: `resources/js/pages/Approvals.tsx`
-- Notifications: `app/Services/ApprovalNotificationService.php`, `app/Jobs/SendApprovalNotification.php`
+- Notifications setup: `resources/js/pages/Notifications.tsx`
+- Notifications service: `app/Services/ApprovalNotificationService.php`
+- Notification job: `app/Jobs/SendApprovalNotification.php`
+- Webhook API: `app/Http/Controllers/Api/AgentWebhookController.php`
+- Telegram webhook: `app/Http/Controllers/Api/TelegramWebhookController.php`
 - SDK polling: `packages/sdk/src/MandateClient.ts` → `waitForApproval()`

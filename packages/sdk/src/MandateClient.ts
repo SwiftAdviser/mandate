@@ -68,7 +68,7 @@ export class MandateClient {
     const data: ValidateResult = await res.json();
 
     if (data.requiresApproval && data.intentId && data.approvalId) {
-      throw new ApprovalRequiredError(data.intentId, data.approvalId);
+      throw new ApprovalRequiredError(data.intentId, data.approvalId, data.approvalReason ?? undefined);
     }
 
     return data;

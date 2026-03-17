@@ -142,6 +142,21 @@ describe('MandateClient#validate', () => {
     expect(err.approvalId).toBe('approval-1');
   });
 
+  it('passes approvalReason to ApprovalRequiredError', async () => {
+    mockFetch(200, {
+      allowed: true,
+      intentId: 'intent-1',
+      requiresApproval: true,
+      approvalId: 'approval-1',
+      approvalReason: 'Transaction amount exceeds the approval threshold. Please wait.',
+      blockReason: null,
+    });
+
+    const err = await makeClient().validate(PAYLOAD).catch(e => e);
+    expect(err).toBeInstanceOf(ApprovalRequiredError);
+    expect(err.approvalReason).toBe('Transaction amount exceeds the approval threshold. Please wait.');
+  });
+
   it('throws MandateError on 500', async () => {
     mockFetch(500, { error: 'Server error' });
 

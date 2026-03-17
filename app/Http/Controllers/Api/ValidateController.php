@@ -45,6 +45,7 @@ class ValidateController extends Controller
             'intentId' => $result['intentId'],
             'requiresApproval' => $result['requiresApproval'],
             'approvalId' => $result['approvalId'],
+            'approvalReason' => $result['approvalReason'] ?? null,
             'blockReason' => $result['blockReason'],
             'riskLevel' => $result['riskLevel'] ?? null,
             'riskDegraded' => $result['riskDegraded'] ?? false,

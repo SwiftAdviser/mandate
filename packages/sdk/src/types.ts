@@ -25,6 +25,7 @@ export interface ValidateResult {
   intentId: string | null;
   requiresApproval: boolean;
   approvalId: string | null;
+  approvalReason?: string | null;
   blockReason: string | null;
   blockDetail?: string | null;
 }
@@ -82,12 +83,15 @@ export class PolicyBlockedError extends MandateError {
 }
 
 export class ApprovalRequiredError extends MandateError {
+  public readonly approvalReason?: string;
   constructor(
     public readonly intentId: string,
     public readonly approvalId: string,
+    approvalReason?: string,
   ) {
     super('Transaction requires human approval. Poll /status until approved.', 202, 'approval_required');
     this.name = 'ApprovalRequiredError';
+    this.approvalReason = approvalReason;
   }
 }
 

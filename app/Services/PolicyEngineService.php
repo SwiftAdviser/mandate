@@ -124,7 +124,7 @@ class PolicyEngineService
         }
 
         // 12. Approval required?
-        $needsApproval = $this->needsApproval($policy, $action, $amountUsd, $payload['calldata'] ?? '0x');
+        $approvalReasons = $this->collectApprovalReasons($policy, $action, $amountUsd, $payload['calldata'] ?? '0x');
 
         // Phase 1.5a: Agent Reputation (EIP-8004)
         $reputationResult = null;
@@ -136,11 +136,11 @@ class PolicyEngineService
             if (! $reputationResult['degraded']) {
                 if (! $reputationResult['registered']) {
                     if (config('mandate.reputation.thresholds.unknown_requires_approval', true)) {
-                        $needsApproval = true;
+                        $approvalReasons[] = 'unknown_agent';
                     }
                 } elseif ($reputationResult['score'] !== null
                           && $reputationResult['score'] < config('mandate.reputation.thresholds.low_score', 30)) {
-                    $needsApproval = true;
+                    $approvalReasons[] = 'low_reputation';
                 }
             }
         }
@@ -154,7 +154,7 @@ class PolicyEngineService
                 return $this->block('aegis_critical_risk', 'Transaction flagged as CRITICAL risk by security scanner. Contact agent owner');
             }
             if ($riskAssessment['risk_level'] === 'HIGH') {
-                $needsApproval = true;
+                $approvalReasons[] = 'high_risk';
             }
         }
 
@@ -177,9 +177,11 @@ class PolicyEngineService
                 return $this->block('reason_blocked', $reasonScan['explanation']);
             }
             if ($reasonScan['action'] === 'require_approval') {
-                $needsApproval = true;
+                $approvalReasons[] = 'reason_flagged';
             }
         }
+
+        $needsApproval = ! empty($approvalReasons);
 
         // ----- Phase 2: DB transaction -----
 
@@ -187,7 +189,7 @@ class PolicyEngineService
 
         DB::transaction(function () use (
             $agent, $policy, $payload, $serverHash,
-            $decoded, $action, $amountUsd, $needsApproval, $riskAssessment, $reputationResult, $reason, $reasonScan, &$result
+            $decoded, $action, $amountUsd, $needsApproval, $approvalReasons, $riskAssessment, $reputationResult, $reason, $reasonScan, &$result
         ) {
             // 13. INSERT intent — ON CONFLICT DO NOTHING
             $intentId = Str::uuid()->toString();
@@ -312,6 +314,7 @@ class PolicyEngineService
                 'intentId' => $intentId,
                 'requiresApproval' => $needsApproval,
                 'approvalId' => $approvalId,
+                'approvalReason' => $needsApproval ? $this->buildApprovalReason($approvalReasons) : null,
                 'blockReason' => null,
                 'riskLevel' => $riskAssessment['risk_level'] ?? null,
                 'riskDegraded' => $riskAssessment['degraded'] ?? false,
@@ -350,22 +353,44 @@ class PolicyEngineService
         return '0x'.Keccak::hash($packed, 256);
     }
 
-    private function needsApproval(Policy $policy, string $action, ?float $amountUsd, string $calldata): bool
+    /**
+     * @return string[] List of approval trigger codes (empty = no approval needed)
+     */
+    private function collectApprovalReasons(Policy $policy, string $action, ?float $amountUsd, string $calldata): array
     {
+        $reasons = [];
+
         if ($policy->require_approval_selectors && ! empty($calldata)) {
             $selector = strtolower(substr($calldata, 0, 10));
             if (in_array($selector, array_map('strtolower', $policy->require_approval_selectors), true)) {
-                return true;
+                $reasons[] = 'selector_requires_approval';
             }
         }
 
         if ($policy->require_approval_above_usd && $amountUsd !== null) {
             if ($amountUsd > (float) $policy->require_approval_above_usd) {
-                return true;
+                $reasons[] = 'amount_above_threshold';
             }
         }
 
-        return false;
+        return $reasons;
+    }
+
+    private function buildApprovalReason(array $approvalReasons): string
+    {
+        $messages = array_map(fn (string $r) => match ($r) {
+            'amount_above_threshold' => 'Transaction amount exceeds the approval threshold set by the wallet owner.',
+            'selector_requires_approval' => 'This contract function requires manual approval per policy.',
+            'high_risk' => 'Security scan flagged this transaction as HIGH risk. The wallet owner must review before proceeding.',
+            'unknown_agent' => 'This agent is not registered on-chain (EIP-8004). The wallet owner must verify your identity before approving.',
+            'low_reputation' => 'This agent has a low on-chain reputation score. The wallet owner must review before approving.',
+            'reason_flagged' => 'The stated reason for this transaction was flagged for review. The wallet owner must verify your intent.',
+            default => "Approval required: {$r}.",
+        }, $approvalReasons);
+
+        $combined = implode(' ', $messages);
+
+        return "{$combined} Please wait — the wallet owner has been notified and will review shortly.";
     }
 
     private function checkSchedule(array $schedule): bool

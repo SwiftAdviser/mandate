@@ -30,7 +30,7 @@ export const sendEthTool = {
   execute: async (
     params: SendEthParams,
     context?: { runtimeKey?: string; privateKey?: string; chainId?: number },
-  ): Promise<{ success: boolean; txHash?: string; intentId?: string; blocked?: boolean; reason?: string; declineMessage?: string; requiresApproval?: boolean }> => {
+  ): Promise<{ success: boolean; txHash?: string; intentId?: string; blocked?: boolean; reason?: string; declineMessage?: string; requiresApproval?: boolean; approvalReason?: string }> => {
     const runtimeKey = context?.runtimeKey ?? process.env.MANDATE_RUNTIME_KEY ?? '';
     const privateKey = (context?.privateKey ?? process.env.MANDATE_PRIVATE_KEY ?? '') as `0x${string}`;
     const chainId = params.chainId ?? context?.chainId ?? Number(process.env.MANDATE_CHAIN_ID ?? '84532');
@@ -48,7 +48,7 @@ export const sendEthTool = {
         return { success: false, blocked: true, reason: err.blockReason, declineMessage: err.declineMessage };
       }
       if (err instanceof ApprovalRequiredError) {
-        return { success: false, requiresApproval: true, intentId: err.intentId };
+        return { success: false, requiresApproval: true, intentId: err.intentId, approvalReason: err.approvalReason };
       }
       throw err;
     }

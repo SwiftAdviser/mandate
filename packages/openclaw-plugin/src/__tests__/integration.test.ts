@@ -127,6 +127,7 @@ function handleValidate(scenario: ApiScenario): Response {
       return new Response(JSON.stringify({
         allowed: true, intentId: 'intent-integ-2', requiresApproval: true,
         approvalId: 'approval-integ-1', blockReason: null,
+        approvalReason: 'Transaction amount exceeds the approval threshold set by the wallet owner. Please wait — the wallet owner has been notified and will review shortly.',
       }), { status: 200, headers: { 'Content-Type': 'application/json' } });
 
     case 'circuit_breaker':
@@ -181,6 +182,7 @@ describe('integration: transfer tool + real SDK', () => {
     expect(result.success).toBe(false);
     expect(result.requiresApproval).toBe(true);
     expect(result.intentId).toBe('intent-integ-2');
+    expect(result.approvalReason).toContain('approval threshold');
   });
 
   it('transfer circuit breaker — throws CircuitBreakerError (not caught by plugin)', async () => {

@@ -7,7 +7,7 @@ vi.mock('@mandate/sdk', () => {
     constructor(r: string, d?: string, dm?: string) { super(r); this.blockReason = r; this.declineMessage = dm; }
   };
   const ApprovalRequiredError = class extends Error {
-    intentId = 'id2'; approvalId = 'appr1';
+    intentId = 'id2'; approvalId = 'appr1'; approvalReason = 'Amount above threshold.';
   };
   const MandateWallet = vi.fn().mockImplementation(() => ({
     transfer: vi.fn().mockResolvedValue({ txHash: '0xabc', intentId: 'id1', status: { status: 'confirmed' } }),
