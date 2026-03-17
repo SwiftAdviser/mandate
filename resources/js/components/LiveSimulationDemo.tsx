@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 
 const CHECKS = [
-  { label: 'Rules',          detail: 'urgency + social engineering',  ok: false },
+  { label: 'MANDATE.md rules', detail: 'urgency + social engineering',  ok: false },
   { label: 'Simulation',     detail: 'normal ERC20 transfer',        ok: true },
   { label: 'Spend Limit',    detail: '$490 within $500/day',         ok: true },
   { label: 'Reputation',     detail: 'agent score 87/100',           ok: true },
