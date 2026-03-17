@@ -24,7 +24,7 @@ class AgentWebhookController extends Controller
         $request->validate([
             'webhooks'             => 'required|array',
             'webhooks.*.type'      => 'required|string|in:slack,telegram,custom',
-            'webhooks.*.url'       => 'required_if:webhooks.*.type,slack,custom|nullable|string',
+            'webhooks.*.url'       => 'nullable|string',
             'webhooks.*.chat_id'   => 'nullable|string',
             'webhooks.*.bot_token' => 'nullable|string',
             'webhooks.*.username'  => 'nullable|string|max:100',
