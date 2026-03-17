@@ -40,6 +40,7 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/mandate', [DashboardController::class, 'mandate']);
     Route::get('/notifications', [DashboardController::class, 'notifications']);
     Route::get('/agents', [DashboardController::class, 'dashboard']); // alias for now
+    Route::get('/how-it-works', fn () => \Inertia\Inertia::render('HowItWorks'));
     Route::get('/integrations', function (\Illuminate\Http\Request $request) {
         $runtimeKey = $request->session()->get('first_agent_key');
 

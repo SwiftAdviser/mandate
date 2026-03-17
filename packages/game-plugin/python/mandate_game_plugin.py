@@ -39,7 +39,7 @@ class MandatePlugin:
         runtime_key: str | None = None,
         rpc_url: str | None = None,
         chain_id: int = 84532,
-        mandate_api_url: str = "https://api.mandate.krutovoy.me",
+        mandate_api_url: str = "https://app.mandate.md",
     ) -> None:
         self.runtime_key = runtime_key or os.environ.get("MANDATE_RUNTIME_KEY", "")
         self.rpc_url = rpc_url or os.environ.get("MANDATE_RPC_URL", "https://sepolia.base.org")

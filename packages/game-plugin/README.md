@@ -1,6 +1,6 @@
 # @mandate/game-plugin
 
-Virtuals Protocol GAME SDK plugin for [Mandate](https://mandate.krutovoy.me) — policy-enforced on-chain actions for autonomous agents.
+Virtuals Protocol GAME SDK plugin for [Mandate](https://app.mandate.md) — policy-enforced on-chain actions for autonomous agents.
 
 Mandate wraps any agent wallet with spending limits, approval flows, and circuit breakers. This plugin exposes Mandate-guarded tools as GAME SDK `GameFunction`s ready to drop into any `GameWorker`.
 

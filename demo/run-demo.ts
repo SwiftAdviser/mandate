@@ -7,14 +7,14 @@
  * Requires:
  *   MANDATE_RUNTIME_KEY=mndt_test_...
  *   MANDATE_PRIVATE_KEY=0x... (test wallet private key)
- *   MANDATE_API_URL=https://api.mandate.krutovoy.me (or http://localhost:8000)
+ *   MANDATE_API_URL=https://app.mandate.md (or http://localhost:8000)
  */
 
 import { MandateWallet, PolicyBlockedError, ApprovalRequiredError } from '@mandate/sdk';
 
 const RUNTIME_KEY = process.env.MANDATE_RUNTIME_KEY;
 const PRIVATE_KEY = process.env.MANDATE_PRIVATE_KEY as `0x${string}`;
-const API_URL = process.env.MANDATE_API_URL ?? 'https://api.mandate.krutovoy.me';
+const API_URL = process.env.MANDATE_API_URL ?? 'https://app.mandate.md';
 
 if (!RUNTIME_KEY || !PRIVATE_KEY) {
   console.error('Set MANDATE_RUNTIME_KEY and MANDATE_PRIVATE_KEY env vars');

@@ -191,7 +191,7 @@ describe('MandateActionProvider', () => {
   describe('getPolicy action', () => {
     it('returns dashboard URL hint', async () => {
       const result = await actionProvider.getPolicy(walletProvider);
-      expect(result).toContain('mandate.krutovoy.me');
+      expect(result).toContain('app.mandate.md');
     });
   });
 

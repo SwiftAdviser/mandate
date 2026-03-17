@@ -7,7 +7,7 @@ import {
   MandateError, PolicyBlockedError, RiskBlockedError,
 } from './types.js';
 
-const DEFAULT_BASE = 'https://api.mandate.krutovoy.me';
+const DEFAULT_BASE = 'https://app.mandate.md';
 
 /**
  * Low-level Mandate API client.

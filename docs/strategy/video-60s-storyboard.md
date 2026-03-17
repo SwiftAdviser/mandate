@@ -189,7 +189,7 @@ MANDATE
 Deterministic policy. On-chain reputation. Independent simulation.
 Non-custodial.
 
-mandate.krutovoy.me
+app.mandate.md
 ```
 
 ---
@@ -293,7 +293,7 @@ With Mandate:
 → BLOCKED. Funds safe. Human notified.
 
 Three layers. Before any signing.
-mandate.krutovoy.me
+app.mandate.md
 ```
 
 ---

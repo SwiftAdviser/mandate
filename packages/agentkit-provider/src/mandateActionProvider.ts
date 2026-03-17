@@ -64,7 +64,7 @@ export class MandateActionProvider extends ActionProvider<WalletProvider> {
     schema: GetPolicySchema,
   })
   async getPolicy(_walletProvider: WalletProvider): Promise<string> {
-    return 'Policy info: use the Mandate dashboard at https://mandate.krutovoy.me to view and configure spending limits.';
+    return 'Policy info: use the Mandate dashboard at https://app.mandate.md to view and configure spending limits.';
   }
 
   @CreateAction({

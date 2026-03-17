@@ -67,7 +67,7 @@ class ApprovalNotificationService
             'guard_scan'    => $guardScan,
             'expires_at'    => $expiresAt?->toIso8601String(),
             'minutes_left'  => $expiresAt ? (int) now()->diffInMinutes($expiresAt, false) : null,
-            'dashboard_url' => config('app.url', 'https://mandate.krutovoy.me') . '/approvals',
+            'dashboard_url' => config('app.url', 'https://app.mandate.md') . '/approvals',
             'approval_id'   => $approval->id,
             'intent_id'     => $intent->id,
         ];
@@ -195,7 +195,7 @@ class ApprovalNotificationService
                 ['text' => '❌ Reject', 'callback_data' => "reject:{$approvalId}"],
             ],
             [
-                ['text' => 'Review in Dashboard →', 'url' => config('app.url', 'https://mandate.krutovoy.me') . '/approvals'],
+                ['text' => 'Review in Dashboard →', 'url' => config('app.url', 'https://app.mandate.md') . '/approvals'],
             ],
         ];
     }
@@ -213,7 +213,7 @@ class ApprovalNotificationService
             'guard_scan'    => null,
             'expires_at'    => now()->addHour()->toIso8601String(),
             'minutes_left'  => 60,
-            'dashboard_url' => config('app.url', 'https://mandate.krutovoy.me') . '/approvals',
+            'dashboard_url' => config('app.url', 'https://app.mandate.md') . '/approvals',
             'approval_id'   => 'test-approval-id',
             'intent_id'     => 'test-intent-id',
         ];

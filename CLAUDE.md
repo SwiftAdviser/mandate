@@ -6,8 +6,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 Mandate is a **non-custodial agent wallet policy layer**. It enforces spend limits, allowlists, and approval workflows for AI agent transactions — without ever receiving private keys. The architecture:
 
-- **Backend**: Laravel 12 (PHP 8.2) API at `api.mandate.krutovoy.me`
-- **Frontend**: React 19 + Inertia.js + Tailwind 4 (dashboard at `mandate.krutovoy.me`)
+- **Backend**: Laravel 12 (PHP 8.2) API at `app.mandate.md`
+- **Frontend**: React 19 + Inertia.js + Tailwind 4 (dashboard at `app.mandate.md`)
 - **SDK packages**: TypeScript monorepo in `packages/` (bun workspaces)
 - **SKILL.md**: Canonical API reference for the Mandate API (used as a skill by AI agents)
 

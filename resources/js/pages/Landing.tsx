@@ -796,7 +796,7 @@ export default function LandingV3() {
                 Join Telegram
               </a>
               <a
-                href="mailto:hello@mandate.krutovoy.me"
+                href="mailto:hello@mandate.md"
                 className="btn-outline"
                 style={{
                   display: 'inline-flex', alignItems: 'center', gap: 8,
@@ -867,7 +867,7 @@ export default function LandingV3() {
           }}>
             For AI agents: give your agent this{' '}
             <a
-              href="https://mandate.krutovoy.me/SKILL.md"
+              href="https://app.mandate.md/SKILL.md"
               target="_blank"
               rel="noopener noreferrer"
               style={{ color: 'var(--btc-orange)', textDecoration: 'underline', textUnderlineOffset: 3 }}

@@ -287,7 +287,7 @@ interface MandateAcpConfig {
   builderCode?:      string;   // ACP_BUILDER_CODE (optional)
   acpApiUrl?:        string;   // default: https://claw-api.virtuals.io
   mandateRuntimeKey: string;   // mndt_live_... or mndt_test_...
-  mandateApiUrl?:    string;   // default: https://api.mandate.krutovoy.me
+  mandateApiUrl?:    string;   // default: https://app.mandate.md
 }
 ```
 
@@ -322,7 +322,7 @@ try {
 | Var | Used by | Notes |
 |-----|---------|-------|
 | `MANDATE_RUNTIME_KEY` | all packages | `mndt_live_...` or `mndt_test_...` |
-| `MANDATE_API_URL` | all packages | Default: `https://api.mandate.krutovoy.me` |
+| `MANDATE_API_URL` | all packages | Default: `https://app.mandate.md` |
 | `AGENT_PRIVATE_KEY` | sdk, eliza, goat, agentkit, game | EVM private key `0x...` |
 | `LITE_AGENT_API_KEY` | acp-plugin | From ACP dashboard |
 | `ACP_BUILDER_CODE` | acp-plugin | Optional |

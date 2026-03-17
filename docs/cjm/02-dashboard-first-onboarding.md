@@ -9,7 +9,7 @@
 ## Путь
 
 ```
-[1. Лендинг] → mandate.krutovoy.me
+[1. Лендинг] → app.mandate.md
       ↓
 [2. "Sign in with GitHub"]
       ↓

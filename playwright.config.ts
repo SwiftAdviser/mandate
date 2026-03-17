@@ -5,7 +5,7 @@ export default defineConfig({
   fullyParallel: true,
   reporter: 'list',
   use: {
-    baseURL: process.env.BASE_URL ?? 'https://mandate.krutovoy.me',
+    baseURL: process.env.BASE_URL ?? 'https://app.mandate.md',
     trace: 'on-first-retry',
   },
   projects: [

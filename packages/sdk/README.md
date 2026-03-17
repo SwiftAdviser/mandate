@@ -78,6 +78,6 @@ const response = await wallet.x402Pay('https://api.example.com/data');
 
 ## Links
 
-- [SKILL.md](https://mandate.krutovoy.me/SKILL.md) — Full API reference for AI agents
-- [Dashboard](https://mandate.krutovoy.me) — Configure policies
+- [SKILL.md](https://app.mandate.md/SKILL.md) — Full API reference for AI agents
+- [Dashboard](https://app.mandate.md) — Configure policies
 - [GitHub](https://github.com/SwiftAdviser/mandate)

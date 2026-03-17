@@ -21,7 +21,7 @@ class TelegramRegister extends Command
             return 1;
         }
 
-        $baseUrl = config('app.url', 'https://api.mandate.krutovoy.me');
+        $baseUrl = config('app.url', 'https://app.mandate.md');
         $webhookUrl = "{$baseUrl}/api/telegram/webhook/{$secret}";
 
         $this->info("Registering webhook: {$webhookUrl}");

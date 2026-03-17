@@ -23,7 +23,7 @@ and audit every payment before execution.
 - Core (any stack): bun add @mandate/sdk
 
 ## Required env var
-MANDATE_RUNTIME_KEY — from https://mandate.krutovoy.me/dashboard
+MANDATE_RUNTIME_KEY — from https://app.mandate.md/dashboard
 
 ## Steps
 1. Install the package for your framework
@@ -99,7 +99,7 @@ await agent.run('Send 10 USDC to alice.eth');`,
     logo: '/logos/claude.svg',
     tagline: 'PreToolUse hook for Claude Code sessions',
     install: 'cp mandate-hook.sh ~/.claude/hooks/mandate-hook.sh',
-    quickStart: 'curl -sL https://mandate.krutovoy.me/hooks/claude.sh -o ~/.claude/hooks/mandate-hook.sh && chmod +x ~/.claude/hooks/mandate-hook.sh',
+    quickStart: 'curl -sL https://app.mandate.md/hooks/claude.sh -o ~/.claude/hooks/mandate-hook.sh && chmod +x ~/.claude/hooks/mandate-hook.sh',
     code: `{
   "hooks": {
     "PreToolUse": [

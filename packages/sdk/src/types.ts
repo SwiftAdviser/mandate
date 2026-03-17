@@ -1,7 +1,7 @@
 export interface MandateConfig {
   /** Your mndt_live_... or mndt_test_... runtime key */
   runtimeKey: string;
-  /** Base URL for Mandate API. Default: https://api.mandate.krutovoy.me */
+  /** Base URL for Mandate API. Default: https://app.mandate.md */
   baseUrl?: string;
 }
 

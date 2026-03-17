@@ -26,7 +26,7 @@ npx wrangler deploy
 npx wrangler secret put MANDATE_RUNTIME_KEY
 ```
 
-The `MANDATE_API_URL` var defaults to `https://api.mandate.krutovoy.me` (set in `wrangler.toml`). Override per environment as needed.
+The `MANDATE_API_URL` var defaults to `https://app.mandate.md` (set in `wrangler.toml`). Override per environment as needed.
 
 ## Client Config
 

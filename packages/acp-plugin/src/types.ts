@@ -83,7 +83,7 @@ export interface AcpConfig {
 export interface MandateAcpConfig extends AcpConfig {
   /** Mandate runtime key (mndt_live_... or mndt_test_...) */
   mandateRuntimeKey: string;
-  /** Mandate API base URL. Default: https://api.mandate.krutovoy.me */
+  /** Mandate API base URL. Default: https://app.mandate.md */
   mandateApiUrl?: string;
 }
 

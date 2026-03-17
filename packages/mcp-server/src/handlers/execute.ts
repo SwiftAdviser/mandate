@@ -7,7 +7,7 @@ export async function executeHandler(
   params: Record<string, unknown>,
   env: Env,
 ): Promise<ActionResult> {
-  const base = (env.MANDATE_API_URL ?? 'https://api.mandate.krutovoy.me').replace(/\/$/, '');
+  const base = (env.MANDATE_API_URL ?? 'https://app.mandate.md').replace(/\/$/, '');
   const key = env.MANDATE_RUNTIME_KEY ?? '';
 
   try {

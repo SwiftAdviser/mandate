@@ -1,9 +1,10 @@
 import { Link, usePage } from '@inertiajs/react';
-import { LayoutDashboard, Bot, Shield, FileText, CheckCircle, Bell, ScrollText, Puzzle } from 'lucide-react';
+import { LayoutDashboard, Bot, Shield, FileText, CheckCircle, Bell, ScrollText, Puzzle, Play } from 'lucide-react';
 import { ReactNode, useState } from 'react';
 
 const NAV = [
   { href: '/dashboard',       label: 'Quick Start',   icon: LayoutDashboard },
+  { href: '/how-it-works',    label: 'How It Works',   icon: Play },
   { href: '/integrations',    label: 'Integrations',   icon: Puzzle },
   { href: '/mandate',          label: 'MANDATE.md',     icon: FileText, needsAgent: true },
   { href: '/agents',          label: 'Agents',         icon: Bot, needsAgent: true },
