@@ -1,6 +1,7 @@
 import DashboardLayout from '@/layouts/DashboardLayout';
 import { formatUsd } from '@/lib/utils';
 import { router } from '@inertiajs/react';
+import { TokenUSDC, TokenUSDT, TokenETH } from '@web3icons/react';
 import { useState } from 'react';
 
 interface Policy {
@@ -20,6 +21,12 @@ interface Props {
   agent_id: string;
   current_policy: Policy | null;
 }
+
+const POPULAR_ADDRESSES = [
+  { symbol: 'USDC', address: '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48', Icon: TokenUSDC },
+  { symbol: 'USDT', address: '0xdAC17F958D2ee523a2206206994597C13D831ec7', Icon: TokenUSDT },
+  { symbol: 'ETH',  address: '0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE', Icon: TokenETH },
+] as const;
 
 const DAYS = ['monday','tuesday','wednesday','thursday','friday','saturday','sunday'];
 
@@ -225,6 +232,37 @@ export default function PolicyBuilder({ agent_id, current_policy }: Props) {
             <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
               <Field label="Allowed addresses" hint="If set, agent may only send to these addresses. Leave empty to allow all.">
                 <TagInput values={form.allowedAddresses} onChange={v => setForm(f => ({ ...f, allowedAddresses: v }))} placeholder="0x… (enter to add)" />
+                <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginTop: 4 }}>
+                  {POPULAR_ADDRESSES.map(({ symbol, address, Icon }) => {
+                    const added = form.allowedAddresses.some(a => a.toLowerCase() === address.toLowerCase());
+                    return (
+                      <button
+                        key={symbol}
+                        onClick={() => {
+                          if (!added) setForm(f => ({ ...f, allowedAddresses: [...f.allowedAddresses, address] }));
+                        }}
+                        style={{
+                          display: 'flex', alignItems: 'center', gap: 5,
+                          padding: '4px 10px',
+                          fontSize: 11,
+                          fontFamily: 'var(--font-mono)',
+                          borderRadius: 6,
+                          border: '1px solid',
+                          cursor: added ? 'default' : 'pointer',
+                          transition: 'all 0.12s',
+                          background: added ? 'var(--accent-glow)' : 'var(--bg-base)',
+                          borderColor: added ? 'var(--accent-dim)' : 'var(--border)',
+                          color: added ? 'var(--accent)' : 'var(--text-dim)',
+                          opacity: added ? 0.6 : 1,
+                        }}
+                      >
+                        <Icon variant="branded" size={14} />
+                        {symbol}
+                        {added && <span style={{ fontSize: 10 }}>✓</span>}
+                      </button>
+                    );
+                  })}
+                </div>
               </Field>
               <Field label="Blocked selectors" hint="4-byte function selectors to block (e.g. 0x23b872dd for transferFrom)">
                 <TagInput values={form.blockedSelectors} onChange={v => setForm(f => ({ ...f, blockedSelectors: v }))} placeholder="0x… selector" />
