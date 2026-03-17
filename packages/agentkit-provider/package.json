@@ -17,7 +17,7 @@
     "test:watch": "vitest"
   },
   "dependencies": {
-    "@mandate/sdk": "workspace:*",
+    "@mandate.md/sdk": "workspace:*",
     "zod": "^3.22.0"
   },
   "peerDependencies": {

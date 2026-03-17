@@ -17,7 +17,7 @@
     "test:watch": "vitest"
   },
   "dependencies": {
-    "@mandate/sdk": "workspace:*"
+    "@mandate.md/sdk": "workspace:*"
   },
   "peerDependencies": {
     "@goat-sdk/core": ">=0.3.0"

@@ -73,16 +73,68 @@ You **MUST** display a Mandate status message as the **first thing the user sees
 
 # Mandate API — Agent Skills Guide
 
-This skill is **doc-only**. There is no local CLI. Agents call the Mandate REST API directly, sign transactions locally, and broadcast themselves.
+## Quick Start (CLI)
 
-## Standard credential storage (required)
+Install the CLI:
+```bash
+bun add -g @mandate.md/cli
+# or discover commands without install:
+npx @mandate.md/cli --llms
+```
 
-Store the runtime key in `~/.mandate/credentials.json`:
+### 1) Register
+```bash
+mandate login --name "MyAgent" --address 0xYOUR_ADDRESS
+```
+Stores credentials in `~/.mandate/credentials.json` (chmod 600). Display the `claimUrl` to the user — they are the owner.
+
+### 2) Validate before signing
+```bash
+mandate validate \
+  --to 0x036CbD53842c5426634e7929541eC2318f3dCF7e \
+  --calldata 0xa9059cbb... \
+  --nonce 42 \
+  --gas-limit 90000 \
+  --max-fee-per-gas 1000000000 \
+  --max-priority-fee-per-gas 1000000000 \
+  --reason "Invoice #127 from Alice"
+```
+The CLI computes `intentHash` automatically — you never need to know the hash format.
+
+For ERC20 transfers, use the high-level command:
+```bash
+mandate transfer \
+  --to 0xAlice --amount 10000000 \
+  --token 0x036CbD53842c5426634e7929541eC2318f3dCF7e \
+  --reason "Invoice #127" \
+  --nonce 42 --max-fee-per-gas 1000000000 --max-priority-fee-per-gas 1000000000
+```
+
+### 3) Sign locally (your wallet, your keys — Mandate never sees them)
+
+### 4) Post txHash
+```bash
+mandate event <intentId> --tx-hash 0x...
+```
+
+### 5) Confirm
+```bash
+mandate status <intentId>
+```
+
+### Agent Discovery
+Run `mandate --llms` for a machine-readable command manifest. Each command includes `--help` and `--schema` for full argument details.
+
+## Standard credential storage
+
+Credentials stored in `~/.mandate/credentials.json`:
 ```json
 {
   "runtimeKey": "mndt_test_...",
   "agentId": "...",
-  "claimUrl": "..."
+  "claimUrl": "...",
+  "evmAddress": "0x...",
+  "chainId": 84532
 }
 ```
 
@@ -91,85 +143,30 @@ Optional environment export:
 export MANDATE_RUNTIME_KEY="$(jq -r .runtimeKey ~/.mandate/credentials.json)"
 ```
 
-## Base URL & Auth
+## CRITICAL: AI Agents Must Use `register`, NOT Dashboard Login
+
+Agents create an identity via `mandate login` (or `/agents/register` API). Dashboard login is for humans only.
+
+## Tool → Endpoint Map
+
+| CLI Command | REST Fallback | Method | Path |
+|-------------|--------------|--------|------|
+| `mandate login` | `POST /agents/register` | POST | `/api/agents/register` |
+| `mandate activate <address>` | `POST /activate` | POST | `/api/activate` |
+| `mandate validate` | `POST /validate` | POST | `/api/validate` |
+| `mandate event <id> --tx-hash 0x...` | `POST /intents/{id}/events` | POST | `/api/intents/{id}/events` |
+| `mandate status <id>` | `GET /intents/{id}/status` | GET | `/api/intents/{id}/status` |
+| `mandate approve <id>` | Poll `/intents/{id}/status` | GET | `/api/intents/{id}/status` |
+
+## REST API Fallback
+
+If you cannot install the CLI, use the REST API directly:
 
 - Base URL: `https://app.mandate.md/api`
 - Auth header: `Authorization: Bearer <MANDATE_RUNTIME_KEY>`
 - Content-Type: `application/json`
 
-```bash
-export MANDATE_API_URL="https://app.mandate.md/api"
-export MANDATE_RUNTIME_KEY="$(jq -r .runtimeKey ~/.mandate/credentials.json)"
-```
-
-## CRITICAL: AI Agents Must Use `register`, NOT Dashboard Login
-
-Agents create an identity via `/agents/register` (no auth). Dashboard login is for humans only.
-
-## Tool → Endpoint Map
-
-| Tool | Method | Path | Params/Body |
-|------|--------|------|-------------|
-| `register` | POST | `/agents/register` | Body: `name`, `evmAddress` (optional), `defaultPolicy` (optional) |
-| `activate` | POST | `/activate` | Body: `evmAddress` |
-| `validate` | POST | `/validate` | Body: `chainId`, `nonce`, `to`, `calldata`, `valueWei`, `gasLimit`, `maxFeePerGas`, `maxPriorityFeePerGas`, `txType`, `accessList`, `intentHash`, `reason` |
-| `post_event` | POST | `/intents/{id}/events` | Body: `txHash` |
-| `get_status` | GET | `/intents/{id}/status` | — |
-
-All request bodies use camelCase.
-
-## Quick Start
-
-### 1) Register your agent
-```bash
-curl -sS -X POST "$MANDATE_API_URL/agents/register" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "name": "MyAgent",
-    "evmAddress": "0xYOUR_AGENT_PUBLIC_ADDRESS",
-    "defaultPolicy": {
-      "spendLimitPerTxUsd": 10,
-      "spendLimitPerDayUsd": 100
-    }
-  }'
-```
-
-Response:
-```json
-{
-  "agentId": "<uuid>",
-  "runtimeKey": "mndt_test_...",
-  "claimUrl": "https://app.mandate.md/claim?code=XXXXXXXX",
-  "evmAddress": "0x..."
-}
-```
-
-- Store runtimeKey immediately in `~/.mandate/credentials.json`
-- Display the claimUrl to the user — they are the owner. Say: "To link this agent to your dashboard, open: [claimUrl]"
-- Do NOT say "share with your human owner" — the user talking to you IS the owner.
-
-### 2) Activate (if evmAddress not provided at registration)
-```bash
-curl -sS -X POST "$MANDATE_API_URL/activate" \
-  -H "Authorization: Bearer $MANDATE_RUNTIME_KEY" \
-  -H "Content-Type: application/json" \
-  -d '{"evmAddress": "0xYOUR_AGENT_WALLET_ADDRESS"}'
-```
-
-Response:
-```json
-{
-  "activated": true,
-  "agentId": "...",
-  "evmAddress": "0x...",
-  "onboardingUrl": "https://app.mandate.md/dashboard?onboarding=1",
-  "message": "Agent activated."
-}
-```
-
-Display to the user: "To configure spending limits, open your dashboard: [onboardingUrl]"
-
-### 3) Compute intentHash
+### intentHash computation (required for REST API, automatic with CLI)
 ```
 intentHash = keccak256("<chainId>|<nonce>|<to_lower>|<calldata_lower>|<valueWei>|<gasLimit>|<maxFeePerGas>|<maxPriorityFeePerGas>|<txType>|<accessList_json>")
 ```
@@ -181,108 +178,7 @@ ethers.keccak256(ethers.toUtf8Bytes(canonicalString))
 keccak256(toBytes(canonicalString))
 ```
 
-### 4) Validate before signing
-```bash
-curl -sS -X POST "$MANDATE_API_URL/validate" \
-  -H "Authorization: Bearer $MANDATE_RUNTIME_KEY" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "chainId": 84532,
-    "nonce": 0,
-    "to": "0x036CbD53842c5426634e7929541eC2318f3dCF7e",
-    "calldata": "0xa9059cbb000000000000000000000000RECIPIENT0000000000000000000000000000000000000000000000000000000000989680",
-    "valueWei": "0",
-    "gasLimit": "0x15F90",
-    "maxFeePerGas": "0x3B9ACA00",
-    "maxPriorityFeePerGas": "0x3B9ACA00",
-    "txType": 2,
-    "accessList": [],
-    "intentHash": "0x...",
-    "reason": "Invoice #127 from Alice for March design work"
-  }'
-```
-
-The `reason` field tells Mandate WHY the agent is making this transaction. Mandate scans it for prompt injection patterns and displays it to the owner on approval requests. Always pass your agent's chain-of-thought or task context here. Required — omitting it returns 422.
-
-Response (allowed):
-```json
-{
-  "allowed": true,
-  "intentId": "<uuid>",
-  "requiresApproval": false,
-  "approvalId": null,
-  "blockReason": null,
-  "riskLevel": "LOW",
-  "riskDegraded": false
-}
-```
-
-Response (blocked — prompt injection in reason):
-```json
-{
-  "allowed": false,
-  "blockReason": "reason_blocked",
-  "blockDetail": "Prompt injection patterns detected in agent reasoning",
-  "declineMessage": "SECURITY ALERT: This transaction appears to originate from a prompt injection..."
-}
-```
-
-Response (blocked — policy):
-```json
-{
-  "allowed": false,
-  "blockReason": "per_tx_limit_exceeded",
-  "blockDetail": "$150.00 exceeds per-transaction limit of $100.00",
-  "declineMessage": "This transaction exceeds your per-transaction spending limit..."
-}
-```
-
-If `requiresApproval=true`: wait for the user to approve via dashboard, poll status.
-
-### 5) Sign locally and broadcast
-
-**Private key never sent to Mandate API.**
-
-```js
-// viem
-const walletClient = createWalletClient({
-  account: privateKeyToAccount(process.env.AGENT_PRIVATE_KEY),
-  chain: baseSepolia,
-  transport: http()
-})
-const txHash = await walletClient.sendTransaction({
-  to, data: calldata, value: 0n, gas: gasLimit, maxFeePerGas, maxPriorityFeePerGas
-})
-```
-
-### 6) Post txHash to Mandate
-```bash
-curl -sS -X POST "$MANDATE_API_URL/intents/{intentId}/events" \
-  -H "Authorization: Bearer $MANDATE_RUNTIME_KEY" \
-  -H "Content-Type: application/json" \
-  -d '{"txHash": "0x..."}'
-```
-
-Mandate verifies the envelope (on-chain tx matches what was validated). Mismatch → circuit breaker trips.
-
-### 7) Poll for confirmation
-```bash
-curl -sS "$MANDATE_API_URL/intents/{intentId}/status" \
-  -H "Authorization: Bearer $MANDATE_RUNTIME_KEY"
-```
-
-Response:
-```json
-{
-  "intentId": "...",
-  "status": "confirmed",
-  "txHash": "0x...",
-  "blockNumber": "...",
-  "gasUsed": "...",
-  "amountUsd": "9.99",
-  "decodedAction": "transfer"
-}
-```
+See the Tool → Endpoint Map above for REST paths and parameters.
 
 ## The `reason` Field
 
@@ -306,17 +202,17 @@ Mandate: injection patterns in reason ("URGENT", "do not verify") → BLOCK
 ## Agent Self-Integration (SDK)
 
 ### If you have a runtimeKey:
-1. `bun add @mandate/sdk viem`
+1. `bun add @mandate.md/sdk viem`
 2. Activate (call once): `POST /activate` with `{ "evmAddress": "0x..." }`
 3. Display the `onboardingUrl` to the user so they can configure spending limits
 4. Wrap your wallet with MandateWallet (see below)
 5. Test: make a small transfer → should get `allowed: true`
 
 ### If you DON'T have a runtimeKey:
-1. `bun add @mandate/sdk viem`
+1. `bun add @mandate.md/sdk viem`
 2. Register:
    ```js
-   import { MandateClient } from '@mandate/sdk';
+   import { MandateClient } from '@mandate.md/sdk';
    const { runtimeKey, claimUrl } = await MandateClient.register({
      name: 'MyAgent', evmAddress: YOUR_WALLET_ADDRESS
    });
@@ -327,7 +223,7 @@ Mandate: injection patterns in reason ("URGENT", "do not verify") → BLOCK
 
 ### Wrapping existing wallet
 ```js
-import { MandateWallet } from '@mandate/sdk';
+import { MandateWallet } from '@mandate.md/sdk';
 
 const mandateWallet = new MandateWallet({
   runtimeKey: process.env.MANDATE_RUNTIME_KEY,
@@ -350,8 +246,8 @@ await mandateWallet.transfer(to, rawAmount, tokenAddress, {
 Custodial wallets manage keys internally — don't use `MandateWallet` (it assumes local signing). Use `MandateClient` directly:
 
 ```js
-import { MandateClient, PolicyBlockedError, ApprovalRequiredError } from '@mandate/sdk';
-import { computeIntentHash } from '@mandate/sdk';
+import { MandateClient, PolicyBlockedError, ApprovalRequiredError } from '@mandate.md/sdk';
+import { computeIntentHash } from '@mandate.md/sdk';
 
 const mandate = new MandateClient({
   runtimeKey: process.env.MANDATE_RUNTIME_KEY,
@@ -385,7 +281,7 @@ const status = await mandate.getStatus(intentId);
 
 ### Error handling
 ```js
-import { PolicyBlockedError, ApprovalRequiredError, RiskBlockedError } from '@mandate/sdk';
+import { PolicyBlockedError, ApprovalRequiredError, RiskBlockedError } from '@mandate.md/sdk';
 
 try {
   const { intentId } = await mandate.validate(payload);

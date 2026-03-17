@@ -17,7 +17,7 @@
     "test:watch": "vitest"
   },
   "dependencies": {
-    "@mandate/sdk": "workspace:*"
+    "@mandate.md/sdk": "workspace:*"
   },
   "peerDependencies": {
     "@elizaos/core": ">=0.1.0"

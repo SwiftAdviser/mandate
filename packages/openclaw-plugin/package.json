@@ -17,7 +17,7 @@
     "test:watch": "vitest"
   },
   "dependencies": {
-    "@mandate/sdk": "workspace:*"
+    "@mandate.md/sdk": "workspace:*"
   },
   "devDependencies": {
     "tsup": "^8.0.0",

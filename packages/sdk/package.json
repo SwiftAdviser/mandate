@@ -1,5 +1,5 @@
 {
-  "name": "@mandate/sdk",
+  "name": "@mandate.md/sdk",
   "version": "0.1.0",
   "description": "Policy layer for agent wallets. Not a wallet — guardrails for existing wallets.",
   "type": "module",
