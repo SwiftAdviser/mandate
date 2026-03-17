@@ -1,67 +1,84 @@
 # Flow 1: Happy Path — Auto-Approved Transaction
 
-> Agent pays a known contractor. Everything checks out. Transaction executes automatically.
+Agent pays an invoice. Everything checks out. Transaction executes automatically.
 
 ---
 
 ## Trigger
 
-Agent receives a task: "Pay Alice for March design work, invoice #127."
+Agent receives a task: pay a contractor invoice.
 
-## Agent Reasoning
+## Step-by-step
+
+### 1. Agent reasoning
 
 ```
 "Invoice #127 from Alice for March design work. $150/day × 3 days = $450."
 ```
 
-## Transaction
+### 2. Agent calls Mandate
 
 ```
-transfer 450 USDC → 0xAlice…3f8a (on allowlist)
+POST /api/validate
+{
+  "to": "0xAlice…",
+  "value": "0",
+  "calldata": "0xa9059cbb000...0001c6bf52634000",  // transfer(alice, 450e6)
+  "chainId": 8453,
+  "reason": "Invoice #127 from Alice for March design work. $150/day × 3 days."
+}
 ```
 
-## Mandate Intelligence Checks
+### 3. Mandate intelligence checks (8 layers)
 
 ```
-┌──────────────────────────────────────────────────────────────┐
-│  ✅ Rules           no MANDATE.md violations                 │
-│  ✅ Simulation      normal ERC20 transfer, no side effects   │
-│  ✅ Spend Limit     $450 within $500/day budget              │
-│  ✅ Reputation      agent score 92/100                       │
-│  ✅ Injection Scan  no suspicious patterns in reasoning      │
-│  ✅ Recipient       0xAlice — on allowlist                   │
-│  ✅ Calldata        standard transfer(address,uint256)       │
-│  ✅ Schedule        within operating hours                   │
-└──────────────────────────────────────────────────────────────┘
+✅ Rules          — no MANDATE.md violations
+✅ Simulation     — standard ERC20 transfer, no side effects
+✅ Spend Limit    — $450 within $500/day budget
+✅ Reputation     — agent score 91/100
+✅ Injection Scan — no suspicious patterns in reasoning
+✅ Recipient      — 0xAlice on allowlist
+✅ Calldata       — standard transfer(address,uint256)
+✅ Schedule       — within operating hours (Mon-Fri, 9-18 UTC)
 ```
 
-## Verdict
+### 4. Verdict: AUTO-APPROVED
 
-```
-✅ AUTO-APPROVED — all 8 checks passed
-```
-
-## What Happens Next
-
-1. Mandate returns `intentId` to agent
-2. Agent signs transaction locally (private key never leaves agent)
-3. Agent broadcasts to chain
-4. Agent reports `txHash` to Mandate
-5. Mandate verifies on-chain tx matches validated intent (envelope verification)
-6. Status: `confirmed` — logged in audit trail with full context + reason
-
-## Dashboard Shows
-
-```
-Intent #4821
-  Action:     transfer 450 USDC → 0xAlice…3f8a
-  Reason:     "Invoice #127 from Alice for March design work"
-  Risk:       SAFE
-  Status:     confirmed
-  Time:       2 seconds ago
+```json
+{
+  "allowed": true,
+  "intentId": "intent_abc123",
+  "riskLevel": "LOW",
+  "declineMessage": null
+}
 ```
 
-## Key Insight
+### 5. Agent signs & broadcasts locally
 
-Owner sees WHY the agent made this payment — not just that it happened.
-Audit trail is a decision journal, not just a transaction log.
+Private key never leaves the agent. Mandate only validated the intent.
+
+### 6. Agent reports back
+
+```
+POST /api/intents/intent_abc123/events
+{ "txHash": "0x9f2e..." }
+```
+
+### 7. Dashboard shows
+
+```
+┌──────────────────────────────────────────────────────────┐
+│ ✅ transfer $450 USDC → 0xAlice                         │
+│                                                          │
+│ Reason: "Invoice #127 from Alice for March design work.  │
+│          $150/day × 3 days."                             │
+│                                                          │
+│ Risk: LOW  │  Status: confirmed  │  2 min ago            │
+└──────────────────────────────────────────────────────────┘
+```
+
+---
+
+## Key point
+
+The owner sees **why** the agent spent money — not just that it did. Audit trail becomes a decision journal.

@@ -1,106 +1,125 @@
-# Flow 3: Human Approval — New Vendor, Routed to Owner
+# Flow 3: Human Approval — New Vendor Payment
 
-> Agent wants to pay a new vendor. Amount exceeds auto-approve threshold. Mandate routes to human with full evidence.
+Agent wants to pay a new vendor. Amount exceeds auto-approve threshold. Mandate routes to human with full evidence.
 
 ---
 
 ## Trigger
 
-Agent receives a task: "Pay Bob for API integration services, contract signed March 15."
+Agent processes a legitimate vendor onboarding task.
 
-## Agent Reasoning
+## Step-by-step
 
-```
-"New vendor onboarding. First payment for API integration services.
-Contract signed 2026-03-15. Amount: $400 USDC."
-```
-
-## Transaction
+### 1. Agent reasoning
 
 ```
-transfer 400 USDC → 0xBob…d47c (new address, not on allowlist)
+"New vendor onboarding. First payment for API integration
+ services. Contract signed 2026-03-15."
 ```
 
-## Transaction Reason
+### 2. Agent calls Mandate
 
 ```
-"New vendor payment — API integration services per signed contract."
+POST /api/validate
+{
+  "to": "0xBob…",
+  "value": "0",
+  "calldata": "0xa9059cbb...",  // transfer(bob, 400e6)
+  "chainId": 8453,
+  "reason": "New vendor onboarding. First payment for API integration services. Contract signed 2026-03-15."
+}
 ```
 
-## Mandate Intelligence Checks
+### 3. Mandate intelligence checks (8 layers)
 
 ```
-┌──────────────────────────────────────────────────────────────┐
-│  ✅ Rules           no MANDATE.md violations                 │
-│  ✅ Simulation      normal ERC20 transfer, no side effects   │
-│  ⚠️ Spend Limit     $400 above $200 auto-approve threshold  │
-│  ✅ Reputation      agent score 92/100                       │
-│  ✅ Injection Scan  no suspicious patterns                   │
-│  ⚠️ Recipient       new address — not on allowlist           │
-│  ✅ Calldata        standard transfer(address,uint256)       │
-│  ✅ Schedule        within operating hours                   │
-└──────────────────────────────────────────────────────────────┘
+✅ Rules          — no MANDATE.md violations
+✅ Simulation     — standard ERC20 transfer, no side effects
+⚠️ Spend Limit    — $400 above $200 auto-approve threshold
+✅ Reputation     — agent score 91/100
+✅ Injection Scan — no suspicious patterns
+⚠️ Recipient      — new address, first interaction
+✅ Calldata       — standard transfer(address,uint256)
+✅ Schedule       — within operating hours
 ```
 
-## Verdict
+**No security flags, but policy requires human review** for amounts above $200 to new recipients.
 
-```
-⏳ REQUIRES HUMAN APPROVAL — amount above threshold + new recipient
-```
+### 4. Verdict: REQUIRES APPROVAL
 
-## Owner Receives Notification (Slack / Telegram)
-
-```
-┌─────────────────────────────────────────────────┐
-│  🔍 Approval Required                           │
-│                                                  │
-│  Agent: treasury-bot                             │
-│  To: 0xBob…d47c ($400 USDC)                    │
-│                                                  │
-│  WHY: "New vendor payment — API integration      │
-│  services per signed contract."                  │
-│                                                  │
-│  Risk: ✅ LOW — address clean, no anomalies     │
-│  Simulation: normal ERC20 transfer               │
-│  New recipient: first time sending to this addr  │
-│                                                  │
-│  [✅ Approve]  [❌ Reject]                       │
-└─────────────────────────────────────────────────┘
+```json
+{
+  "allowed": false,
+  "requiresApproval": true,
+  "approvalId": "appr_xyz789",
+  "intentId": "intent_def456"
+}
 ```
 
-## Mandate Responds to Agent (Constructive Hold Message)
+### 5. Mandate tells the agent to wait
 
-While waiting for approval, the agent receives:
-
-```
-This transaction requires human approval because the amount ($400)
-exceeds the auto-approve threshold ($200) and the recipient is new.
-The wallet owner has been notified and will review shortly.
-Use waitForApproval() to poll for the decision.
+```json
+{
+  "declineMessage": "This transaction requires human approval ($400 exceeds auto-approve threshold of $200). The wallet owner has been notified. Use waitForApproval() to poll for the decision."
+}
 ```
 
-## Owner Approves
+Agent calls `waitForApproval()` from the SDK — polls every few seconds.
 
-Owner clicks **Approve** in Slack → Mandate updates intent status:
-
-```
-Status: approval_pending → approved → broadcasted → confirmed
-```
-
-Agent's `waitForApproval()` resolves → agent signs and broadcasts.
-
-## Owner Rejects
-
-If owner clicks **Reject**:
+### 6. Owner receives Slack/Telegram notification
 
 ```
-This transaction was rejected by the wallet owner. Reason: [optional].
-Do not retry this transaction. If you believe this was an error,
-the wallet owner can adjust policies in the dashboard.
+┌─────────────────────────────────────────────┐
+│ 🔍 Approval Required                        │
+│                                              │
+│ Agent: treasury-bot                          │
+│ To: 0xBob ($400 USDC)                       │
+│                                              │
+│ WHY: "New vendor onboarding. First payment   │
+│ for API integration services. Contract       │
+│ signed 2026-03-15."                          │
+│                                              │
+│ Risk: ✅ LOW — address clean                 │
+│ Simulation: normal transfer, no side effects │
+│ Recipient: first interaction (new)           │
+│                                              │
+│ [Approve ✅] [Reject ❌]                      │
+└─────────────────────────────────────────────┘
 ```
 
-## Key Insight
+The owner sees **why** the agent wants to make this payment — not just "approve $400?". Full context for an informed decision.
 
-The owner doesn't just see "$400 to 0xBob" — they see the full context:
-WHY the agent wants to pay, WHO Bob is (new vendor), WHAT the simulation
-shows, and the risk assessment. One-click decision with full evidence.
+### 7. Owner clicks Approve
+
+```
+POST /api/approvals/appr_xyz789/decide
+{ "decision": "approve", "reason": "Vendor confirmed, contract on file" }
+```
+
+### 8. Agent receives approval
+
+`waitForApproval()` resolves. Agent signs and broadcasts the transaction locally.
+
+### 9. Dashboard shows
+
+```
+┌──────────────────────────────────────────────────────────┐
+│ ✅ transfer $400 USDC → 0xBob                            │
+│                                                          │
+│ Reason: "New vendor onboarding. First payment for API    │
+│          integration services."                          │
+│                                                          │
+│ Approved by: owner (via Slack)                           │
+│ Approval reason: "Vendor confirmed, contract on file"    │
+│                                                          │
+│ Risk: LOW  │  Status: confirmed  │  5 min ago            │
+└──────────────────────────────────────────────────────────┘
+```
+
+---
+
+## Key point
+
+Human-in-the-loop with **evidence, not just numbers**. The owner sees the agent's reasoning, simulation results, and risk assessment — enough to decide in seconds instead of investigating manually.
+
+The approval decision itself is also logged in the audit trail, creating a complete chain: agent intent → intelligence checks → human review → execution → confirmation.
