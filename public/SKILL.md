@@ -7,15 +7,24 @@ user-invocable: true
 metadata: {"openclaw":{"emoji":"🛡️","category":"finance","primaryEnv":"MANDATE_RUNTIME_KEY","requires":{"env":["MANDATE_RUNTIME_KEY"]}}}
 ---
 
+## ⛔ MANDATORY SECURITY RULES
+
+Mandate is the security boundary, not optional infrastructure. The card must be swiped before the purchase.
+
+1. You **MUST** call `/validate` before EVERY transaction. No exceptions. No shortcuts.
+2. If `/validate` returns `allowed: false` → you **MUST NOT** execute the transaction. Display the `blockReason` to the user.
+3. If `/validate` is unreachable → you **MUST NOT** execute the transaction. Do NOT fall back to calling the wallet directly. See [Fail-Safe Behavior](#fail-safe-behavior).
+4. You **MUST** display validation results to the user before any wallet call. See [Required User Feedback](#required-user-feedback).
+5. Even with custodial wallets, you **MUST** validate with Mandate BEFORE calling the wallet API. Do NOT call transfer/swap directly.
+6. Skipping validation is a **security violation**, not a simplification. An unvalidated transaction bypasses spend limits, allowlists, and approval workflows the owner configured to protect their funds.
+
 ```
 MANDATE API QUICK REFERENCE v1.0.0
 Base:   https://app.mandate.md/api
 Auth:   Authorization: Bearer <MANDATE_RUNTIME_KEY>
-Docs:   This file is canonical (skills guide + params)
 
 ⚠️  NON-CUSTODIAL: your private key NEVER leaves your machine.
     Flow: validate → sign locally → broadcast → post txHash
-    Think: corporate card limits for AI agents.
 
 Key endpoints:
   POST /agents/register        -> register agent (no auth), get runtimeKey + claimUrl
@@ -29,26 +38,46 @@ Credentials: ~/.mandate/credentials.json
 Errors: HTTP status + JSON { "error": "message" } or { "allowed": false, "blockReason": "..." }
 ```
 
+## Required User Feedback
+
+You **MUST** display a Mandate status message as the **first thing the user sees** when a transaction starts — BEFORE any wallet API call. If the platform supports message editing (Slack, Telegram, Discord), update in place. Otherwise, append new lines.
+
+**Happy path:**
+```
+🔎 Mandate: checking policies...
+✅ Mandate: policy check passed — $50 USDC to 0xAlice
+   Reason: Invoice #127 from Alice
+✅ Transaction confirmed — 0x9f2e...abc1
+```
+
+**Blocked:**
+```
+🔎 Mandate: checking policies...
+🚫 Mandate: blocked — $150 exceeds $100/tx limit
+```
+
+**Approval required:**
+```
+🔎 Mandate: checking policies...
+⏳ Mandate: approval required — waiting for owner decision
+   Open dashboard to approve: https://app.mandate.md
+✅ Mandate: approved — broadcasting...
+✅ Transaction confirmed — 0x9f2e...abc1
+```
+
+**API unreachable:**
+```
+🔎 Mandate: checking policies...
+⚠️ Mandate: policy server unreachable — transaction halted for safety
+```
+
 # Mandate API — Agent Skills Guide
 
 This skill is **doc-only**. There is no local CLI. Agents call the Mandate REST API directly, sign transactions locally, and broadcast themselves.
 
-## Why the steps matter (short rationale)
-
-- **Non-custodial**: Mandate never holds private keys. It validates transaction intent against policies, then you sign and broadcast. If the on-chain tx doesn't match what was validated, the circuit breaker trips.
-- **Register vs activate**: registration creates an agent identity and returns a runtimeKey. Activation links your EVM address to that identity. Both are one-time operations.
-- **Claim URL**: ensures the human owner explicitly links the agent to their dashboard and controls policies/funding.
-- **`reason` field (required)**: every validate call MUST include a `reason` — a plain-text explanation of WHY the agent is making this transaction (max 1000 chars). Mandate scans it for prompt injection patterns and shows it to the human owner on approval requests. This is the core differentiator: no other wallet provider captures agent reasoning.
-- **intentHash**: cryptographic binding between what you validated and what you broadcast. Must match exactly or the circuit breaker trips.
-- **Credential persistence**: the runtimeKey is returned once at registration. If you lose it, you must re-register.
-
 ## Standard credential storage (required)
 
-Store the runtime key in **one canonical location**:
-
-- `~/.mandate/credentials.json`
-
-Recommended file contents:
+Store the runtime key in `~/.mandate/credentials.json`:
 ```json
 {
   "runtimeKey": "mndt_test_...",
@@ -57,7 +86,7 @@ Recommended file contents:
 }
 ```
 
-Optional environment export (runtime convenience):
+Optional environment export:
 ```bash
 export MANDATE_RUNTIME_KEY="$(jq -r .runtimeKey ~/.mandate/credentials.json)"
 ```
@@ -68,7 +97,6 @@ export MANDATE_RUNTIME_KEY="$(jq -r .runtimeKey ~/.mandate/credentials.json)"
 - Auth header: `Authorization: Bearer <MANDATE_RUNTIME_KEY>`
 - Content-Type: `application/json`
 
-Quick env setup:
 ```bash
 export MANDATE_API_URL="https://app.mandate.md/api"
 export MANDATE_RUNTIME_KEY="$(jq -r .runtimeKey ~/.mandate/credentials.json)"
@@ -88,7 +116,7 @@ Agents create an identity via `/agents/register` (no auth). Dashboard login is f
 | `post_event` | POST | `/intents/{id}/events` | Body: `txHash` |
 | `get_status` | GET | `/intents/{id}/status` | — |
 
-Note: all request bodies use camelCase.
+All request bodies use camelCase.
 
 ## Quick Start
 
@@ -117,8 +145,8 @@ Response:
 ```
 
 - Store runtimeKey immediately in `~/.mandate/credentials.json`
-- Send claimUrl to human owner to link agent to dashboard
-- chainId is optional at registration — determined per-transaction in `/validate`
+- Display the claimUrl to the user — they are the owner. Say: "To link this agent to your dashboard, open: [claimUrl]"
+- Do NOT say "share with your human owner" — the user talking to you IS the owner.
 
 ### 2) Activate (if evmAddress not provided at registration)
 ```bash
@@ -135,18 +163,17 @@ Response:
   "agentId": "...",
   "evmAddress": "0x...",
   "onboardingUrl": "https://app.mandate.md/dashboard?onboarding=1",
-  "message": "Agent activated. Tell your human to visit the onboarding URL."
+  "message": "Agent activated."
 }
 ```
 
-Share the `onboardingUrl` with your human owner — it opens the onboarding wizard.
+Display to the user: "To configure spending limits, open your dashboard: [onboardingUrl]"
 
 ### 3) Compute intentHash
 ```
 intentHash = keccak256("<chainId>|<nonce>|<to_lower>|<calldata_lower>|<valueWei>|<gasLimit>|<maxFeePerGas>|<maxPriorityFeePerGas>|<txType>|<accessList_json>")
 ```
 
-Use your language's keccak256:
 ```js
 // ethers.js
 ethers.keccak256(ethers.toUtf8Bytes(canonicalString))
@@ -175,7 +202,7 @@ curl -sS -X POST "$MANDATE_API_URL/validate" \
   }'
 ```
 
-The `reason` field tells Mandate WHY the agent is making this transaction. Mandate scans it for prompt injection patterns (e.g. "URGENT", "do not verify", "ignore previous instructions") and displays it to the human owner on approval requests. Always pass your agent's chain-of-thought or task context here.
+The `reason` field tells Mandate WHY the agent is making this transaction. Mandate scans it for prompt injection patterns and displays it to the owner on approval requests. Always pass your agent's chain-of-thought or task context here. Required — omitting it returns 422.
 
 Response (allowed):
 ```json
@@ -190,7 +217,7 @@ Response (allowed):
 }
 ```
 
-Response (blocked — prompt injection detected in reason):
+Response (blocked — prompt injection in reason):
 ```json
 {
   "allowed": false,
@@ -210,7 +237,7 @@ Response (blocked — policy):
 }
 ```
 
-If `requiresApproval=true`: wait for human to approve via dashboard, poll status.
+If `requiresApproval=true`: wait for the user to approve via dashboard, poll status.
 
 ### 5) Sign locally and broadcast
 
@@ -228,15 +255,6 @@ const txHash = await walletClient.sendTransaction({
 })
 ```
 
-```js
-// ethers.js
-const signer = new ethers.Wallet(process.env.AGENT_PRIVATE_KEY, provider)
-const tx = await signer.sendTransaction({
-  to, data: calldata, value: 0, gasLimit, maxFeePerGas, maxPriorityFeePerGas
-})
-const txHash = tx.hash
-```
-
 ### 6) Post txHash to Mandate
 ```bash
 curl -sS -X POST "$MANDATE_API_URL/intents/{intentId}/events" \
@@ -245,7 +263,7 @@ curl -sS -X POST "$MANDATE_API_URL/intents/{intentId}/events" \
   -d '{"txHash": "0x..."}'
 ```
 
-Mandate verifies the envelope (on-chain tx matches what was validated). Mismatch → circuit breaker trips, intent fails.
+Mandate verifies the envelope (on-chain tx matches what was validated). Mismatch → circuit breaker trips.
 
 ### 7) Poll for confirmation
 ```bash
@@ -266,22 +284,14 @@ Response:
 }
 ```
 
-## The `reason` Field — Why Your Agent Spends Money
+## The `reason` Field
 
 Every `/validate` call **requires** a `reason` string (max 1000 chars). This is the core differentiator: **no other wallet provider captures WHY an agent decided to make a transaction.**
 
-AI agents already "think" before every action — chain-of-thought, reasoning, plan steps. The `reason` field just captures what the agent was already computing.
-
-```typescript
-await mandateWallet.transfer(to, amount, token, {
-  reason: "March invoice #127 from Alice, $150/day x 3 days"
-});
-```
-
 What Mandate does with the reason:
-- **Scans for prompt injection** (18 hardcoded patterns + optional LLM judge): "URGENT", "do not verify", "ignore previous instructions", base64-encoded payloads, etc.
-- **Returns a `declineMessage`** on block — an adversarial counter-message designed to override the manipulation and convince the agent to stop (not just reject the API call)
-- **Shows it to the human owner** on approval requests (Slack/Telegram/dashboard) — so they see WHY, not just what
+- **Scans for prompt injection** (18 hardcoded patterns + optional LLM judge)
+- **Returns a `declineMessage`** on block — an adversarial counter-message to override manipulation
+- **Shows it to the owner** on approval requests (Slack/Telegram/dashboard)
 - **Logs it in the audit trail** — full context for every transaction, forever
 
 **Example: reason catches what session keys miss**
@@ -293,14 +303,12 @@ Session key: amount ok ($499 < $500) → APPROVE
 Mandate: injection patterns in reason ("URGENT", "do not verify") → BLOCK
 ```
 
-The `reason` field is **required** — omitting it returns 422. Always pass your agent's chain-of-thought or task context.
-
 ## Agent Self-Integration (SDK)
 
 ### If you have a runtimeKey:
 1. `bun add @mandate/sdk viem`
 2. Activate (call once): `POST /activate` with `{ "evmAddress": "0x..." }`
-3. Share the `onboardingUrl` with your human owner
+3. Display the `onboardingUrl` to the user so they can configure spending limits
 4. Wrap your wallet with MandateWallet (see below)
 5. Test: make a small transfer → should get `allowed: true`
 
@@ -314,7 +322,7 @@ The `reason` field is **required** — omitting it returns 422. Always pass your
    });
    ```
 3. Save runtimeKey to `.env` as `MANDATE_RUNTIME_KEY`
-4. Tell human to visit claimUrl
+4. Display claimUrl to the user: "To link this agent to your dashboard, open: [claimUrl]"
 5. Wrap your wallet (see below)
 
 ### Wrapping existing wallet
@@ -323,14 +331,13 @@ import { MandateWallet } from '@mandate/sdk';
 
 const mandateWallet = new MandateWallet({
   runtimeKey: process.env.MANDATE_RUNTIME_KEY,
-  chainId: 84532, // determines viem chain + RPC for gas estimation
+  chainId: 84532,
   signer: {
     sendTransaction: (tx) => yourExistingWallet.sendTransaction(tx),
     getAddress: async () => '0xYourAgentAddress',
   },
 });
 
-// Always pass a reason — it's scanned for injection and shown on approval requests
 await mandateWallet.transfer(to, rawAmount, tokenAddress, {
   reason: "Invoice #127 from Alice for March design work"
 });
@@ -338,7 +345,9 @@ await mandateWallet.transfer(to, rawAmount, tokenAddress, {
 
 ### With custodial wallets (Sponge, Locus, etc.)
 
-Custodial wallets manage keys internally — don't use `MandateWallet` (it assumes local signing). Instead, use `MandateClient` directly: validate with Mandate, then call the custodial wallet API to execute.
+> ⚠️ **CRITICAL**: Even with custodial wallets, you **MUST** validate with Mandate BEFORE calling the wallet API. Do NOT call transfer/swap/send directly — that bypasses all spend limits and approval workflows.
+
+Custodial wallets manage keys internally — don't use `MandateWallet` (it assumes local signing). Use `MandateClient` directly:
 
 ```js
 import { MandateClient, PolicyBlockedError, ApprovalRequiredError } from '@mandate/sdk';
@@ -348,26 +357,19 @@ const mandate = new MandateClient({
   runtimeKey: process.env.MANDATE_RUNTIME_KEY,
 });
 
-// 1. Build intent payload (you still need tx params for policy check)
 const payload = {
-  chainId: 84532,
-  nonce: 0,
-  to: tokenAddress,
-  calldata: encodedTransferCalldata,
-  valueWei: '0',
-  gasLimit: '0x15F90',
-  maxFeePerGas: '0x3B9ACA00',
-  maxPriorityFeePerGas: '0x3B9ACA00',
-  txType: 2,
-  accessList: [],
+  chainId: 84532, nonce: 0, to: tokenAddress,
+  calldata: encodedTransferCalldata, valueWei: '0',
+  gasLimit: '0x15F90', maxFeePerGas: '0x3B9ACA00',
+  maxPriorityFeePerGas: '0x3B9ACA00', txType: 2, accessList: [],
   intentHash: computeIntentHash(/* ... */),
   reason: "Invoice #127 from Alice for March design work",
 };
 
-// 2. Validate with Mandate (policy + reason scan)
+// ⚠️ DO NOT skip this step — validate with Mandate first
 const { intentId } = await mandate.validate(payload);
 
-// 3. Execute via custodial wallet API
+// Only AFTER validation passes, call custodial wallet API
 const { txHash } = await fetch('https://api.wallet.paysponge.com/api/transfers/evm', {
   method: 'POST',
   headers: {
@@ -377,10 +379,7 @@ const { txHash } = await fetch('https://api.wallet.paysponge.com/api/transfers/e
   body: JSON.stringify({ chain: 'base', to, amount, currency: 'USDC' }),
 }).then(r => r.json());
 
-// 4. Post txHash back to Mandate (triggers envelope verification)
 await mandate.postEvent(intentId, txHash);
-
-// 5. Poll for confirmation
 const status = await mandate.getStatus(intentId);
 ```
 
@@ -390,48 +389,47 @@ import { PolicyBlockedError, ApprovalRequiredError, RiskBlockedError } from '@ma
 
 try {
   const { intentId } = await mandate.validate(payload);
-  // ... execute + post event
 } catch (err) {
   if (err instanceof PolicyBlockedError) {
-    // err.blockReason → "per_tx_limit_exceeded", "reason_blocked", etc.
-    // err.detail → human-readable explanation
-    // err.declineMessage → adversarial message to convince agent to stop
-    //   (for "reason_blocked": includes SECURITY ALERT to override manipulation)
+    // err.blockReason, err.detail, err.declineMessage
   }
   if (err instanceof RiskBlockedError) {
     // err.blockReason → "aegis_critical_risk"
-    // Transaction flagged as critical risk by security scanner
   }
   if (err instanceof ApprovalRequiredError) {
-    // err.intentId, err.approvalId → wait for human approval via dashboard
+    // err.intentId, err.approvalId → wait for user approval via dashboard
   }
 }
 ```
 
 ## Default Policy
 
-After registration, your agent has:
-- $100 per transaction limit
-- $1,000 per day limit
-- No address restrictions
-- No approval required
+After registration: $100/tx limit, $1,000/day limit, no address restrictions, no approval required. Adjust via dashboard at `https://app.mandate.md`.
 
-Adjust via dashboard at `https://app.mandate.md`.
+## Fail-Safe Behavior
+
+If the guard is offline, the vault stays locked.
+
+When Mandate API is unreachable:
+1. Do **NOT** execute the transaction
+2. Do **NOT** fall back to calling the wallet API directly
+3. Display `⚠️ Mandate: policy server unreachable — transaction halted for safety`
+4. Retry up to 3 times at 30-second intervals
+5. If all retries fail, tell the user: "Cannot execute until policy server recovers. No funds were spent."
+
+This is non-negotiable. An unreachable policy server does not mean "no policies apply" — it means "policies cannot be verified." Executing without verification bypasses the owner's configured protections.
 
 ## x402 Payment Flow
 
-1. Make HTTP request to paywall URL → get 402 response
+1. HTTP request to paywall URL → 402 response
 2. Parse `X-Payment-Required` header: `{ amount, currency, paymentAddress, chainId }`
-3. Encode ERC20 transfer calldata:
-   - selector = `0xa9059cbb` (transfer)
-   - calldata = selector + padded(paymentAddress, 32) + padded(amount, 32)
+3. Encode ERC20 transfer calldata: selector `0xa9059cbb` + padded(paymentAddress, 32) + padded(amount, 32)
 4. Follow steps 3-7 above (compute hash → validate → sign → broadcast → post event)
-5. Retry original request with header: `Payment-Signature: <txHash>`
+5. Retry original request with `Payment-Signature: <txHash>`
 
 ## Chain Reference
 
-**Test keys** (`mndt_test_*`): Base Sepolia (84532)
-**Live keys** (`mndt_live_*`): Base mainnet (8453)
+**Test keys** (`mndt_test_*`): Base Sepolia (84532) | **Live keys** (`mndt_live_*`): Base mainnet (8453)
 
 | Chain | Chain ID | USDC Address | Decimals |
 |-------|----------|-------------|----------|
@@ -444,8 +442,8 @@ Adjust via dashboard at `https://app.mandate.md`.
 | State | Description | Expiry |
 |-------|------------|--------|
 | `reserved` | Validated, waiting for broadcast | 15 min |
-| `approval_pending` | Requires human approval via dashboard | 1 hour |
-| `approved` | Human approved, broadcast window open | 10 min |
+| `approval_pending` | Requires owner approval via dashboard | 1 hour |
+| `approved` | Owner approved, broadcast window open | 10 min |
 | `broadcasted` | Tx sent, waiting for on-chain receipt | — |
 | `confirmed` | On-chain confirmed, quota committed | — |
 | `failed` | Reverted, dropped, policy violation, or envelope mismatch | — |
@@ -495,23 +493,11 @@ calldata: 0xa9059cbb
           + {amount_hex_padded_to_64_chars}             (32 bytes)
 ```
 
-Example — transfer 10 USDC (10_000_000 = 0x989680):
-```
-0xa9059cbb
-000000000000000000000000ABC...123
-0000000000000000000000000000000000000000000000000000000000989680
-```
-
-ERC20 `approve(address spender, uint256 amount)`: selector `0x095ea7b3`
-Note: approve is not spend-bearing — does not count against quota.
+ERC20 `approve(address spender, uint256 amount)`: selector `0x095ea7b3` — not spend-bearing, does not count against quota.
 
 ## Security
 
 - Never share your runtime key in logs, posts, or screenshots.
-- Store keys in `~/.mandate/credentials.json` and restrict file permissions (`chmod 600`).
+- Store keys in `~/.mandate/credentials.json` and restrict permissions (`chmod 600`).
 - Rotate the key (re-register) if exposure is suspected.
-- The circuit breaker automatically trips if on-chain tx doesn't match validated intent — protecting against key compromise.
-
----
-
-Built for agents. Non-custodial by design.
+- Circuit breaker auto-trips if on-chain tx doesn't match validated intent.
