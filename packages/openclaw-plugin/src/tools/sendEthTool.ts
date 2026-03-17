@@ -1,15 +1,14 @@
 import { MandateWallet, PolicyBlockedError, ApprovalRequiredError } from '@mandate/sdk';
 
-export interface TransferParams {
+export interface SendEthParams {
   to: string;
-  amount: string;
-  tokenAddress: string;
+  valueWei: string;
   chainId?: number;
 }
 
-export const transferTool = {
-  name: 'mandate_transfer',
-  description: 'Transfer ERC20 tokens with Mandate policy enforcement. Transaction will be blocked if it exceeds configured spending limits.',
+export const sendEthTool = {
+  name: 'mandate_send_eth',
+  description: 'Send native ETH/MATIC with Mandate policy enforcement. Transaction will be blocked if it exceeds configured spending limits.',
   parameters: {
     type: 'object',
     properties: {
@@ -17,23 +16,19 @@ export const transferTool = {
         type: 'string',
         description: 'Recipient EVM address (0x...)',
       },
-      amount: {
+      valueWei: {
         type: 'string',
-        description: 'Amount in token smallest units (e.g. "1000000" = 1 USDC at 6 decimals)',
-      },
-      tokenAddress: {
-        type: 'string',
-        description: 'ERC20 token contract address (0x...)',
+        description: 'Amount in wei (e.g. "1000000000000000000" = 1 ETH)',
       },
       chainId: {
         type: 'number',
         description: 'Chain ID (default: from env MANDATE_CHAIN_ID)',
       },
     },
-    required: ['to', 'amount', 'tokenAddress'],
+    required: ['to', 'valueWei'],
   },
   execute: async (
-    params: TransferParams,
+    params: SendEthParams,
     context?: { runtimeKey?: string; privateKey?: string; chainId?: number },
   ): Promise<{ success: boolean; txHash?: string; intentId?: string; blocked?: boolean; reason?: string; declineMessage?: string; requiresApproval?: boolean }> => {
     const runtimeKey = context?.runtimeKey ?? process.env.MANDATE_RUNTIME_KEY ?? '';
@@ -43,10 +38,9 @@ export const transferTool = {
     const wallet = new MandateWallet({ runtimeKey, privateKey, chainId });
 
     try {
-      const result = await wallet.transfer(
+      const result = await wallet.sendEth(
         params.to as `0x${string}`,
-        params.amount,
-        params.tokenAddress as `0x${string}`,
+        params.valueWei,
       );
       return { success: true, txHash: result.txHash, intentId: result.intentId };
     } catch (err) {

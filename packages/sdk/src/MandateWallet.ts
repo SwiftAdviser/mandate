@@ -320,7 +320,7 @@ export class MandateWallet {
         maxFeePerGas:          BigInt(prepared.maxFeePerGas),
         maxPriorityFeePerGas:  BigInt(prepared.maxPriorityFeePerGas),
         nonce:                 prepared.nonce,
-      } as Parameters<typeof this.wallet.sendTransaction>[0]);
+      } as Parameters<NonNullable<typeof this.wallet>['sendTransaction']>[0]);
     }
 
     await this.client.postEvent(intentId, txHash);

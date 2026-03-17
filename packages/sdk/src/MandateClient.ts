@@ -57,7 +57,7 @@ export class MandateClient {
       if (reason.startsWith('aegis_')) {
         throw new RiskBlockedError(reason);
       }
-      throw new PolicyBlockedError(reason, data.blockDetail);
+      throw new PolicyBlockedError(reason, data.blockDetail, data.declineMessage);
     }
 
     if (!res.ok) {

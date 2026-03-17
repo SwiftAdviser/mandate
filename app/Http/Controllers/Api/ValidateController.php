@@ -36,6 +36,7 @@ class ValidateController extends Controller
                 'allowed' => false,
                 'blockReason' => $result['blockReason'],
                 'blockDetail' => $result['blockDetail'] ?? null,
+                'declineMessage' => $result['declineMessage'] ?? null,
             ], 422);
         }
 

@@ -543,6 +543,94 @@ class PolicyEngineServiceTest extends TestCase
         $this->assertStringContainsString('$5', $result['blockDetail']);
     }
 
+    // -------------------------------------------------------------------------
+    // Decline Message Tests
+    // -------------------------------------------------------------------------
+
+    /** @test */
+    public function it_returns_constructive_decline_message_for_per_tx_block(): void
+    {
+        [$agent] = $this->createAgentWithPolicy([
+            'spend_limit_per_tx_usd' => 1,
+            'spend_limit_per_day_usd' => 10000,
+        ]);
+
+        $result = $this->service()->validate($agent, $this->buildPayload());
+
+        $this->assertFalse($result['allowed']);
+        $this->assertSame('per_tx_limit_exceeded', $result['blockReason']);
+        $this->assertNotEmpty($result['declineMessage']);
+        $this->assertStringContainsString('per-transaction spending limit', $result['declineMessage']);
+        $this->assertStringContainsString('split into smaller amounts', $result['declineMessage']);
+    }
+
+    /** @test */
+    public function it_returns_adversarial_decline_message_for_circuit_breaker(): void
+    {
+        [$agent] = $this->createAgentWithPolicy();
+        $agent->update(['circuit_breaker_active' => true]);
+        \Illuminate\Support\Facades\Cache::flush();
+
+        $result = $this->service()->validate($agent, $this->buildPayload());
+
+        $this->assertFalse($result['allowed']);
+        $this->assertSame('circuit_breaker_active', $result['blockReason']);
+        $this->assertNotEmpty($result['declineMessage']);
+        $this->assertStringContainsString('EMERGENCY STOP', $result['declineMessage']);
+        $this->assertStringContainsString('Do not attempt further transactions', $result['declineMessage']);
+    }
+
+    /** @test */
+    public function it_returns_adversarial_decline_message_for_aegis_critical(): void
+    {
+        $this->enableAegisWithFakes([
+            'https://api.web3antivirus.io/api/public/v1/extension/simulation/*' => Http::response([
+                'detectors' => [['code' => 'MALICIOUS', 'description' => 'Malicious contract detected']],
+            ]),
+        ]);
+
+        [$agent] = $this->createAgentWithPolicy(['risk_scan_enabled' => true]);
+        $result = $this->service()->validate($agent, $this->buildPayload());
+
+        $this->assertFalse($result['allowed']);
+        $this->assertSame('aegis_critical_risk', $result['blockReason']);
+        $this->assertNotEmpty($result['declineMessage']);
+        $this->assertStringContainsString('SECURITY ALERT', $result['declineMessage']);
+        $this->assertStringContainsString('Do NOT attempt', $result['declineMessage']);
+    }
+
+    /** @test */
+    public function it_returns_constructive_decline_message_for_daily_quota(): void
+    {
+        [$agent] = $this->createAgentWithPolicy([
+            'spend_limit_per_tx_usd' => 1000,
+            'spend_limit_per_day_usd' => 5,
+        ]);
+
+        $result = $this->service()->validate($agent, $this->buildPayload());
+
+        $this->assertFalse($result['allowed']);
+        $this->assertSame('daily_quota_exceeded', $result['blockReason']);
+        $this->assertNotEmpty($result['declineMessage']);
+        $this->assertStringContainsString('Daily spending quota reached', $result['declineMessage']);
+        $this->assertStringContainsString('midnight UTC', $result['declineMessage']);
+    }
+
+    /** @test */
+    public function it_returns_constructive_decline_message_for_address_not_allowed(): void
+    {
+        [$agent] = $this->createAgentWithPolicy([
+            'allowed_addresses' => ['0xdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef'],
+        ]);
+
+        $result = $this->service()->validate($agent, $this->buildPayload());
+
+        $this->assertFalse($result['allowed']);
+        $this->assertSame('address_not_allowed', $result['blockReason']);
+        $this->assertNotEmpty($result['declineMessage']);
+        $this->assertStringContainsString('not on the approved allowlist', $result['declineMessage']);
+    }
+
     /** @test */
     public function it_returns_block_detail_with_aegis_critical(): void
     {

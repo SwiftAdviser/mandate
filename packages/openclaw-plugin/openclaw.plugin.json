@@ -1,20 +1,20 @@
 {
   "name": "mandate",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Policy-enforced on-chain actions via Mandate spending limits",
   "main": "dist/plugin.js",
-  "tools": ["mandate_transfer", "mandate_x402_pay"],
+  "tools": ["mandate_transfer", "mandate_x402_pay", "mandate_send_eth"],
   "env": {
     "MANDATE_RUNTIME_KEY": {
-      "description": "Mandate runtime key (mndt_live_... or mndt_test_...)",
+      "description": "Your mndt_live_... or mndt_test_... key",
       "required": true
     },
     "MANDATE_PRIVATE_KEY": {
-      "description": "Agent wallet private key (0x...)",
+      "description": "Agent wallet private key (never exposed to LLM)",
       "required": true
     },
     "MANDATE_CHAIN_ID": {
-      "description": "EVM chain ID (84532=BaseSepolia, 8453=BaseMainnet)",
+      "description": "Default chain ID",
       "required": false,
       "default": "84532"
     }

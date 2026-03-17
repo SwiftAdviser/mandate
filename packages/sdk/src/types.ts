@@ -72,10 +72,12 @@ export class CircuitBreakerError extends MandateError {
 
 export class PolicyBlockedError extends MandateError {
   public readonly detail?: string;
-  constructor(reason: string, detail?: string) {
+  public readonly declineMessage?: string;
+  constructor(reason: string, detail?: string, declineMessage?: string) {
     super(`Transaction blocked by policy: ${reason}`, 422, reason);
     this.name = 'PolicyBlockedError';
     this.detail = detail;
+    this.declineMessage = declineMessage;
   }
 }
 

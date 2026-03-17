@@ -7,6 +7,7 @@ use App\Http\Controllers\Api\CircuitBreakerController;
 use App\Http\Controllers\Api\IntentController;
 use App\Http\Controllers\Api\PolicyController;
 use App\Http\Controllers\Api\RiskCheckController;
+use App\Http\Controllers\Api\TelegramWebhookController;
 use App\Http\Controllers\Api\ValidateController;
 use App\Http\Middleware\RuntimeKeyAuth;
 use Illuminate\Support\Facades\Route;
@@ -15,6 +16,9 @@ use Illuminate\Support\Facades\Route;
 Route::prefix('agents')->group(function () {
     Route::post('/register', [AgentRegistrationController::class, 'register']);
 });
+
+// Telegram bot webhook (public, verified by secret in URL)
+Route::post('/telegram/webhook/{secret}', [TelegramWebhookController::class, 'webhook']);
 
 // ── Runtime key (agent → validate/events/status) ───────────────────────────
 Route::middleware([RuntimeKeyAuth::class])->group(function () {
@@ -56,4 +60,5 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::get('/agents/{agentId}/webhooks',       [AgentWebhookController::class, 'index']);
     Route::put('/agents/{agentId}/webhooks',       [AgentWebhookController::class, 'update']);
     Route::post('/agents/{agentId}/webhooks/test', [AgentWebhookController::class, 'test']);
+
 });

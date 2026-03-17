@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\Agent;
 use App\Models\ApprovalQueue;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use App\Services\IntentSummaryService;
@@ -23,7 +24,12 @@ class ApprovalNotificationService
             try {
                 match ($webhook['type'] ?? null) {
                     'slack'    => $this->sendSlack($webhook['url'], $context),
-                    'telegram' => $this->sendTelegram($webhook['bot_token'], $webhook['chat_id'], $context),
+                    'telegram' => $this->sendTelegram(
+                        $webhook['bot_token'] ?: config('mandate.telegram.bot_token'),
+                        $webhook['chat_id'] ?? '',
+                        $context,
+                        $webhook['username'] ?? null,
+                    ),
                     'custom'   => $this->sendCustomWebhook($webhook['url'], $webhook['secret'] ?? '', $context),
                     default    => Log::warning('Unknown webhook type', ['type' => $webhook['type'] ?? 'null']),
                 };
@@ -217,8 +223,18 @@ class ApprovalNotificationService
         ]);
     }
 
-    private function sendTelegram(string $botToken, string $chatId, array $context): void
+    private function sendTelegram(string $botToken, string $chatId, array $context, ?string $username = null): void
     {
+        // Resolve chat_id from cached username→chat_id mapping if empty
+        if (empty($chatId) && $username) {
+            $chatId = Cache::get("tg_user:{$username}", '');
+        }
+
+        if (empty($chatId)) {
+            Log::warning('Telegram notification skipped — no chat_id', ['username' => $username]);
+            return;
+        }
+
         $text = $this->formatTelegramMessage($context);
 
         Http::post("https://api.telegram.org/bot{$botToken}/sendMessage", [

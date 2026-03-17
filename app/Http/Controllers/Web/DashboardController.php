@@ -140,10 +140,19 @@ class DashboardController extends Controller
         $userId = auth()->id();
         $agent = Agent::where('user_id', $userId)->first();
 
+        $webhooks = $agent?->notification_webhooks ?? [];
+        $telegramUsernames = collect($webhooks)
+            ->where('type', 'telegram')
+            ->pluck('username')
+            ->filter()
+            ->values()
+            ->all();
+
         return Inertia::render('Notifications', [
             'agent_id' => $agent?->id ?? '',
             'agent_name' => $agent?->name ?? '',
-            'webhooks' => $agent?->notification_webhooks ?? [],
+            'webhooks' => $webhooks,
+            'telegram_usernames' => $telegramUsernames,
         ]);
     }
 

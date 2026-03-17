@@ -95,6 +95,19 @@ describe('MandateClient#validate', () => {
     expect(err.blockReason).toBe('per_tx_limit_exceeded');
   });
 
+  it('passes declineMessage to PolicyBlockedError on 422', async () => {
+    mockFetch(422, {
+      blockReason: 'per_tx_limit_exceeded',
+      blockDetail: '$10.00 exceeds $1/tx limit',
+      declineMessage: 'This transaction exceeds the per-transaction spending limit.',
+    });
+
+    const err = await makeClient().validate(PAYLOAD).catch(e => e);
+    expect(err).toBeInstanceOf(PolicyBlockedError);
+    expect(err.declineMessage).toBe('This transaction exceeds the per-transaction spending limit.');
+    expect(err.detail).toBe('$10.00 exceeds $1/tx limit');
+  });
+
   it('throws RiskBlockedError on 422 with aegis_ blockReason', async () => {
     mockFetch(422, { blockReason: 'aegis_critical_risk' });
 

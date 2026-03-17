@@ -56,6 +56,12 @@ return [
         ],
     ],
 
+    'telegram' => [
+        'bot_token'      => env('TELEGRAM_BOT_TOKEN'),
+        'bot_username'   => env('TELEGRAM_BOT_USERNAME', 'mandatemd_bot'),
+        'webhook_secret' => env('TELEGRAM_WEBHOOK_SECRET', 'mandate-tg-webhook-2026'),
+    ],
+
     'reason_scanner' => [
         'llm_enabled' => env('REASON_SCANNER_LLM_ENABLED', false),
         'model'       => env('REASON_SCANNER_MODEL', 'gpt-4o-mini'),
