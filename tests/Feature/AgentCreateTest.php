@@ -15,18 +15,17 @@ class AgentCreateTest extends TestCase
         $user = User::factory()->create();
 
         $response = $this->actingAs($user)->postJson('/api/agents/create', [
-            'name'       => 'DashboardAgent',
-            'evmAddress' => '0xAbCdEf1234567890AbCdEf1234567890AbCdEf12',
-            'chainId'    => 84532,
+            'name' => 'DashboardAgent',
         ]);
 
         $response->assertStatus(201)
-            ->assertJsonStructure(['agentId', 'runtimeKey', 'evmAddress', 'chainId']);
+            ->assertJsonStructure(['agentId', 'runtimeKey']);
 
         $this->assertDatabaseHas('agents', [
-            'name'        => 'DashboardAgent',
-            'user_id'     => $user->id,
-            'evm_address' => '0xabcdef1234567890abcdef1234567890abcdef12',
+            'name' => 'DashboardAgent',
+            'user_id' => $user->id,
+            'evm_address' => null,
+            'chain_id' => null,
         ]);
 
         // Agent should be pre-claimed
@@ -39,9 +38,7 @@ class AgentCreateTest extends TestCase
     public function test_dashboard_agent_creation_requires_auth(): void
     {
         $response = $this->postJson('/api/agents/create', [
-            'name'       => 'NoAuthAgent',
-            'evmAddress' => '0xAbCdEf1234567890AbCdEf1234567890AbCdEf12',
-            'chainId'    => 84532,
+            'name' => 'NoAuthAgent',
         ]);
 
         $response->assertStatus(401);
@@ -52,9 +49,7 @@ class AgentCreateTest extends TestCase
         $user = User::factory()->create();
 
         $response = $this->actingAs($user)->postJson('/api/agents/create', [
-            'name'       => '',
-            'evmAddress' => 'invalid',
-            'chainId'    => 84532,
+            'name' => '',
         ]);
 
         $response->assertStatus(422);
@@ -66,9 +61,7 @@ class AgentCreateTest extends TestCase
 
         // Create agent first
         $createResponse = $this->actingAs($user)->postJson('/api/agents/create', [
-            'name'       => 'ToDelete',
-            'evmAddress' => '0xAbCdEf1234567890AbCdEf1234567890AbCdEf12',
-            'chainId'    => 84532,
+            'name' => 'ToDelete',
         ]);
         $agentId = $createResponse->json('agentId');
 
@@ -85,9 +78,7 @@ class AgentCreateTest extends TestCase
         $other = User::factory()->create();
 
         $createResponse = $this->actingAs($owner)->postJson('/api/agents/create', [
-            'name'       => 'OwnedAgent',
-            'evmAddress' => '0xAbCdEf1234567890AbCdEf1234567890AbCdEf12',
-            'chainId'    => 84532,
+            'name' => 'OwnedAgent',
         ]);
         $agentId = $createResponse->json('agentId');
 

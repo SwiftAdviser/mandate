@@ -25,6 +25,14 @@ php artisan migrate   # Run migrations
 
 Tests use SQLite in-memory; no database setup needed.
 
+### Browser Testing (local)
+
+Use `/dev-login` route to authenticate in headless browser (local env only):
+```
+goto http://localhost:8000/dev-login   # auto-login as first user
+goto http://localhost:8000/policies    # then navigate to any authenticated page
+```
+
 ### TypeScript Packages (bun)
 
 ```bash

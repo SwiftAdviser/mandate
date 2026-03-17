@@ -29,6 +29,15 @@ class ValidateController extends Controller
         ]);
 
         $agent = $request->attributes->get('agent');
+
+        // Auto-fill agent address/chain on first validate call
+        if ($agent->evm_address === null && isset($data['to'])) {
+            $agent->update(['evm_address' => strtolower($data['to'])]);
+        }
+        if ($agent->chain_id === null && isset($data['chainId'])) {
+            $agent->update(['chain_id' => $data['chainId']]);
+        }
+
         $result = $this->engine->validate($agent, $data);
 
         if (! $result['allowed'] && $result['intentId'] === null) {

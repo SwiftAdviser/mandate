@@ -5,15 +5,10 @@ interface Props {
   onClose: () => void;
 }
 
-const CHAINS = [
-  { id: 84532, label: 'Base Sepolia (84532)' },
-  { id: 8453, label: 'Base (8453)' },
-];
+const QUICK_NAMES = ['Trading Agent', 'Polymarket Agent', 'Shopping Agent'];
 
 export default function CreateAgentModal({ onClose }: Props) {
   const [name, setName] = useState('');
-  const [evmAddress, setEvmAddress] = useState('');
-  const [chainId, setChainId] = useState(84532);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [runtimeKey, setRuntimeKey] = useState<string | null>(null);
@@ -35,7 +30,7 @@ export default function CreateAgentModal({ onClose }: Props) {
           ),
           'X-CSRF-TOKEN': csrfToken,
         },
-        body: JSON.stringify({ name, evmAddress, chainId }),
+        body: JSON.stringify({ name }),
       });
       if (!res.ok) {
         const data = await res.json().catch(() => null);
@@ -51,7 +46,7 @@ export default function CreateAgentModal({ onClose }: Props) {
   }
 
   function handleDone() {
-    window.location.reload();
+    window.location.href = '/dashboard?onboarding=1';
   }
 
   const inputStyle = {
@@ -65,16 +60,6 @@ export default function CreateAgentModal({ onClose }: Props) {
     fontFamily: 'var(--font-mono)',
     outline: 'none',
     boxSizing: 'border-box' as const,
-  };
-
-  const labelStyle = {
-    display: 'block',
-    fontSize: 11,
-    color: 'var(--text-dim)',
-    fontFamily: 'var(--font-mono)',
-    textTransform: 'uppercase' as const,
-    letterSpacing: '0.08em',
-    marginBottom: 6,
   };
 
   return (
@@ -104,7 +89,23 @@ export default function CreateAgentModal({ onClose }: Props) {
         }}
       >
         {runtimeKey ? (
-          <RuntimeKeyReveal runtimeKey={runtimeKey} onDone={handleDone} />
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+            <RuntimeKeyReveal runtimeKey={runtimeKey} onDone={handleDone} />
+            <div style={{
+              padding: '14px 16px',
+              background: 'var(--accent-glow)',
+              border: '1px solid var(--accent-dim)',
+              borderRadius: 8,
+            }}>
+              <div style={{ fontSize: 11, color: 'var(--accent)', fontFamily: 'var(--font-mono)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 6 }}>
+                Next step
+              </div>
+              <div style={{ fontSize: 12, color: 'var(--text-primary)', lineHeight: 1.6 }}>
+                Give <a href="/integrations" style={{ color: 'var(--accent)', textDecoration: 'underline' }}>SKILL.md</a> to your AI agent.
+                It contains the API reference and your runtimeKey.
+              </div>
+            </div>
+          </div>
         ) : (
           <>
             <div style={{
@@ -121,7 +122,13 @@ export default function CreateAgentModal({ onClose }: Props) {
             <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
               {/* Name */}
               <div>
-                <label style={labelStyle}>Name</label>
+                <label style={{
+                  display: 'block', fontSize: 11, color: 'var(--text-dim)',
+                  fontFamily: 'var(--font-mono)', textTransform: 'uppercase',
+                  letterSpacing: '0.08em', marginBottom: 6,
+                }}>
+                  Name
+                </label>
                 <input
                   type="text"
                   value={name}
@@ -131,41 +138,29 @@ export default function CreateAgentModal({ onClose }: Props) {
                   maxLength={100}
                   style={inputStyle}
                 />
-              </div>
-
-              {/* EVM Address */}
-              <div>
-                <label style={labelStyle}>EVM Address</label>
-                <input
-                  type="text"
-                  value={evmAddress}
-                  onChange={e => setEvmAddress(e.target.value)}
-                  placeholder="0x..."
-                  required
-                  pattern="^0x[a-fA-F0-9]{40}$"
-                  style={inputStyle}
-                />
-                <div style={{ fontSize: 10, color: 'var(--text-dim)', marginTop: 4, fontFamily: 'var(--font-mono)' }}>
-                  The agent's wallet address (0x + 40 hex chars)
-                </div>
-              </div>
-
-              {/* Chain */}
-              <div>
-                <label style={labelStyle}>Chain</label>
-                <select
-                  value={chainId}
-                  onChange={e => setChainId(Number(e.target.value))}
-                  style={{
-                    ...inputStyle,
-                    appearance: 'none',
-                    cursor: 'pointer',
-                  }}
-                >
-                  {CHAINS.map(c => (
-                    <option key={c.id} value={c.id}>{c.label}</option>
+                {/* Quick pick */}
+                <div style={{ display: 'flex', gap: 6, marginTop: 8 }}>
+                  {QUICK_NAMES.map(n => (
+                    <button
+                      key={n}
+                      type="button"
+                      onClick={() => setName(n)}
+                      style={{
+                        padding: '4px 10px',
+                        fontSize: 10,
+                        fontFamily: 'var(--font-mono)',
+                        background: name === n ? 'var(--accent-glow)' : 'var(--bg-hover)',
+                        border: `1px solid ${name === n ? 'var(--accent-dim)' : 'var(--border-dim)'}`,
+                        borderRadius: 4,
+                        color: name === n ? 'var(--accent)' : 'var(--text-dim)',
+                        cursor: 'pointer',
+                        transition: 'all 0.15s',
+                      }}
+                    >
+                      {n}
+                    </button>
                   ))}
-                </select>
+                </div>
               </div>
 
               {/* Error */}

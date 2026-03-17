@@ -101,7 +101,7 @@ export default function Claim({ claim_code, agent_name, evm_address, chain_id, a
                 Configure its policy from your dashboard.
               </p>
               <a
-                href="/dashboard"
+                href="/dashboard?onboarding=1"
                 style={{
                   display: 'inline-block', marginTop: 24,
                   padding: '10px 24px',
@@ -137,8 +137,8 @@ export default function Claim({ claim_code, agent_name, evm_address, chain_id, a
                 {/* Agent details */}
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
                   {[
-                    { label: 'EVM Address', value: evm_address },
-                    { label: 'Chain ID',    value: String(chain_id) },
+                    ...(evm_address ? [{ label: 'EVM Address', value: evm_address }] : []),
+                    ...(chain_id ? [{ label: 'Chain ID', value: String(chain_id) }] : []),
                     { label: 'Claim Code',  value: claim_code },
                   ].map(row => (
                     <div key={row.label} style={{

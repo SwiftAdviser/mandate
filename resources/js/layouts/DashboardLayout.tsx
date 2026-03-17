@@ -3,14 +3,14 @@ import { LayoutDashboard, Bot, Shield, FileText, CheckCircle, Bell, ScrollText, 
 import { ReactNode, useState } from 'react';
 
 const NAV = [
-  { href: '/dashboard',       label: 'Overview',      icon: LayoutDashboard },
-  { href: '/mandate',          label: 'MANDATE.md',     icon: FileText },
-  { href: '/agents',          label: 'Agents',         icon: Bot },
-  { href: '/policies',        label: 'Policies',       icon: Shield },
-  { href: '/approvals',       label: 'Approvals',      icon: CheckCircle, badge: true },
-  { href: '/notifications',   label: 'Notifications',  icon: Bell },
-  { href: '/audit',           label: 'Audit Log',      icon: ScrollText },
+  { href: '/dashboard',       label: 'Quick Start',   icon: LayoutDashboard },
   { href: '/integrations',    label: 'Integrations',   icon: Puzzle },
+  { href: '/mandate',          label: 'MANDATE.md',     icon: FileText, needsAgent: true },
+  { href: '/agents',          label: 'Agents',         icon: Bot, needsAgent: true },
+  { href: '/policies',        label: 'Policies',       icon: Shield, needsAgent: true },
+  { href: '/approvals',       label: 'Approvals',      icon: CheckCircle, badge: true, needsAgent: true },
+  { href: '/notifications',   label: 'Notifications',  icon: Bell, needsAgent: true },
+  { href: '/audit',           label: 'Audit Log',      icon: ScrollText, needsAgent: true },
 ];
 
 export default function DashboardLayout({ children }: { children: ReactNode }) {
@@ -18,6 +18,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
   const url = page.url;
   const user = (page.props as any).auth?.user;
   const pendingApprovals = (page.props as any).pending_approvals ?? 0;
+  const agentActivated = (page.props as any).agent_activated ?? false;
   const [collapsed, setCollapsed] = useState(false);
 
   return (
@@ -65,7 +66,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
 
         {/* Nav */}
         <nav style={{ flex: 1, padding: '12px 8px', overflow: 'auto' }}>
-          {NAV.map(item => {
+          {NAV.filter(item => !item.needsAgent || agentActivated).map(item => {
             const active = url.startsWith(item.href);
             const Icon = item.icon;
             return (

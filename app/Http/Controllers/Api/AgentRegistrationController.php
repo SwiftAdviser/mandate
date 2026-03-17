@@ -17,7 +17,7 @@ class AgentRegistrationController extends Controller
         $data = $request->validate([
             'name' => ['required', 'string', 'max:100'],
             'evmAddress' => ['required', 'string', 'regex:/^0x[a-fA-F0-9]{40}$/'],
-            'chainId' => ['required', 'integer'],
+            'chainId' => ['sometimes', 'integer'],
             'defaultPolicy' => ['sometimes', 'array'],
             'defaultPolicy.spendLimitPerTxUsd' => ['sometimes', 'numeric', 'min:0'],
             'defaultPolicy.spendLimitPerDayUsd' => ['sometimes', 'numeric', 'min:0'],
@@ -28,7 +28,7 @@ class AgentRegistrationController extends Controller
         $agent = Agent::create([
             'name' => $data['name'],
             'evm_address' => strtolower($data['evmAddress']),
-            'chain_id' => $data['chainId'],
+            'chain_id' => $data['chainId'] ?? null,
             'claim_code' => $claimCode,
         ]);
 
@@ -105,26 +105,18 @@ class AgentRegistrationController extends Controller
     {
         $data = $request->validate([
             'name' => ['required', 'string', 'max:100'],
-            'evmAddress' => ['required', 'string', 'regex:/^0x[a-fA-F0-9]{40}$/'],
-            'chainId' => ['required', 'integer'],
-            'defaultPolicy' => ['sometimes', 'array'],
-            'defaultPolicy.spendLimitPerTxUsd' => ['sometimes', 'numeric', 'min:0'],
-            'defaultPolicy.spendLimitPerDayUsd' => ['sometimes', 'numeric', 'min:0'],
         ]);
 
         $agent = Agent::create([
             'user_id' => auth()->id(),
             'name' => $data['name'],
-            'evm_address' => strtolower($data['evmAddress']),
-            'chain_id' => $data['chainId'],
             'claimed_at' => now(),
         ]);
 
-        $policyDefaults = $data['defaultPolicy'] ?? [];
         Policy::create([
             'agent_id' => $agent->id,
-            'spend_limit_per_tx_usd' => $policyDefaults['spendLimitPerTxUsd'] ?? 100,
-            'spend_limit_per_day_usd' => $policyDefaults['spendLimitPerDayUsd'] ?? 1000,
+            'spend_limit_per_tx_usd' => 100,
+            'spend_limit_per_day_usd' => 1000,
             'is_active' => true,
         ]);
 
@@ -133,8 +125,6 @@ class AgentRegistrationController extends Controller
         return response()->json([
             'agentId' => $agent->id,
             'runtimeKey' => $rawKey,
-            'evmAddress' => $agent->evm_address,
-            'chainId' => $agent->chain_id,
         ], 201);
     }
 }

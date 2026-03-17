@@ -4,7 +4,9 @@ namespace App\Http\Controllers\Web;
 
 use App\Http\Controllers\Controller;
 use App\Models\Agent;
+use App\Models\AgentApiKey;
 use App\Models\ApprovalQueue;
+use App\Models\Policy;
 use App\Models\TxIntent;
 use App\Services\IntentSummaryService;
 use Illuminate\Http\Request;
@@ -18,16 +20,49 @@ class DashboardController extends Controller
         $userId = auth()->id();
 
         $agents = Agent::where('user_id', $userId)->get();
+        $firstVisitKey = null;
+
+        // Auto-create first agent on first dashboard visit
+        if ($agents->isEmpty()) {
+            $agent = Agent::create([
+                'user_id' => $userId,
+                'name' => 'first-agent',
+                'claimed_at' => now(),
+            ]);
+
+            Policy::create([
+                'agent_id' => $agent->id,
+                'spend_limit_per_tx_usd' => 100,
+                'spend_limit_per_day_usd' => 1000,
+                'is_active' => true,
+            ]);
+
+            [$rawKey] = AgentApiKey::generate($agent);
+            $request->session()->put('first_agent_key', $rawKey);
+
+            $agents = Agent::where('user_id', $userId)->get();
+        }
+
         $selectedAgent = $agents->first();
 
-        $dailyQuota   = null;
+        // Show activation block until agent makes its first API call (evm_address gets filled)
+        if ($selectedAgent && $selectedAgent->evm_address === null && $request->session()->has('first_agent_key')) {
+            $firstVisitKey = $request->session()->get('first_agent_key');
+        }
+
+        // Agent activated — clear session key
+        if ($selectedAgent && $selectedAgent->evm_address !== null) {
+            $request->session()->forget('first_agent_key');
+        }
+
+        $dailyQuota = null;
         $monthlyQuota = null;
         $recentIntents = collect();
-        $totalToday   = 0;
+        $totalToday = 0;
         $pendingApprovals = 0;
 
         if ($selectedAgent) {
-            $dailyQuota   = \DB::table('quota_reservations')
+            $dailyQuota = \DB::table('quota_reservations')
                 ->where('agent_id', $selectedAgent->id)
                 ->where('window_type', 'daily')
                 ->where('window_key', now()->format('Y-m-d'))
@@ -43,7 +78,7 @@ class DashboardController extends Controller
             $recentIntents = TxIntent::where('agent_id', $selectedAgent->id)
                 ->orderByDesc('created_at')
                 ->limit(20)
-                ->get(['id','decoded_action','decoded_token','decoded_raw_amount','decoded_recipient','amount_usd_computed','status','to_address','created_at','tx_hash','chain_id','value_wei','calldata','risk_level','reason'])
+                ->get(['id', 'decoded_action', 'decoded_token', 'decoded_raw_amount', 'decoded_recipient', 'amount_usd_computed', 'status', 'to_address', 'created_at', 'tx_hash', 'chain_id', 'value_wei', 'calldata', 'risk_level', 'reason'])
                 ->map(fn ($i) => array_merge($i->toArray(), ['summary' => $summaryService->summarize($i)]));
 
             $totalToday = TxIntent::where('agent_id', $selectedAgent->id)
@@ -57,14 +92,18 @@ class DashboardController extends Controller
                 ->count();
         }
 
+        $needsOnboarding = $request->query('onboarding') === '1';
+
         return Inertia::render('Dashboard', [
-            'agents'                => $agents,
-            'selected_agent'        => $selectedAgent,
-            'daily_quota'           => $dailyQuota,
-            'monthly_quota'         => $monthlyQuota,
-            'recent_intents'        => $recentIntents,
+            'agents' => $agents,
+            'selected_agent' => $selectedAgent,
+            'daily_quota' => $dailyQuota,
+            'monthly_quota' => $monthlyQuota,
+            'recent_intents' => $recentIntents,
             'total_confirmed_today' => (float) $totalToday,
-            'pending_approvals'     => $pendingApprovals,
+            'pending_approvals' => $pendingApprovals,
+            'needs_onboarding' => $needsOnboarding,
+            'first_visit_key' => $firstVisitKey,
         ]);
     }
 
@@ -78,7 +117,7 @@ class DashboardController extends Controller
             ->when($request->status, fn ($q, $s) => $q->where('status', $s))
             ->when($request->action, fn ($q, $a) => $q->where('decoded_action', $a))
             ->orderByDesc('created_at')
-            ->paginate(50, ['id','decoded_action','decoded_token','decoded_raw_amount','decoded_recipient','amount_usd_computed','status','to_address','created_at','tx_hash','chain_id','intent_hash','value_wei','calldata','risk_level','reason']);
+            ->paginate(50, ['id', 'decoded_action', 'decoded_token', 'decoded_raw_amount', 'decoded_recipient', 'amount_usd_computed', 'status', 'to_address', 'created_at', 'tx_hash', 'chain_id', 'intent_hash', 'value_wei', 'calldata', 'risk_level', 'reason']);
 
         $intents->through(fn ($i) => array_merge($i->toArray(), ['summary' => $summaryService->summarize($i)]));
 
@@ -104,6 +143,7 @@ class DashboardController extends Controller
             if ($a->intent) {
                 $a->intent->setAttribute('summary', $summaryService->summarize($a->intent));
             }
+
             return $a;
         });
 
@@ -118,7 +158,7 @@ class DashboardController extends Controller
         $currentPolicy = $agent?->activePolicy()->first();
 
         return Inertia::render('PolicyBuilder', [
-            'agent_id'       => $agent?->id ?? '',
+            'agent_id' => $agent?->id ?? '',
             'current_policy' => $currentPolicy,
         ]);
     }
@@ -130,7 +170,7 @@ class DashboardController extends Controller
         $currentPolicy = $agent?->activePolicy()->first();
 
         return Inertia::render('MandateMd', [
-            'agent_id'    => $agent?->id ?? '',
+            'agent_id' => $agent?->id ?? '',
             'guard_rules' => $currentPolicy?->guard_rules,
         ]);
     }
@@ -158,14 +198,14 @@ class DashboardController extends Controller
 
     public function claim(Request $request): Response
     {
-        $code  = $request->query('code', '');
+        $code = $request->query('code', '');
         $agent = Agent::where('claim_code', strtoupper($code))->first();
 
         return Inertia::render('Claim', [
-            'claim_code'      => $code,
-            'agent_name'      => $agent?->name ?? 'Unknown Agent',
-            'evm_address'     => $agent?->evm_address ?? '',
-            'chain_id'        => $agent?->chain_id ?? 0,
+            'claim_code' => $code,
+            'agent_name' => $agent?->name ?? 'Unknown Agent',
+            'evm_address' => $agent?->evm_address ?? '',
+            'chain_id' => $agent?->chain_id ?? 0,
             'already_claimed' => $agent?->isClaimed() ?? false,
         ]);
     }

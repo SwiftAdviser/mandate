@@ -1,4 +1,5 @@
 import DashboardLayout from '@/layouts/DashboardLayout';
+import { FaTelegram, FaSlack } from 'react-icons/fa';
 import { useState } from 'react';
 
 interface Webhook {
@@ -147,7 +148,7 @@ export default function Notifications({ agent_id, agent_name, webhooks: initial,
               borderRadius: 12,
             }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14 }}>
-                <span style={{ fontSize: 18 }}>✈</span>
+                <FaTelegram size={20} color="#29b6f6" />
                 <div>
                   <div style={{ fontSize: 14, fontWeight: 500, color: 'var(--text-primary)' }}>Telegram</div>
                   <div style={{ fontSize: 11, color: 'var(--text-dim)' }}>
@@ -225,7 +226,7 @@ export default function Notifications({ agent_id, agent_name, webhooks: initial,
               borderRadius: 12,
             }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14 }}>
-                <span style={{ fontSize: 18 }}>#</span>
+                <FaSlack size={20} color="#E01E5A" />
                 <div>
                   <div style={{ fontSize: 14, fontWeight: 500, color: 'var(--text-primary)' }}>Slack</div>
                   <div style={{ fontSize: 11, color: 'var(--text-dim)' }}>Incoming Webhook URL</div>

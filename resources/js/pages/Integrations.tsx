@@ -41,14 +41,17 @@ interface Integration {
   package: string;
   category: 'core' | 'agent' | 'assistant';
   icon: string;
+  logo?: string;
   tagline: string;
   install: string;
+  quickStart: string; // one-line copy-paste instruction for agents
   code: string;
   lang: 'typescript' | 'bash' | 'json' | 'toml';
   envVars: { name: string; note: string }[];
   prerequisites: string[];
   githubUrl: string;
   hasSkill: boolean;
+  comingSoon?: boolean;
 }
 
 type FilterCategory = 'all' | 'agent' | 'assistant' | 'core';
@@ -61,8 +64,10 @@ const INTEGRATIONS: Integration[] = [
     package: '@mandate/openclaw-plugin',
     category: 'agent',
     icon: '🦀',
+    logo: '/logos/openclaw.svg',
     tagline: 'Drop-in policy plugin for OpenClaw agents',
     install: 'bun add @mandate/openclaw-plugin',
+    quickStart: 'bun add @mandate/openclaw-plugin',
     code: `import { MandatePlugin } from '@mandate/openclaw-plugin';
 import { OpenClaw } from 'openclaw';
 
@@ -70,7 +75,6 @@ const agent = new OpenClaw({
   plugins: [
     new MandatePlugin({
       runtimeKey: process.env.MANDATE_RUNTIME_KEY!,
-      chainId: Number(process.env.MANDATE_CHAIN_ID),
     }),
   ],
 });
@@ -80,7 +84,7 @@ await agent.run('Send 10 USDC to alice.eth');`,
     lang: 'typescript',
     envVars: [
       { name: 'MANDATE_RUNTIME_KEY', note: 'from dashboard' },
-      { name: 'MANDATE_CHAIN_ID', note: 'e.g. 84532 for Base Sepolia' },
+
     ],
     prerequisites: ['local EVM wallet key required'],
     githubUrl: 'https://github.com/SwiftAdviser/mandate/blob/master/docs/STACK.md',
@@ -92,8 +96,10 @@ await agent.run('Send 10 USDC to alice.eth');`,
     package: 'mandate-hook.sh',
     category: 'assistant',
     icon: '🤖',
+    logo: '/logos/claude.svg',
     tagline: 'PreToolUse hook for Claude Code sessions',
     install: 'cp mandate-hook.sh ~/.claude/hooks/mandate-hook.sh',
+    quickStart: 'curl -sL https://mandate.krutovoy.me/hooks/claude.sh -o ~/.claude/hooks/mandate-hook.sh && chmod +x ~/.claude/hooks/mandate-hook.sh',
     code: `{
   "hooks": {
     "PreToolUse": [
@@ -126,6 +132,7 @@ await agent.run('Send 10 USDC to alice.eth');`,
     icon: '⚙️',
     tagline: 'Cloudflare Worker MCP server with policy enforcement',
     install: 'npx wrangler deploy',
+    quickStart: 'npx wrangler deploy && add mandate MCP server URL to your agent config',
     code: `[mcp_servers.mandate]
 url = "https://mandate-mcp.YOUR_SUBDOMAIN.workers.dev/mcp"
 env = { MANDATE_RUNTIME_KEY = "$MANDATE_RUNTIME_KEY" }
@@ -142,12 +149,14 @@ env = { MANDATE_RUNTIME_KEY = "$MANDATE_RUNTIME_KEY" }
   },
   {
     id: 'eliza',
+    comingSoon: true,
     framework: 'ElizaOS',
     package: '@mandate/eliza-plugin',
     category: 'agent',
     icon: '🧬',
     tagline: 'Plugin for ElizaOS agent runtimes',
     install: 'bun add @mandate/eliza-plugin',
+    quickStart: 'bun add @mandate/eliza-plugin',
     code: `import { mandatePlugin } from '@mandate/eliza-plugin';
 import { AgentRuntime } from '@elizaos/core';
 
@@ -155,7 +164,6 @@ const runtime = new AgentRuntime({
   plugins: [mandatePlugin],
   settings: {
     MANDATE_RUNTIME_KEY: process.env.MANDATE_RUNTIME_KEY!,
-    MANDATE_CHAIN_ID: process.env.MANDATE_CHAIN_ID!,
   },
 });
 
@@ -163,7 +171,7 @@ const runtime = new AgentRuntime({
     lang: 'typescript',
     envVars: [
       { name: 'MANDATE_RUNTIME_KEY', note: 'from dashboard' },
-      { name: 'MANDATE_CHAIN_ID', note: 'e.g. 84532 for Base Sepolia' },
+
     ],
     prerequisites: ['local EVM wallet key required'],
     githubUrl: 'https://github.com/SwiftAdviser/mandate/blob/master/docs/STACK.md',
@@ -171,12 +179,15 @@ const runtime = new AgentRuntime({
   },
   {
     id: 'agentkit',
+    comingSoon: true,
     framework: 'Coinbase AgentKit',
     package: '@mandate/agentkit-provider',
     category: 'agent',
     icon: '🔵',
+    logo: '/logos/coinbase.svg',
     tagline: 'Policy provider for Coinbase AgentKit',
     install: 'bun add @mandate/agentkit-provider @coinbase/agentkit',
+    quickStart: 'bun add @mandate/agentkit-provider',
     code: `import { MandateWalletProvider } from '@mandate/agentkit-provider';
 import { AgentKit } from '@coinbase/agentkit';
 
@@ -198,12 +209,14 @@ const agentKit = new AgentKit({ walletProvider });
   },
   {
     id: 'goat',
+    comingSoon: true,
     framework: 'GOAT SDK',
     package: '@mandate/goat-plugin',
     category: 'agent',
     icon: '🐐',
     tagline: 'Policy middleware for GOAT SDK toolchains',
     install: 'bun add @mandate/goat-plugin @goat-sdk/core',
+    quickStart: 'bun add @mandate/goat-plugin',
     code: `import { mandate } from '@mandate/goat-plugin';
 import { getOnChainTools } from '@goat-sdk/adapter-vercel-ai';
 
@@ -227,12 +240,14 @@ const tools = await getOnChainTools({
   },
   {
     id: 'game',
+    comingSoon: true,
     framework: 'GAME SDK (Virtuals)',
     package: '@mandate/game-plugin',
     category: 'agent',
     icon: '🎮',
     tagline: 'Policy enforcement for Virtuals GAME agents',
     install: 'bun add @mandate/game-plugin @virtuals-protocol/game',
+    quickStart: 'bun add @mandate/game-plugin',
     code: `import { MandatePlugin } from '@mandate/game-plugin';
 import { GameAgent } from '@virtuals-protocol/game';
 
@@ -257,12 +272,14 @@ await agent.init();`,
   },
   {
     id: 'acp',
+    comingSoon: true,
     framework: 'ACP by Virtuals',
     package: '@mandate/acp-plugin',
     category: 'agent',
     icon: '🌐',
     tagline: 'Policy layer for ACP agent-to-agent payments',
     install: 'bun add @mandate/acp-plugin',
+    quickStart: 'bun add @mandate/acp-plugin',
     code: `import { withMandate } from '@mandate/acp-plugin';
 import { AcpClient } from '@virtuals-protocol/acp';
 
@@ -290,11 +307,11 @@ export const agent = withMandate(acpClient, {
     icon: '📦',
     tagline: 'Direct HTTP client for any stack or language',
     install: 'bun add @mandate/sdk',
+    quickStart: 'bun add @mandate/sdk',
     code: `import { MandateClient, PolicyBlockedError, ApprovalRequiredError } from '@mandate/sdk';
 
 const mandate = new MandateClient({
   runtimeKey: process.env.MANDATE_RUNTIME_KEY!,
-  chainId: Number(process.env.MANDATE_CHAIN_ID),
 });
 
 try {
@@ -314,11 +331,12 @@ try {
     lang: 'typescript',
     envVars: [
       { name: 'MANDATE_RUNTIME_KEY', note: 'from dashboard' },
-      { name: 'MANDATE_CHAIN_ID', note: 'e.g. 84532 for Base Sepolia' },
+
     ],
     prerequisites: ['local EVM wallet key required'],
     githubUrl: 'https://github.com/SwiftAdviser/mandate/blob/master/docs/STACK.md',
     hasSkill: false,
+    comingSoon: true,
   },
 ];
 
@@ -373,24 +391,55 @@ function IntegrationCard({
   active: boolean;
   onClick: () => void;
 }) {
+  const isSoon = item.comingSoon;
+
   return (
     <button
-      onClick={onClick}
+      onClick={isSoon ? undefined : onClick}
       aria-pressed={active}
       aria-controls="integration-detail"
       style={{
         display: 'flex', flexDirection: 'column', gap: 12,
-        padding: '24px', textAlign: 'left', cursor: 'pointer',
+        padding: '24px', textAlign: 'left',
+        cursor: isSoon ? 'default' : 'pointer',
         background: active ? 'var(--bg-raised)' : 'var(--bg-surface)',
-        border: `1px solid ${active ? 'var(--accent)' : 'var(--border)'}`,
+        border: `1px solid ${active ? 'var(--accent)' : isSoon ? 'rgba(16, 185, 129, 0.08)' : 'var(--border)'}`,
         borderRadius: 4,
         boxShadow: active ? '0 0 0 1px var(--accent), 0 0 16px rgba(16,185,129,0.1)' : 'none',
         transition: 'all 0.2s ease',
         width: '100%',
+        opacity: isSoon ? 0.55 : 1,
+        pointerEvents: isSoon ? 'none' : 'auto',
+        position: 'relative',
+        overflow: 'hidden',
       }}
     >
+      {isSoon && (
+        <div style={{
+          position: 'absolute', top: 12, right: 14,
+          display: 'inline-flex', alignItems: 'center', gap: 5,
+          padding: '3px 8px',
+          background: 'rgba(16, 185, 129, 0.08)',
+          border: '1px solid rgba(16, 185, 129, 0.15)',
+          borderRadius: 3,
+        }}>
+          <span style={{
+            width: 5, height: 5, borderRadius: '50%',
+            display: 'inline-block',
+            background: 'var(--accent)', opacity: 0.6,
+          }} />
+          <span style={{
+            fontFamily: 'var(--font-mono)', fontSize: 9.5,
+            color: 'var(--accent)', letterSpacing: '0.06em',
+            opacity: 0.8,
+          }}>coming soon</span>
+        </div>
+      )}
       <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-        <span style={{ fontSize: 24, lineHeight: 1 }}>{item.icon}</span>
+        {item.logo
+          ? <img src={item.logo} alt={item.framework} style={{ width: 24, height: 24, objectFit: 'contain', ...(isSoon ? { filter: 'grayscale(0.5)' } : {}) }} />
+          : <span style={{ fontSize: 24, lineHeight: 1, ...(isSoon ? { filter: 'grayscale(0.4)' } : {}) }}>{item.icon}</span>
+        }
         <div>
           <div style={{
             fontFamily: 'var(--font-sans)', fontSize: 15,
@@ -408,7 +457,7 @@ function IntegrationCard({
         fontFamily: 'var(--font-sans)', fontSize: 13,
         color: 'var(--text-secondary)', lineHeight: 1.5,
       }}>{item.tagline}</div>
-      {item.hasSkill && (
+      {item.hasSkill && !isSoon && (
         <div style={{
           fontFamily: 'var(--font-mono)', fontSize: 10,
           color: 'var(--accent)', letterSpacing: '0.06em',
@@ -419,9 +468,22 @@ function IntegrationCard({
   );
 }
 
-/* ── Detail panel ────────────────────────────────────────────────────────── */
-function DetailPanel({ item }: { item: Integration }) {
+/* ── Detail modal ────────────────────────────────────────────────────────── */
+function DetailModal({ item, runtimeKey, onClose }: { item: Integration; runtimeKey: string | null; onClose: () => void }) {
+  const [mainCopied, setMainCopied] = useState(false);
+  const [showCode, setShowCode] = useState(false);
   const { copy, copied } = useCopy();
+  const backdropRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleEsc = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
+    document.addEventListener('keydown', handleEsc);
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.removeEventListener('keydown', handleEsc);
+      document.body.style.overflow = '';
+    };
+  }, [onClose]);
 
   const langLabel: Record<string, string> = {
     typescript: 'TypeScript',
@@ -430,208 +492,222 @@ function DetailPanel({ item }: { item: Integration }) {
     toml: 'TOML',
   };
 
+  const fullText = `${item.quickStart}\nMANDATE_RUNTIME_KEY=${runtimeKey || '<your-runtime-key>'}`;
+
+  async function copyQuickStart() {
+    await navigator.clipboard.writeText(fullText);
+    setMainCopied(true);
+    setTimeout(() => setMainCopied(false), 2500);
+  }
+
   return (
     <div
-      id="integration-detail"
-      key={item.id}
-      className="fade-up"
+      ref={backdropRef}
+      className="modal-backdrop"
+      onClick={e => { if (e.target === backdropRef.current) onClose(); }}
       style={{
-        marginTop: 24,
-        border: '1px solid var(--border)',
-        borderRadius: 4,
-        background: 'var(--bg-surface)',
-        overflow: 'hidden',
+        position: 'fixed', inset: 0, zIndex: 1000,
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        background: 'rgba(0, 0, 0, 0.6)',
+        backdropFilter: 'blur(6px)',
+        padding: 24,
       }}
     >
-      <div style={{
-        padding: '24px 28px',
-        borderBottom: '1px solid var(--border-dim)',
-        display: 'flex', alignItems: 'center', gap: 12,
-      }}>
-        <span style={{ fontSize: 28 }}>{item.icon}</span>
-        <div>
-          <div style={{
-            fontFamily: 'var(--font-mono)', fontSize: 14,
-            color: 'var(--accent)',
-          }}>{item.package}</div>
-          <div style={{
-            fontFamily: 'var(--font-sans)', fontSize: 16,
-            color: 'var(--text-primary)', fontWeight: 500,
-          }}>{item.framework}</div>
-        </div>
-      </div>
-
-      <div style={{ padding: '28px' }}>
-        {/* Install block */}
-        <div style={{ marginBottom: 24 }}>
-          <div style={{
-            fontFamily: 'var(--font-mono)', fontSize: 11,
-            color: 'var(--text-dim)', letterSpacing: '0.08em',
-            textTransform: 'uppercase', marginBottom: 10,
-          }}>Install</div>
-          <div style={{
-            display: 'flex', alignItems: 'center', gap: 12,
-            background: 'var(--bg-raised)',
-            border: '1px solid var(--border-dim)',
-            borderRadius: 4, padding: '12px 16px',
-          }}>
-            <code style={{
-              flex: 1, fontFamily: 'var(--font-mono)', fontSize: 13,
-              color: 'var(--text-primary)',
-            }}>{item.install}</code>
-            <button
-              onClick={() => copy(`${item.id}-install`, item.install)}
-              style={{
-                fontFamily: 'var(--font-mono)', fontSize: 11,
-                color: copied[`${item.id}-install`] ? 'var(--accent)' : 'var(--text-dim)',
-                background: 'none', border: 'none', cursor: 'pointer',
-                padding: '4px 8px',
-                transition: 'color 0.15s',
-                flexShrink: 0,
-              }}
-            >
-              {copied[`${item.id}-install`] ? '✓ Copied' : 'Copy'}
-            </button>
-          </div>
-        </div>
-
-        {/* Code block */}
-        <div style={{ marginBottom: 28 }}>
-          <div style={{
-            background: '#040709',
-            border: '1px solid var(--border)',
-            borderRadius: 4, overflow: 'hidden',
-          }}>
+      <div
+        className="modal-enter"
+        style={{
+          width: '100%', maxWidth: 540,
+          maxHeight: 'calc(100vh - 48px)',
+          overflowY: 'auto',
+          border: '1px solid var(--border)',
+          borderRadius: 12,
+          background: 'var(--bg-surface)',
+          boxShadow: '0 24px 80px rgba(0,0,0,0.5), 0 0 1px rgba(16,185,129,0.2)',
+        }}
+      >
+        {/* Header */}
+        <div style={{
+          padding: '24px 28px 20px',
+          display: 'flex', alignItems: 'center', gap: 12,
+        }}>
+          {item.logo
+            ? <img src={item.logo} alt={item.framework} style={{ width: 32, height: 32, objectFit: 'contain' }} />
+            : <span style={{ fontSize: 32 }}>{item.icon}</span>
+          }
+          <div style={{ flex: 1 }}>
             <div style={{
-              background: 'var(--bg-surface)',
-              borderBottom: '1px solid var(--border)',
-              padding: '10px 16px',
-              display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-            }}>
-              <span style={{
-                fontFamily: 'var(--font-mono)', fontSize: 11,
-                color: 'var(--text-dim)', letterSpacing: '0.04em',
-              }}>{langLabel[item.lang] ?? item.lang}</span>
-              <button
-                onClick={() => copy(`${item.id}-code`, item.code)}
-                style={{
-                  fontFamily: 'var(--font-mono)', fontSize: 11,
-                  color: copied[`${item.id}-code`] ? 'var(--accent)' : 'var(--text-dim)',
-                  background: 'none', border: 'none', cursor: 'pointer',
-                  padding: '4px 8px',
-                  transition: 'color 0.15s',
-                }}
-              >
-                {copied[`${item.id}-code`] ? '✓ Copied' : 'Copy'}
-              </button>
-            </div>
-            <pre style={{
-              margin: 0, padding: '20px 20px',
-              fontFamily: 'var(--font-mono)', fontSize: 12.5,
-              lineHeight: 1.75, color: 'var(--text-secondary)',
-              overflowX: 'auto', whiteSpace: 'pre',
-            }}>
-              {item.code.split('\n').map((line, i) => {
-                const isComment = line.trim().startsWith('//') || line.trim().startsWith('#');
-                const isKey = /^(import|export|const|let|var|async|await|try|catch|if|return|new)\b/.test(line.trim());
-                const isString = line.includes('"') || line.includes("'") || line.includes('`');
-                return (
-                  <span key={i} style={{
-                    display: 'block',
-                    color: isComment ? 'var(--text-dim)'
-                         : isKey    ? 'var(--accent)'
-                         : isString ? 'var(--text-secondary)'
-                         : 'var(--text-primary)',
-                  }}>{line}</span>
-                );
-              })}
-            </pre>
-          </div>
-        </div>
-
-        {/* Env vars */}
-        <div style={{ marginBottom: 20 }}>
-          <div style={{
-            fontFamily: 'var(--font-mono)', fontSize: 11,
-            color: 'var(--text-dim)', letterSpacing: '0.08em',
-            textTransform: 'uppercase', marginBottom: 12,
-          }}>Environment Variables</div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-            {item.envVars.map(ev => (
-              <div key={ev.name} style={{
-                display: 'flex', alignItems: 'baseline', gap: 12,
-                flexWrap: 'wrap',
-              }}>
-                <code style={{
-                  fontFamily: 'var(--font-mono)', fontSize: 12,
-                  color: 'var(--accent)',
-                }}>{ev.name}</code>
-                <span style={{
-                  fontFamily: 'var(--font-mono)', fontSize: 12,
-                  color: 'var(--text-dim)',
-                }}>· {ev.note}</span>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Prerequisites */}
-        {item.prerequisites.length > 0 && (
-          <div style={{ marginBottom: 28 }}>
+              fontFamily: 'var(--font-display)', fontSize: 20,
+              color: 'var(--text-primary)', fontWeight: 400,
+              letterSpacing: '-0.02em',
+            }}>{item.framework}</div>
             <div style={{
               fontFamily: 'var(--font-mono)', fontSize: 11,
-              color: 'var(--text-dim)', letterSpacing: '0.08em',
-              textTransform: 'uppercase', marginBottom: 8,
-            }}>Prerequisites</div>
-            {item.prerequisites.map(p => (
-              <div key={p} style={{
-                fontFamily: 'var(--font-mono)', fontSize: 12,
-                color: 'var(--text-secondary)',
-              }}>· {p}</div>
-            ))}
+              color: 'var(--text-dim)', marginTop: 2,
+            }}>{item.tagline}</div>
           </div>
-        )}
-
-        {/* CTAs */}
-        <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
-          {item.hasSkill && (
-            <button
-              onClick={downloadSkill}
-              style={{
-                display: 'inline-flex', alignItems: 'center', gap: 8,
-                padding: '10px 18px',
-                background: 'var(--accent-glow)',
-                border: '1px solid var(--accent-dim)',
-                borderRadius: 4,
-                fontFamily: 'var(--font-mono)', fontSize: 13,
-                color: 'var(--accent)', cursor: 'pointer',
-                transition: 'opacity 0.15s',
-              }}
-              onMouseEnter={e => (e.currentTarget.style.opacity = '0.8')}
-              onMouseLeave={e => (e.currentTarget.style.opacity = '1')}
-            >
-              ↓ mandate.skill.md
-            </button>
-          )}
-          <a
-            href={item.githubUrl}
-            target="_blank"
-            rel="noopener noreferrer"
+          <button
+            onClick={onClose}
             style={{
-              display: 'inline-flex', alignItems: 'center', gap: 8,
-              padding: '10px 18px',
-              background: 'transparent',
-              border: '1px solid var(--border)',
-              borderRadius: 4,
-              fontFamily: 'var(--font-mono)', fontSize: 13,
-              color: 'var(--text-secondary)', textDecoration: 'none',
-              transition: 'color 0.15s, border-color 0.15s',
+              background: 'none', border: 'none', cursor: 'pointer',
+              color: 'var(--text-dim)', fontSize: 18, lineHeight: 1,
+              padding: '4px 8px', borderRadius: 4,
+              transition: 'color 0.15s',
             }}
-            onMouseEnter={e => { e.currentTarget.style.color = 'var(--text-primary)'; e.currentTarget.style.borderColor = 'var(--text-dim)'; }}
-            onMouseLeave={e => { e.currentTarget.style.color = 'var(--text-secondary)'; e.currentTarget.style.borderColor = 'var(--border)'; }}
+            onMouseEnter={e => (e.currentTarget.style.color = 'var(--text-primary)')}
+            onMouseLeave={e => (e.currentTarget.style.color = 'var(--text-dim)')}
           >
-            Full setup guide →
-          </a>
+            ✕
+          </button>
+        </div>
+
+        <div style={{ padding: '0 28px 28px' }}>
+          {/* Quick start — copyable block like Dashboard */}
+          <div style={{
+            background: 'var(--bg-base)',
+            border: '1px solid var(--border-dim)',
+            borderRadius: 8,
+            padding: '16px 18px',
+            fontFamily: 'var(--font-mono)',
+            fontSize: 12,
+            color: 'var(--text-primary)',
+            lineHeight: 1.8,
+            wordBreak: 'break-all',
+            marginBottom: 16,
+          }}>
+            <span style={{ color: 'var(--accent)' }}>{item.quickStart}</span>
+            {'\n'}
+            <span style={{ color: 'var(--text-dim)' }}>MANDATE_RUNTIME_KEY</span>
+            <span style={{ color: 'var(--text-dim)' }}>=</span>
+            <span style={{ color: 'var(--accent)', fontWeight: 600 }}>{runtimeKey || '<from dashboard>'}</span>
+          </div>
+
+          {/* Big CTA */}
+          <button
+            onClick={copyQuickStart}
+            style={{
+              width: '100%',
+              padding: '14px',
+              background: mainCopied ? 'var(--accent-glow)' : 'var(--accent)',
+              border: `1px solid ${mainCopied ? 'var(--accent)' : 'var(--accent)'}`,
+              borderRadius: 8,
+              color: mainCopied ? 'var(--accent)' : '#000',
+              fontSize: 14,
+              fontWeight: 600,
+              fontFamily: 'var(--font-display)',
+              cursor: 'pointer',
+              letterSpacing: '-0.02em',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: 8,
+              transition: 'all 0.2s',
+            }}
+          >
+            {mainCopied ? (
+              <>
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                  <path d="M4 8l3 3 5-5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+                Copied!
+              </>
+            ) : (
+              <>
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                  <rect x="5" y="5" width="8" height="8" rx="1.5" stroke="currentColor" strokeWidth="1.5"/>
+                  <path d="M3 11V3.5A1.5 1.5 0 014.5 2H11" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+                </svg>
+                Copy &amp; share with your AI agent
+              </>
+            )}
+          </button>
+
+          <div style={{
+            marginTop: 10,
+            fontSize: 11,
+            color: 'var(--text-dim)',
+            lineHeight: 1.5,
+            textAlign: 'center',
+            fontFamily: 'var(--font-mono)',
+          }}>
+            {runtimeKey
+              ? 'Paste this into your agent\'s chat.'
+              : <>Get your runtime key from <a href="/dashboard" style={{ color: 'var(--accent)', textDecoration: 'none' }}>Dashboard</a></>
+            }
+          </div>
+
+          {/* Expandable code example */}
+          <div style={{ marginTop: 20 }}>
+            <button
+              onClick={() => setShowCode(!showCode)}
+              style={{
+                width: '100%',
+                display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                padding: '10px 0',
+                background: 'none', border: 'none', cursor: 'pointer',
+                borderTop: '1px solid var(--border-dim)',
+              }}
+            >
+              <span style={{
+                fontFamily: 'var(--font-mono)', fontSize: 11,
+                color: 'var(--text-dim)', letterSpacing: '0.06em',
+              }}>
+                {showCode ? '▾' : '▸'} Code example
+              </span>
+              <span style={{
+                fontFamily: 'var(--font-mono)', fontSize: 10,
+                color: 'var(--text-dim)',
+              }}>{langLabel[item.lang] ?? item.lang}</span>
+            </button>
+
+            {showCode && (
+              <div style={{
+                background: '#040709',
+                border: '1px solid var(--border)',
+                borderRadius: 4, overflow: 'hidden',
+              }}>
+                <div style={{
+                  display: 'flex', justifyContent: 'flex-end',
+                  padding: '8px 12px',
+                  borderBottom: '1px solid var(--border-dim)',
+                }}>
+                  <button
+                    onClick={() => copy(`${item.id}-code`, item.code)}
+                    style={{
+                      fontFamily: 'var(--font-mono)', fontSize: 11,
+                      color: copied[`${item.id}-code`] ? 'var(--accent)' : 'var(--text-dim)',
+                      background: 'none', border: 'none', cursor: 'pointer',
+                      padding: '2px 6px',
+                      transition: 'color 0.15s',
+                    }}
+                  >
+                    {copied[`${item.id}-code`] ? '✓ Copied' : 'Copy'}
+                  </button>
+                </div>
+                <pre style={{
+                  margin: 0, padding: '16px 18px',
+                  fontFamily: 'var(--font-mono)', fontSize: 12,
+                  lineHeight: 1.7, color: 'var(--text-secondary)',
+                  overflowX: 'auto', whiteSpace: 'pre',
+                }}>
+                  {item.code.split('\n').map((line, i) => {
+                    const isComment = line.trim().startsWith('//') || line.trim().startsWith('#');
+                    const isKey = /^(import|export|const|let|var|async|await|try|catch|if|return|new)\b/.test(line.trim());
+                    const isString = line.includes('"') || line.includes("'") || line.includes('`');
+                    return (
+                      <span key={i} style={{
+                        display: 'block',
+                        color: isComment ? 'var(--text-dim)'
+                             : isKey    ? 'var(--accent)'
+                             : isString ? 'var(--text-secondary)'
+                             : 'var(--text-primary)',
+                      }}>{line}</span>
+                    );
+                  })}
+                </pre>
+              </div>
+            )}
+          </div>
+
         </div>
       </div>
     </div>
@@ -639,7 +715,7 @@ function DetailPanel({ item }: { item: Integration }) {
 }
 
 /* ── Page ────────────────────────────────────────────────────────────────── */
-export default function Integrations() {
+export default function Integrations({ runtime_key }: { runtime_key: string | null }) {
   const [filter, setFilter] = useState<FilterCategory>('all');
   const [selected, setSelected] = useState<string | null>(null);
 
@@ -663,6 +739,20 @@ export default function Integrations() {
           @media (max-width: 560px) {
             .int-grid { grid-template-columns: 1fr !important; }
             .filter-tabs { flex-wrap: wrap !important; }
+          }
+          @keyframes modal-in {
+            from { opacity: 0; transform: scale(0.97) translateY(8px); }
+            to { opacity: 1; transform: scale(1) translateY(0); }
+          }
+          .modal-backdrop {
+            animation: fade-in 0.15s ease-out;
+          }
+          .modal-enter {
+            animation: modal-in 0.2s ease-out;
+          }
+          @keyframes fade-in {
+            from { opacity: 0; }
+            to { opacity: 1; }
           }
         `}</style>
 
@@ -725,9 +815,9 @@ export default function Integrations() {
           ))}
         </div>
 
-        {/* Detail panel */}
+        {/* Detail modal */}
         {selectedItem && (
-          <DetailPanel key={selectedItem.id} item={selectedItem} />
+          <DetailModal key={selectedItem.id} item={selectedItem} runtimeKey={runtime_key} onClose={() => setSelected(null)} />
         )}
       </div>
     </DashboardLayout>

@@ -28,7 +28,8 @@ ENDPOINTS
 Registration (no auth required):
   POST /api/agents/register           -> register agent, get runtime key + claim URL
 
-Validation & execution flow (runtime key):
+Activation & execution flow (runtime key):
+  POST /api/activate                  -> activate agent: set evmAddress (call once)
   POST /api/validate                  -> pre-signing policy check, returns intentId
   POST /api/intents/{id}/events       -> post txHash after broadcast (triggers envelope verify)
   GET  /api/intents/{id}/status       -> poll intent state
@@ -51,20 +52,20 @@ Content-Type: application/json
 {
   "name": "MyAgent",
   "evmAddress": "0xYOUR_AGENT_PUBLIC_ADDRESS",
-  "chainId": 84532,
   "defaultPolicy": {
     "spendLimitPerTxUsd": 10,
     "spendLimitPerDayUsd": 100
   }
 }
 
+Note: chainId is optional at registration. Chain is determined per-transaction in /api/validate.
+
 Response:
 {
   "agentId": "<uuid>",
   "runtimeKey": "mndt_test_...",
   "claimUrl": "https://mandate.krutovoy.me/claim?code=XXXXXXXX",
-  "evmAddress": "0x...",
-  "chainId": 84532
+  "evmAddress": "0x..."
 }
 
 -> Store runtimeKey immediately in ~/.mandate/credentials.json
@@ -167,17 +168,27 @@ Follow these steps to add Mandate policy enforcement to your codebase:
 
 ## If you have a runtimeKey:
 1. bun add @mandate/sdk viem
-2. Find your existing wallet/signer code
-3. Wrap it with MandateWallet (see WRAPPING EXISTING WALLET below)
-4. Test: make a small transfer → should get `allowed: true`
-5. Done. All transactions now go through policy checks.
+2. Activate your agent (call once, sets your wallet address):
+
+   POST /api/activate
+   Authorization: Bearer <your_runtime_key>
+   Content-Type: application/json
+
+   { "evmAddress": "0xYOUR_AGENT_WALLET_ADDRESS" }
+
+   Response: { "activated": true, "agentId": "...", "evmAddress": "0x..." }
+
+3. Find your existing wallet/signer code
+4. Wrap it with MandateWallet (see WRAPPING EXISTING WALLET below)
+5. Test: make a small transfer → should get `allowed: true`
+6. Done. All transactions now go through policy checks.
 
 ## If you DON'T have a runtimeKey:
 1. bun add @mandate/sdk viem
 2. Register:
    import { MandateClient } from '@mandate/sdk';
    const { runtimeKey, claimUrl } = await MandateClient.register({
-     name: 'MyAgent', evmAddress: YOUR_WALLET_ADDRESS, chainId: 84532
+     name: 'MyAgent', evmAddress: YOUR_WALLET_ADDRESS
    });
 3. Save runtimeKey to .env as MANDATE_RUNTIME_KEY
 4. Tell human to visit claimUrl to link agent to dashboard
@@ -330,7 +341,7 @@ COMPLETE EXAMPLE (curl)
 # 1. Register
 curl -X POST https://api.mandate.krutovoy.me/api/agents/register \
   -H "Content-Type: application/json" \
-  -d '{"name":"TestAgent","evmAddress":"0xYOUR_ADDRESS","chainId":84532}'
+  -d '{"name":"TestAgent","evmAddress":"0xYOUR_ADDRESS"}'
 
 # 2. Validate (replace values)
 curl -X POST https://api.mandate.krutovoy.me/api/validate \
