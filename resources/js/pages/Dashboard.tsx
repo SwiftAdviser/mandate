@@ -1,6 +1,7 @@
 import CreateAgentModal from '@/components/CreateAgentModal';
 import DashboardLayout from '@/layouts/DashboardLayout';
 import { formatUsd, riskColor, shortAddr, statusColor, timeAgo } from '@/lib/utils';
+import { Trash2 } from 'lucide-react';
 import { useState } from 'react';
 
 /* ── Types ─────────────────────────────────────────────────────────────── */
@@ -153,6 +154,27 @@ function CircuitBreakerToggle({ agent }: { agent: Agent }) {
 export default function Dashboard({ agents, selected_agent, daily_quota, monthly_quota, recent_intents, total_confirmed_today, pending_approvals }: Props) {
   const agent = selected_agent;
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+
+  async function deleteAgent() {
+    if (!agent || deleting) return;
+    setDeleting(true);
+    try {
+      const xsrf = document.cookie.match(/XSRF-TOKEN=([^;]+)/)?.[1];
+      const res = await fetch(`/api/agents/${agent.id}`, {
+        method: 'DELETE',
+        headers: {
+          'X-XSRF-TOKEN': xsrf ? decodeURIComponent(xsrf) : '',
+          'Accept': 'application/json',
+        },
+      });
+      if (res.ok) window.location.reload();
+    } finally {
+      setDeleting(false);
+      setConfirmDelete(false);
+    }
+  }
 
   return (
     <DashboardLayout>
@@ -187,6 +209,47 @@ export default function Dashboard({ agents, selected_agent, daily_quota, monthly
                   <span style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--text-dim)' }}>
                     chain {agent.chain_id}
                   </span>
+                  <span style={{ fontSize: 10, color: 'var(--text-dim)' }}>·</span>
+                  {confirmDelete ? (
+                    <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                      <span style={{ fontSize: 11, color: 'var(--red)', fontFamily: 'var(--font-mono)' }}>delete?</span>
+                      <button
+                        onClick={deleteAgent}
+                        disabled={deleting}
+                        style={{
+                          background: 'var(--red)', border: 'none', borderRadius: 4,
+                          color: '#fff', fontSize: 10, fontFamily: 'var(--font-mono)',
+                          padding: '2px 8px', cursor: deleting ? 'wait' : 'pointer',
+                        }}
+                      >
+                        {deleting ? '…' : 'yes'}
+                      </button>
+                      <button
+                        onClick={() => setConfirmDelete(false)}
+                        style={{
+                          background: 'none', border: '1px solid var(--border)', borderRadius: 4,
+                          color: 'var(--text-dim)', fontSize: 10, fontFamily: 'var(--font-mono)',
+                          padding: '2px 8px', cursor: 'pointer',
+                        }}
+                      >
+                        no
+                      </button>
+                    </span>
+                  ) : (
+                    <button
+                      onClick={() => setConfirmDelete(true)}
+                      title="Delete agent"
+                      style={{
+                        background: 'none', border: 'none', cursor: 'pointer',
+                        color: 'var(--text-dim)', display: 'flex', alignItems: 'center',
+                        padding: 0, transition: 'color 0.15s',
+                      }}
+                      onMouseEnter={e => (e.currentTarget.style.color = 'var(--red)')}
+                      onMouseLeave={e => (e.currentTarget.style.color = 'var(--text-dim)')}
+                    >
+                      <Trash2 size={13} strokeWidth={1.5} />
+                    </button>
+                  )}
                 </div>
               )}
             </div>

@@ -4,9 +4,9 @@ import { ReactNode, useState } from 'react';
 
 const NAV = [
   { href: '/dashboard',       label: 'Overview',      icon: LayoutDashboard },
+  { href: '/mandate',          label: 'MANDATE.md',     icon: FileText },
   { href: '/agents',          label: 'Agents',         icon: Bot },
   { href: '/policies',        label: 'Policies',       icon: Shield },
-  { href: '/mandate',          label: 'MANDATE.md',     icon: FileText },
   { href: '/approvals',       label: 'Approvals',      icon: CheckCircle, badge: true },
   { href: '/notifications',   label: 'Notifications',  icon: Bell },
   { href: '/audit',           label: 'Audit Log',      icon: ScrollText },
@@ -14,9 +14,10 @@ const NAV = [
 ];
 
 export default function DashboardLayout({ children }: { children: ReactNode }) {
-  const page = usePage<{ auth: { user: { name: string; avatar_url: string | null } | null } }>();
+  const page = usePage<{ auth: { user: { name: string; avatar_url: string | null } | null }; pending_approvals: number }>();
   const url = page.url;
   const user = (page.props as any).auth?.user;
+  const pendingApprovals = (page.props as any).pending_approvals ?? 0;
   const [collapsed, setCollapsed] = useState(false);
 
   return (
@@ -95,8 +96,32 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
                   justifyContent: collapsed ? 'center' : 'flex-start',
                 }}
               >
-                <Icon size={16} strokeWidth={1.8} style={{ flexShrink: 0 }} />
-                {!collapsed && <span>{item.label}</span>}
+                <span style={{ position: 'relative', flexShrink: 0, display: 'flex' }}>
+                  <Icon size={16} strokeWidth={1.8} />
+                  {item.badge && pendingApprovals > 0 && (
+                    <span style={{
+                      position: 'absolute', top: -3, right: -4,
+                      width: 7, height: 7, borderRadius: '50%',
+                      background: 'var(--red)',
+                      border: '1.5px solid var(--bg-surface)',
+                    }} />
+                  )}
+                </span>
+                {!collapsed && (
+                  <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                    {item.label}
+                    {item.badge && pendingApprovals > 0 && (
+                      <span style={{
+                        fontSize: 10, fontFamily: 'var(--font-mono)',
+                        background: 'var(--red)', color: '#fff',
+                        borderRadius: 8, padding: '0 5px', lineHeight: '16px',
+                        fontWeight: 600, minWidth: 16, textAlign: 'center',
+                      }}>
+                        {pendingApprovals}
+                      </span>
+                    )}
+                  </span>
+                )}
               </Link>
             );
           })}

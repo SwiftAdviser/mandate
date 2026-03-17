@@ -37,8 +37,9 @@ Route::middleware(['auth:sanctum'])->group(function () {
     // Claim agent
     Route::post('/agents/claim', [AgentRegistrationController::class, 'claim']);
 
-    // Dashboard-first agent creation
+    // Dashboard-first agent creation + deletion
     Route::post('/agents/create', [AgentRegistrationController::class, 'create']);
+    Route::delete('/agents/{agentId}', [AgentRegistrationController::class, 'destroy']);
 
     // Policy management
     Route::get('/agents/{agentId}/policies',       [PolicyController::class, 'index']);

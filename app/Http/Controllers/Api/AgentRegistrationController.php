@@ -86,6 +86,21 @@ class AgentRegistrationController extends Controller
         ]);
     }
 
+    public function destroy(Request $request, string $agentId): JsonResponse
+    {
+        $agent = Agent::where('id', $agentId)
+            ->where('user_id', auth()->id())
+            ->first();
+
+        if (! $agent) {
+            return response()->json(['error' => 'Agent not found.'], 404);
+        }
+
+        $agent->delete();
+
+        return response()->json(['deleted' => true]);
+    }
+
     public function create(Request $request): JsonResponse
     {
         $data = $request->validate([

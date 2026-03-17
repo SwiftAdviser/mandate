@@ -2,6 +2,8 @@
 
 namespace App\Http\Middleware;
 
+use App\Models\Agent;
+use App\Models\ApprovalQueue;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
 
@@ -10,6 +12,14 @@ class HandleInertiaRequests extends Middleware
     public function share(Request $request): array
     {
         $user = $request->user();
+
+        $pendingApprovals = 0;
+        if ($user) {
+            $pendingApprovals = ApprovalQueue::whereHas('agent', fn ($q) => $q->where('user_id', $user->id))
+                ->where('status', ApprovalQueue::STATUS_PENDING)
+                ->where('expires_at', '>', now())
+                ->count();
+        }
 
         return array_merge(parent::share($request), [
             'auth' => [
@@ -21,6 +31,7 @@ class HandleInertiaRequests extends Middleware
                     'github_id'  => $user->github_id,
                 ] : null,
             ],
+            'pending_approvals' => $pendingApprovals,
         ]);
     }
 }
