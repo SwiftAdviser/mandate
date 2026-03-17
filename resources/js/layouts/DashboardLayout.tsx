@@ -48,14 +48,9 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
           gap: 10,
           flexShrink: 0,
         }}>
-          <div style={{
-            width: 28, height: 28, borderRadius: 6,
-            background: 'var(--accent)',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            flexShrink: 0,
-          }}>
-            <span style={{ color: '#000', fontSize: 14, fontWeight: 700, fontFamily: 'var(--font-display)' }}>M</span>
-          </div>
+          <img src="/logo.png" alt="Mandate" style={{
+            width: 28, height: 28, flexShrink: 0,
+          }} />
           {!collapsed && (
             <div>
               <div style={{ fontFamily: 'var(--font-display)', fontSize: 15, fontWeight: 500, color: 'var(--text-primary)', letterSpacing: '-0.02em' }}>
@@ -185,7 +180,8 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
       </aside>
 
       {/* Main */}
-      <main style={{ flex: 1, overflow: 'auto', minWidth: 0 }}>
+      <main className="dashboard-main" style={{ flex: 1, overflow: 'auto', minWidth: 0 }}>
+        <style>{`.dashboard-main > * { margin-left: auto; margin-right: auto; }`}</style>
         {children}
       </main>
     </div>
