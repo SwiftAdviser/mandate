@@ -5,7 +5,7 @@ interface Props {
   runtimeKey: string;
 }
 
-const SKILL_URL = 'https://mandate.krutovoy.me/SKILL.md';
+const SKILL_URL = 'https://app.mandate.md/SKILL.md';
 
 const LAYER_LABELS = [
   'Simulation', 'Reputation', 'Spend Limits', 'Injection Scan',

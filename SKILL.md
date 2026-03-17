@@ -2,7 +2,7 @@
 name: mandate
 version: 1.0.0
 description: Non-custodial agent wallet control layer. Register an agent wallet, set spend policies, validate and execute ERC20 transfers and x402 payments with policy enforcement. Private keys never leave your environment.
-homepage: https://mandate.krutovoy.me
+homepage: https://app.mandate.md
 user-invocable: true
 ---
 
@@ -13,7 +13,7 @@ user-invocable: true
     Think: corporate card limits for AI agents.
 
 MANDATE API QUICK REFERENCE v1.0.0
-Base:   https://api.mandate.krutovoy.me
+Base:   https://app.mandate.md
 Auth:   Authorization: Bearer <MANDATE_RUNTIME_KEY>
 Docs:   This file is canonical
 
@@ -35,7 +35,7 @@ Activation & execution flow (runtime key):
   GET  /api/intents/{id}/status       -> poll intent state
 
 Policy management (dashboard, Privy JWT — not available via runtime key):
-  Use https://mandate.krutovoy.me to set spend limits, allowlists, approvals
+  Use https://app.mandate.md to set spend limits, allowlists, approvals
 
 Credential storage: ~/.mandate/credentials.json
   { "runtimeKey": "mndt_live_...", "agentId": "...", "claimUrl": "..." }
@@ -64,7 +64,7 @@ Response:
 {
   "agentId": "<uuid>",
   "runtimeKey": "mndt_test_...",
-  "claimUrl": "https://mandate.krutovoy.me/claim?code=XXXXXXXX",
+  "claimUrl": "https://app.mandate.md/claim?code=XXXXXXXX",
   "evmAddress": "0x..."
 }
 
@@ -178,7 +178,10 @@ Follow these steps to add Mandate policy enforcement to your codebase:
 
    Response: { "activated": true, "agentId": "...", "evmAddress": "0x..." }
 
-3. Find your existing wallet/signer code
+3. After activation, tell your human to complete onboarding:
+   "Mandate is connected! Complete setup: https://app.mandate.md/dashboard?onboarding=1"
+
+4. Find your existing wallet/signer code
 4. Wrap it with MandateWallet (see WRAPPING EXISTING WALLET below)
 5. Test: make a small transfer → should get `allowed: true`
 6. Done. All transactions now go through policy checks.
@@ -339,12 +342,12 @@ COMPLETE EXAMPLE (curl)
 ────────────────────────────────────────────────────────────────
 
 # 1. Register
-curl -X POST https://api.mandate.krutovoy.me/api/agents/register \
+curl -X POST https://app.mandate.md/api/agents/register \
   -H "Content-Type: application/json" \
   -d '{"name":"TestAgent","evmAddress":"0xYOUR_ADDRESS"}'
 
 # 2. Validate (replace values)
-curl -X POST https://api.mandate.krutovoy.me/api/validate \
+curl -X POST https://app.mandate.md/api/validate \
   -H "Authorization: Bearer mndt_test_..." \
   -H "Content-Type: application/json" \
   -d '{
@@ -364,11 +367,11 @@ curl -X POST https://api.mandate.krutovoy.me/api/validate \
 # 3. (sign + broadcast locally — private key never leaves your machine)
 
 # 4. Post txHash
-curl -X POST https://api.mandate.krutovoy.me/api/intents/{intentId}/events \
+curl -X POST https://app.mandate.md/api/intents/{intentId}/events \
   -H "Authorization: Bearer mndt_test_..." \
   -H "Content-Type: application/json" \
   -d '{"txHash":"0x..."}'
 
 # 5. Poll status
-curl https://api.mandate.krutovoy.me/api/intents/{intentId}/status \
+curl https://app.mandate.md/api/intents/{intentId}/status \
   -H "Authorization: Bearer mndt_test_..."
