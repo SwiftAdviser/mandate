@@ -1,14 +1,14 @@
 import { useEffect, useState } from 'react';
 
 const CHECKS = [
-  { label: 'Rules',          detail: 'no MANDATE.md violations',    ok: true },
-  { label: 'Simulation',     detail: 'normal ERC20 transfer',       ok: true },
-  { label: 'Spend Limit',    detail: '$490 within $500/day',        ok: true },
-  { label: 'Reputation',     detail: 'agent score 87/100',          ok: true },
-  { label: 'Injection Scan', detail: '3 patterns in reasoning',     ok: false },
+  { label: 'Rules',          detail: 'urgency + social engineering',  ok: false },
+  { label: 'Simulation',     detail: 'normal ERC20 transfer',        ok: true },
+  { label: 'Spend Limit',    detail: '$490 within $500/day',         ok: true },
+  { label: 'Reputation',     detail: 'agent score 87/100',           ok: true },
+  { label: 'Injection Scan', detail: '3 patterns in reasoning',      ok: false },
   { label: 'Recipient',      detail: 'new address, not allowlisted', ok: false },
-  { label: 'Calldata',       detail: 'standard transfer()',         ok: true },
-  { label: 'Schedule',       detail: 'within operating hours',      ok: true },
+  { label: 'Calldata',       detail: 'standard transfer()',          ok: true },
+  { label: 'Schedule',       detail: 'within operating hours',       ok: true },
 ] as const;
 
 const PHASE_IDLE = 0;
@@ -83,7 +83,7 @@ export default function LiveSimulationDemo() {
   }, [phase]);
 
   const checksRevealed = Math.max(0, Math.min(phase - PHASE_CHECK_START, CHECKS.length));
-  const injectionHighlighted = phase >= PHASE_CHECK_START + 5;
+  const injectionHighlighted = phase >= PHASE_CHECK_START + 1;
 
   if (phase === PHASE_IDLE) {
     return (

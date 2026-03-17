@@ -180,19 +180,8 @@ export default function EmptyDashboard({ runtimeKey }: Props) {
         </div>
       </div>
 
-      {/* Shield visualization — animated pipeline */}
-      <div className="fade-up fade-up-2" style={{
-        background: 'var(--bg-surface)',
-        border: '1px solid var(--border)',
-        borderRadius: 12,
-        padding: '8px 20px 16px',
-        marginBottom: 16,
-      }}>
-        <ShieldVisual />
-      </div>
-
       {/* How It Works */}
-      <div className="fade-up fade-up-3" style={{ marginBottom: 16 }}>
+      <div className="fade-up fade-up-2" style={{ marginBottom: 16 }}>
         <h2 style={{
           fontFamily: 'var(--font-display)',
           fontSize: 22,
@@ -211,6 +200,17 @@ export default function EmptyDashboard({ runtimeKey }: Props) {
         }}>
           Every transaction your agent makes passes through 8 intelligence checks — before the key is ever touched. Here's a real scenario.
         </p>
+      </div>
+
+      {/* Shield visualization — animated pipeline */}
+      <div className="fade-up fade-up-3" style={{
+        background: 'var(--bg-surface)',
+        border: '1px solid var(--border)',
+        borderRadius: 12,
+        padding: '8px 20px 16px',
+        marginBottom: 16,
+      }}>
+        <ShieldVisual />
       </div>
 
       {/* Live simulation demo */}
