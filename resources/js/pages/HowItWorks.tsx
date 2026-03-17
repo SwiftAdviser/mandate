@@ -93,6 +93,24 @@ export default function HowItWorks() {
           </div>
           <LiveSimulationDemo />
         </div>
+
+        {/* Integrations link */}
+        <a href="/integrations" className="fade-up fade-up-3" style={{
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+          padding: '16px 20px', marginTop: 20,
+          background: 'var(--bg-surface)', border: '1px solid var(--border)',
+          borderRadius: 12, textDecoration: 'none', transition: 'border-color 0.15s',
+        }}>
+          <div>
+            <div style={{ fontFamily: 'var(--font-display)', fontSize: 15, fontWeight: 500, color: 'var(--text-primary)', letterSpacing: '-0.02em' }}>
+              Integrations
+            </div>
+            <div style={{ fontSize: 12, color: 'var(--text-dim)', marginTop: 3 }}>
+              SDK, plugins, and SKILL.md — connect your agent in 3 lines
+            </div>
+          </div>
+          <span style={{ color: 'var(--accent)', fontSize: 13, flexShrink: 0 }}>View →</span>
+        </a>
       </div>
     </DashboardLayout>
   );
