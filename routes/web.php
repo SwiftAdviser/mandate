@@ -25,6 +25,7 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/audit',      [DashboardController::class, 'audit']);
     Route::get('/approvals',  [DashboardController::class, 'approvals']);
     Route::get('/policies',   [DashboardController::class, 'policies']);
+    Route::get('/mandate',       [DashboardController::class, 'mandate']);
     Route::get('/notifications', [DashboardController::class, 'notifications']);
     Route::get('/agents',     [DashboardController::class, 'dashboard']); // alias for now
 });

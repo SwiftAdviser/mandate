@@ -382,7 +382,7 @@ export default function Dashboard({ agents, selected_agent, daily_quota, monthly
               <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
                 <CircuitBreakerToggle agent={agent} />
 
-                <a href={`/policies`} style={{
+                <a href="/policies" style={{
                   display: 'block',
                   padding: '14px 18px',
                   background: 'var(--bg-surface)',
@@ -393,6 +393,19 @@ export default function Dashboard({ agents, selected_agent, daily_quota, monthly
                 }}>
                   <div style={{ fontSize: 11, color: 'var(--text-dim)', fontFamily: 'var(--font-mono)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>Active Policy</div>
                   <div style={{ fontSize: 13, color: 'var(--text-primary)', marginTop: 6, fontWeight: 500 }}>Configure spend limits →</div>
+                </a>
+
+                <a href="/mandate" style={{
+                  display: 'block',
+                  padding: '14px 18px',
+                  background: 'var(--amber-glow)',
+                  border: '1px solid var(--amber-dim)',
+                  borderRadius: 10,
+                  textDecoration: 'none',
+                  transition: 'border-color 0.15s',
+                }}>
+                  <div style={{ fontSize: 11, color: 'var(--amber)', fontFamily: 'var(--font-mono)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>MANDATE.md</div>
+                  <div style={{ fontSize: 13, color: 'var(--text-primary)', marginTop: 6, fontWeight: 500 }}>Write AI guard rules →</div>
                 </a>
               </div>
             </div>

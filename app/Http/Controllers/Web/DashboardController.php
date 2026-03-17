@@ -123,6 +123,18 @@ class DashboardController extends Controller
         ]);
     }
 
+    public function mandate(Request $request): Response
+    {
+        $userId = auth()->id();
+        $agent = Agent::where('user_id', $userId)->first();
+        $currentPolicy = $agent?->activePolicy()->first();
+
+        return Inertia::render('MandateMd', [
+            'agent_id'    => $agent?->id ?? '',
+            'guard_rules' => $currentPolicy?->guard_rules,
+        ]);
+    }
+
     public function notifications(Request $request): Response
     {
         $userId = auth()->id();
