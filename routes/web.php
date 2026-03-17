@@ -7,9 +7,6 @@ use Illuminate\Support\Facades\Route;
 // Landing — public
 Route::get('/', fn () => \Inertia\Inertia::render('Landing'));
 
-// Integrations — public
-Route::get('/integrations', fn () => \Inertia\Inertia::render('Integrations'));
-
 // Auth
 Route::get('/login', fn () => \Inertia\Inertia::render('Login'))->middleware('guest')->name('login');
 Route::get('/auth/github', [GitHubController::class, 'redirect'])->middleware('guest');
@@ -27,7 +24,8 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/policies',   [DashboardController::class, 'policies']);
     Route::get('/mandate',       [DashboardController::class, 'mandate']);
     Route::get('/notifications', [DashboardController::class, 'notifications']);
-    Route::get('/agents',     [DashboardController::class, 'dashboard']); // alias for now
+    Route::get('/agents',        [DashboardController::class, 'dashboard']); // alias for now
+    Route::get('/integrations',  fn () => \Inertia\Inertia::render('Integrations'));
 });
 
 

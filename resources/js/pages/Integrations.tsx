@@ -1,3 +1,4 @@
+import DashboardLayout from '@/layouts/DashboardLayout';
 import { useState, useEffect, useRef } from 'react';
 
 /* ── Mandate skill file content ──────────────────────────────────────────── */
@@ -653,84 +654,32 @@ export default function Integrations() {
   };
 
   return (
-    <div style={{ background: 'var(--bg-base)', minHeight: '100vh', overflowX: 'hidden' }}>
-      <style>{`
-        @media (max-width: 900px) {
-          .int-grid { grid-template-columns: repeat(2, 1fr) !important; }
-        }
-        @media (max-width: 560px) {
-          .int-grid { grid-template-columns: 1fr !important; }
-          .filter-tabs { flex-wrap: wrap !important; }
-        }
-      `}</style>
+    <DashboardLayout>
+      <div style={{ padding: '32px 36px' }}>
+        <style>{`
+          @media (max-width: 900px) {
+            .int-grid { grid-template-columns: repeat(2, 1fr) !important; }
+          }
+          @media (max-width: 560px) {
+            .int-grid { grid-template-columns: 1fr !important; }
+            .filter-tabs { flex-wrap: wrap !important; }
+          }
+        `}</style>
 
-      {/* Navbar */}
-      <nav style={{
-        position: 'fixed', top: 0, left: 0, right: 0, zIndex: 100,
-        background: 'rgba(9,9,11,0.97)',
-        backdropFilter: 'blur(16px)',
-        borderBottom: '1px solid var(--border)',
-      }}>
-        <div style={{
-          maxWidth: 1200, margin: '0 auto', padding: '0 24px',
-          height: 60, display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-        }}>
-          <a href="/" style={{
-            display: 'flex', alignItems: 'center', gap: 10, textDecoration: 'none',
+        {/* Header */}
+        <div className="fade-up" style={{ marginBottom: 32 }}>
+          <h1 style={{
+            fontFamily: 'var(--font-display)',
+            fontSize: 28,
+            fontWeight: 400,
+            letterSpacing: '-0.03em',
+            margin: 0,
           }}>
-            <span style={{
-              fontFamily: 'var(--font-display)', fontStyle: 'italic',
-              fontSize: 20, fontWeight: 400, color: 'var(--text-primary)',
-              letterSpacing: '-0.02em',
-            }}>mandate</span>
-            <span style={{
-              fontSize: 9, fontFamily: 'var(--font-mono)',
-              background: 'var(--accent-glow)', color: 'var(--accent)',
-              border: '1px solid var(--accent-dim)',
-              borderRadius: 3, padding: '2px 6px',
-              letterSpacing: '0.08em', textTransform: 'uppercase',
-            }}>beta</span>
-          </a>
-
-          <a href="/dashboard" style={{
-            display: 'inline-flex', alignItems: 'center', gap: 6,
-            padding: '8px 16px',
-            background: 'var(--accent)', color: '#09090b',
-            fontFamily: 'var(--font-mono)', fontSize: 13, fontWeight: 600,
-            textDecoration: 'none', borderRadius: 4,
-            letterSpacing: '-0.01em',
-            transition: 'opacity 0.15s',
-          }}
-          onMouseEnter={e => (e.currentTarget.style.opacity = '0.88')}
-          onMouseLeave={e => (e.currentTarget.style.opacity = '1')}
-          >Launch App →</a>
-        </div>
-      </nav>
-
-      {/* Header */}
-      <div style={{ maxWidth: 1200, margin: '0 auto', padding: '0 24px' }}>
-        <div style={{ paddingTop: 120, paddingBottom: 64 }}>
-          <div className="fade-up fade-up-1" style={{
-            fontFamily: 'var(--font-mono)', fontSize: 11,
-            color: 'var(--accent)', letterSpacing: '0.1em',
-            textTransform: 'uppercase', marginBottom: 20,
-          }}>
-            Agent Security Infrastructure
-          </div>
-          <h1 className="fade-up fade-up-2" style={{
-            fontFamily: 'var(--font-display)', fontStyle: 'italic',
-            fontSize: 'clamp(36px, 4vw, 52px)',
-            fontWeight: 300, letterSpacing: '-0.03em', lineHeight: 1.1,
-            margin: '0 0 20px', whiteSpace: 'pre-line',
-          }}>
-            {`Add policy enforcement\nto your agent framework.`}
+            Integrations
           </h1>
-          <div className="fade-up fade-up-3" style={{
-            fontFamily: 'var(--font-mono)', fontSize: 14,
-            color: 'var(--text-dim)', letterSpacing: '0.02em',
-          }}>
-            Five minutes. No custody changes.
-          </div>
+          <p style={{ marginTop: 8, color: 'var(--text-dim)', fontSize: 13, lineHeight: 1.6 }}>
+            Add policy enforcement to your agent framework. Five minutes. No custody changes.
+          </p>
         </div>
 
         {/* Filter tabs */}
@@ -780,45 +729,7 @@ export default function Integrations() {
         {selectedItem && (
           <DetailPanel key={selectedItem.id} item={selectedItem} />
         )}
-
-        {/* Footer spacing */}
-        <div style={{ height: 80 }} />
       </div>
-
-      {/* Footer */}
-      <footer style={{ borderTop: '1px solid var(--border-dim)', padding: '32px 0' }}>
-        <div style={{
-          maxWidth: 1200, margin: '0 auto', padding: '0 24px',
-          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-          flexWrap: 'wrap', gap: 20,
-        }}>
-          <span style={{
-            fontFamily: 'var(--font-display)', fontStyle: 'italic',
-            fontSize: 18, fontWeight: 400, color: 'var(--text-dim)', letterSpacing: '-0.02em',
-          }}>mandate</span>
-
-          <div style={{ display: 'flex', gap: 28 }}>
-            {[
-              { label: 'Landing', href: '/' },
-              { label: 'Dashboard', href: '/dashboard' },
-              { label: 'Docs', href: '#' },
-              { label: 'GitHub', href: '#' },
-            ].map(({ label, href }) => (
-              <a key={label} href={href} style={{
-                color: 'var(--text-dim)', textDecoration: 'none',
-                fontSize: 13, fontFamily: 'var(--font-mono)', transition: 'color 0.15s',
-              }}
-              onMouseEnter={e => (e.currentTarget.style.color = 'var(--text-secondary)')}
-              onMouseLeave={e => (e.currentTarget.style.color = 'var(--text-dim)')}
-              >{label}</a>
-            ))}
-          </div>
-
-          <span style={{ fontSize: 12, fontFamily: 'var(--font-mono)', color: 'var(--text-dim)', letterSpacing: '0.04em' }}>
-            Built for the agentic web
-          </span>
-        </div>
-      </footer>
-    </div>
+    </DashboardLayout>
   );
 }
