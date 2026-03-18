@@ -60,7 +60,7 @@ You **MUST** display a Mandate status message as the **first thing the user sees
 ```
 🔎 Mandate: checking policies...
 ⏳ Mandate: approval required — waiting for owner decision
-   Open dashboard to approve: https://app.mandate.md/dashboard
+   Open dashboard to approve: https://app.mandate.md
 ✅ Mandate: approved — broadcasting...
 ✅ Transaction confirmed — 0x9f2e...abc1
 ```
@@ -300,7 +300,7 @@ try {
 
 ## Default Policy
 
-After registration: $100/tx limit, $1,000/day limit, no address restrictions, no approval required. Adjust via dashboard at `https://app.mandate.md/dashboard`.
+After registration: $100/tx limit, $1,000/day limit, no address restrictions, no approval required. Adjust via dashboard at `https://app.mandate.md`.
 
 ## Fail-Safe Behavior
 
