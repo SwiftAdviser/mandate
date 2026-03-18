@@ -1,4 +1,6 @@
-import { MandateClient } from '@mandate.md/sdk';
+import { getRuntimeKey } from '../keyStore.js';
+
+const MANDATE_BASE = 'https://app.mandate.md';
 
 export interface StatusParams {
   intentId: string;
@@ -6,7 +8,7 @@ export interface StatusParams {
 
 export const statusTool = {
   name: 'mandate_status',
-  description: 'Check the status of a Mandate intent (after mandate_validate). Returns: reserved, broadcasted, confirmed, failed, expired, approval_pending, approved.',
+  description: 'Check the status of a Mandate intent (after mandate_validate). Returns: preflight, reserved, broadcasted, confirmed, failed, expired, approval_pending, approved.',
   parameters: {
     type: 'object',
     properties: {
@@ -23,20 +25,27 @@ export const statusTool = {
     txHash?: string;
     error?: string;
   }> {
-    const runtimeKey = context?.runtimeKey ?? '';
+    const runtimeKey = context?.runtimeKey || getRuntimeKey();
+
     if (!runtimeKey) {
       return { success: false, error: 'No runtimeKey. Call mandate_register first.' };
     }
     try {
-      const client = new MandateClient({ runtimeKey });
-      const result = await client.getStatus(params.intentId);
+      const res = await fetch(`${MANDATE_BASE}/api/intents/${params.intentId}/status`, {
+        headers: { 'Authorization': `Bearer ${runtimeKey}` },
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        return { success: false, error: data.error ?? `HTTP ${res.status}` };
+      }
+      const data = await res.json();
       return {
         success: true,
-        status: result.status,
-        txHash: result.txHash ?? undefined,
+        status: data.status,
+        txHash: data.txHash ?? undefined,
       };
-    } catch (err: any) {
-      return { success: false, error: err.message ?? 'Status check failed' };
+    } catch (err: unknown) {
+      return { success: false, error: err instanceof Error ? err.message : 'Status check failed' };
     }
   },
 };

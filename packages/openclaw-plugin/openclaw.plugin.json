@@ -14,8 +14,7 @@
     }
   },
   "uiHints": {
-    "labels": { "runtimeKey": "Runtime Key" },
-    "sensitive": ["runtimeKey"]
+    "labels": { "runtimeKey": "Runtime Key" }
   },
   "security": {
     "envAccess": [],

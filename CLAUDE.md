@@ -136,3 +136,20 @@ No implementation code without a corresponding test written beforehand.
 - `@cloudflare/agents` latest available version is `0.0.16` (not higher)
 - All TS packages extend `tsconfig.base.json` at repo root
 - Package manager for TS: **bun**; for PHP: **composer**
+
+## OpenClaw Agent
+
+There is an OpenClaw agent running locally. You can send messages to it for debugging and testing:
+
+```bash
+# Send a message to the agent and get JSON response
+openclaw agent -m "your message here" --json
+
+# Send and deliver reply to the chat channel
+openclaw agent -m "your message here" --deliver
+
+# Interactive TUI
+openclaw tui
+```
+
+Use this to test Mandate plugin integration (mandate_register, mandate_validate, etc.) directly.

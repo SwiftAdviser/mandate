@@ -1,4 +1,4 @@
-import { MandateClient, PolicyBlockedError, CircuitBreakerError } from '@mandate.md/sdk';
+const MANDATE_BASE = 'https://app.mandate.md';
 
 const FINANCIAL_TOOLS = /^(.*transfer.*|.*payment.*|.*swap.*|.*send.*|.*trade.*|.*buy.*|.*sell.*|.*order.*)$/i;
 const FINANCIAL_KEYWORDS = /\b(transfer|pay|send|swap|trade|buy|sell|order|bridge|stake|unstake|withdraw|deposit|0x[0-9a-fA-F]{40})\b/i;
@@ -30,28 +30,36 @@ export async function preflightValidate(
     return { allowed: false, reason: 'no_runtime_key', declineMessage: 'No runtimeKey configured. Call mandate_register first.' };
   }
 
-  const client = new MandateClient({ runtimeKey });
   const reason = buildReason(toolInput, conversationContext);
-
-  // Extract action from tool name (e.g. "bankr_swap" -> "swap", "locus_transfer" -> "transfer")
   const action = toolName.replace(/^.*?_/, '') || toolName;
 
   try {
-    await client.preflight({
-      action,
-      reason,
-      to: (toolInput as any)?.to ?? (toolInput as any)?.address,
-      amount: (toolInput as any)?.amount,
-      token: (toolInput as any)?.token ?? (toolInput as any)?.currency,
+    const res = await fetch(`${MANDATE_BASE}/api/validate/preflight`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${runtimeKey}`,
+      },
+      body: JSON.stringify({
+        action,
+        reason,
+        to: (toolInput as any)?.to ?? (toolInput as any)?.address,
+        amount: (toolInput as any)?.amount,
+        token: (toolInput as any)?.token ?? (toolInput as any)?.currency,
+      }),
     });
-    return { allowed: true };
-  } catch (err) {
-    if (err instanceof PolicyBlockedError) {
-      return { allowed: false, reason: err.blockReason, declineMessage: err.declineMessage };
-    }
-    if (err instanceof CircuitBreakerError) {
+
+    if (res.status === 403) {
       return { allowed: false, reason: 'circuit_breaker_active', declineMessage: 'Agent circuit breaker is active' };
     }
+
+    if (res.status === 422) {
+      const data = await res.json();
+      return { allowed: false, reason: data.blockReason ?? 'policy_blocked', declineMessage: data.declineMessage };
+    }
+
+    return { allowed: true };
+  } catch {
     return { allowed: false, reason: 'mandate_unreachable', declineMessage: 'Mandate policy server unreachable. Transaction halted for safety.' };
   }
 }
