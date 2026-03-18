@@ -469,8 +469,8 @@ export default function Dashboard({ agents, selected_agent, daily_quota, monthly
               )}
             </div>
 
-            {/* Integrate your agent */}
-            <div className="fade-up fade-up-4" style={{
+            {/* Integrate your agent (hide once agent has activity) */}
+            {recent_intents.length === 0 && <div className="fade-up fade-up-4" style={{
               background: 'var(--bg-surface)',
               border: '1px solid var(--border)',
               borderRadius: 12,
@@ -483,7 +483,7 @@ export default function Dashboard({ agents, selected_agent, daily_quota, monthly
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
                 <div style={{ padding: '14px 16px', background: 'var(--bg-base)', border: '1px solid var(--border-dim)', borderRadius: 8 }}>
                   <div style={{ fontSize: 11, color: 'var(--text-dim)', marginBottom: 6 }}>Install SDK</div>
-                  <div style={{ fontFamily: 'var(--font-mono)', fontSize: 12, color: 'var(--text-primary)' }}>bun add @mandate/sdk</div>
+                  <div style={{ fontFamily: 'var(--font-mono)', fontSize: 12, color: 'var(--text-primary)' }}>bun add @mandate.md/sdk</div>
                 </div>
                 <a href="/integrations" style={{
                   display: 'block', padding: '14px 16px',
@@ -494,7 +494,7 @@ export default function Dashboard({ agents, selected_agent, daily_quota, monthly
                   <div style={{ fontSize: 12, color: 'var(--accent)', fontWeight: 500 }}>View all integrations →</div>
                 </a>
               </div>
-            </div>
+            </div>}
 
             {/* Intelligence layers */}
             <div className="fade-up fade-up-5" style={{
@@ -516,7 +516,7 @@ export default function Dashboard({ agents, selected_agent, daily_quota, monthly
           <CreateAgentModal onClose={() => setShowCreateModal(false)} />
         )}
 
-        {needs_onboarding && agent && !wizardDismissed && !first_visit_key && (
+        {needs_onboarding && agent && !wizardDismissed && (
           <OnboardingWizard agent={agent} onComplete={() => setWizardDismissed(true)} />
         )}
       </div>
