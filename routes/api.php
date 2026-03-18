@@ -45,6 +45,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
     // Dashboard-first agent creation + deletion
     Route::post('/agents/create', [AgentRegistrationController::class, 'create']);
     Route::delete('/agents/{agentId}', [AgentRegistrationController::class, 'destroy']);
+    Route::post('/agents/{agentId}/regenerate-key', [AgentRegistrationController::class, 'regenerateKey']);
 
     // Policy management
     Route::get('/agents/{agentId}/policies', [PolicyController::class, 'index']);

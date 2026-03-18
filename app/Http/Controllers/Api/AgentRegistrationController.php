@@ -101,6 +101,31 @@ class AgentRegistrationController extends Controller
         return response()->json(['deleted' => true]);
     }
 
+    public function regenerateKey(Request $request, string $agentId): JsonResponse
+    {
+        $agent = Agent::where('id', $agentId)->first();
+
+        if (! $agent) {
+            return response()->json(['error' => 'Agent not found.'], 404);
+        }
+
+        if ($agent->user_id !== auth()->id()) {
+            return response()->json(['error' => 'Forbidden.'], 403);
+        }
+
+        // Revoke all active keys
+        AgentApiKey::where('agent_id', $agentId)
+            ->whereNull('revoked_at')
+            ->update(['revoked_at' => now()]);
+
+        // Generate new key
+        [$rawKey] = AgentApiKey::generate($agent);
+
+        return response()->json([
+            'runtimeKey' => $rawKey,
+        ]);
+    }
+
     public function create(Request $request): JsonResponse
     {
         $data = $request->validate([

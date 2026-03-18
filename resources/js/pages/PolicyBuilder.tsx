@@ -2,7 +2,7 @@ import DashboardLayout from '@/layouts/DashboardLayout';
 import { formatUsd } from '@/lib/utils';
 import { router } from '@inertiajs/react';
 import { TokenUSDC, TokenUSDT, TokenETH } from '@web3icons/react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
 interface Policy {
   id?: string;
@@ -135,6 +135,21 @@ export default function PolicyBuilder({ agent_id, current_policy }: Props) {
   });
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
+
+  useEffect(() => {
+    if (!current_policy) return;
+    setForm({
+      spendLimitPerTxUsd:      current_policy.spend_limit_per_tx_usd ?? '',
+      spendLimitPerDayUsd:     current_policy.spend_limit_per_day_usd ?? '',
+      spendLimitPerMonthUsd:   current_policy.spend_limit_per_month_usd ?? '',
+      requireApprovalAboveUsd: current_policy.require_approval_above_usd ?? '',
+      allowedAddresses:        current_policy.allowed_addresses ?? [],
+      blockedSelectors:        current_policy.blocked_selectors ?? [],
+      maxGasLimit:             current_policy.max_gas_limit ?? '',
+      scheduleDays:            current_policy.schedule?.days ?? [],
+      scheduleHours:           current_policy.schedule?.hours ?? [],
+    });
+  }, [current_policy?.id]);
 
   function toggleDay(day: string) {
     setForm(f => ({

@@ -2,10 +2,11 @@ import CreateAgentModal from '@/components/CreateAgentModal';
 import EmptyDashboard from '@/components/EmptyDashboard';
 import LiveSimulationDemo from '@/components/LiveSimulationDemo';
 import OnboardingWizard from '@/components/OnboardingWizard';
+import RuntimeKeyReveal from '@/components/RuntimeKeyReveal';
 import DashboardLayout from '@/layouts/DashboardLayout';
 import { formatUsd, riskColor, shortAddr, statusColor, timeAgo } from '@/lib/utils';
-import { Trash2 } from 'lucide-react';
-import { useState } from 'react';
+import { KeyRound, Plus, Trash2, X } from 'lucide-react';
+import { useEffect, useRef, useState } from 'react';
 
 /* ── Types ─────────────────────────────────────────────────────────────── */
 interface Agent {
@@ -162,6 +163,10 @@ export default function Dashboard({ agents, selected_agent, daily_quota, monthly
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [wizardDismissed, setWizardDismissed] = useState(false);
+  const [regenState, setRegenState] = useState<'idle' | 'confirm' | 'loading' | 'reveal'>('idle');
+  const [newRuntimeKey, setNewRuntimeKey] = useState('');
+  const [showComingSoon, setShowComingSoon] = useState(false);
+  const comingSoonRef = useRef<HTMLDivElement>(null);
 
   async function deleteAgent() {
     if (!agent || deleting) return;
@@ -182,112 +187,232 @@ export default function Dashboard({ agents, selected_agent, daily_quota, monthly
     }
   }
 
+  async function regenerateKey() {
+    if (!agent) return;
+    setRegenState('loading');
+    try {
+      const xsrf = document.cookie.match(/XSRF-TOKEN=([^;]+)/)?.[1];
+      const res = await fetch(`/api/agents/${agent.id}/regenerate-key`, {
+        method: 'POST',
+        headers: {
+          'X-XSRF-TOKEN': xsrf ? decodeURIComponent(xsrf) : '',
+          'Accept': 'application/json',
+        },
+      });
+      const data = await res.json();
+      setNewRuntimeKey(data.runtimeKey);
+      setRegenState('reveal');
+    } catch {
+      setRegenState('idle');
+    }
+  }
+
+  useEffect(() => {
+    if (!showComingSoon) return;
+    function handleClickOutside(e: MouseEvent) {
+      if (comingSoonRef.current && !comingSoonRef.current.contains(e.target as Node)) {
+        setShowComingSoon(false);
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [showComingSoon]);
+
   return (
     <DashboardLayout>
       <div style={{ padding: '32px 36px', maxWidth: 1100 }}>
 
-        {/* Header — only when agent exists and not first visit */}
-        {agent && !first_visit_key && <div className="fade-up" style={{ marginBottom: 32 }}>
-          <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', flexWrap: 'wrap', gap: 16 }}>
-            <div>
-              <h1 style={{
-                fontFamily: 'var(--font-display)',
-                fontSize: 28,
-                fontWeight: 400,
-                color: 'var(--text-primary)',
-                letterSpacing: '-0.03em',
-                margin: 0,
-                lineHeight: 1.1,
-              }}>
-                {agent.name}
-              </h1>
-              {agent && (
-                <div style={{ marginTop: 6, display: 'flex', alignItems: 'center', gap: 10 }}>
-                  {agent.evm_address && (
-                    <>
-                      <span style={{ fontFamily: 'var(--font-mono)', fontSize: 12, color: 'var(--text-dim)' }}>
-                        {shortAddr(agent.evm_address)}
-                      </span>
-                      <span style={{ fontSize: 10, color: 'var(--text-dim)' }}>·</span>
-                    </>
-                  )}
-                  <span style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: agent.circuit_breaker_active ? 'var(--red)' : 'var(--green)', display: 'flex', alignItems: 'center', gap: 4 }}>
-                    <span style={{ display: 'inline-block', width: 5, height: 5, borderRadius: '50%', background: 'currentColor' }} />
-                    {agent.circuit_breaker_active ? 'tripped' : 'operational'}
-                  </span>
-                  {agent.chain_id && (
-                    <>
-                      <span style={{ fontSize: 10, color: 'var(--text-dim)' }}>·</span>
-                      <span style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--text-dim)' }}>
-                        chain {agent.chain_id}
-                      </span>
-                    </>
-                  )}
-                  <span style={{ fontSize: 10, color: 'var(--text-dim)' }}>·</span>
-                  {confirmDelete ? (
-                    <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                      <span style={{ fontSize: 11, color: 'var(--red)', fontFamily: 'var(--font-mono)' }}>delete?</span>
-                      <button
-                        onClick={deleteAgent}
-                        disabled={deleting}
-                        style={{
-                          background: 'var(--red)', border: 'none', borderRadius: 4,
-                          color: '#fff', fontSize: 10, fontFamily: 'var(--font-mono)',
-                          padding: '2px 8px', cursor: deleting ? 'wait' : 'pointer',
-                        }}
-                      >
-                        {deleting ? '…' : 'yes'}
-                      </button>
-                      <button
-                        onClick={() => setConfirmDelete(false)}
-                        style={{
-                          background: 'none', border: '1px solid var(--border)', borderRadius: 4,
-                          color: 'var(--text-dim)', fontSize: 10, fontFamily: 'var(--font-mono)',
-                          padding: '2px 8px', cursor: 'pointer',
-                        }}
-                      >
-                        no
-                      </button>
-                    </span>
-                  ) : (
-                    <button
-                      onClick={() => setConfirmDelete(true)}
-                      title="Delete agent"
-                      style={{
-                        background: 'none', border: 'none', cursor: 'pointer',
-                        color: 'var(--text-dim)', display: 'flex', alignItems: 'center',
-                        padding: 0, transition: 'color 0.15s',
-                      }}
-                      onMouseEnter={e => (e.currentTarget.style.color = 'var(--red)')}
-                      onMouseLeave={e => (e.currentTarget.style.color = 'var(--text-dim)')}
-                    >
-                      <Trash2 size={13} strokeWidth={1.5} />
-                    </button>
-                  )}
-                </div>
-              )}
-            </div>
+        {/* Compact agent info bar */}
+        {agent && !first_visit_key && <div className="fade-up" style={{ marginBottom: 20 }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
+            <h1 style={{
+              fontFamily: 'var(--font-display)',
+              fontSize: 20,
+              fontWeight: 400,
+              color: 'var(--text-primary)',
+              letterSpacing: '-0.03em',
+              margin: 0,
+            }}>
+              Overview
+            </h1>
 
             {pending_approvals > 0 && (
               <a href="/approvals" style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: 8,
-                padding: '8px 14px',
-                background: 'var(--accent-glow)',
-                border: '1px solid var(--accent-dim)',
-                borderRadius: 8,
-                color: 'var(--accent)',
-                fontSize: 12,
-                fontWeight: 500,
-                textDecoration: 'none',
+                display: 'flex', alignItems: 'center', gap: 6,
+                padding: '5px 12px', background: 'var(--accent-glow)',
+                border: '1px solid var(--accent-dim)', borderRadius: 6,
+                color: 'var(--accent)', fontSize: 11, fontWeight: 500, textDecoration: 'none',
               }}>
-                <span className="pulse-accent" style={{ display: 'inline-block', width: 6, height: 6, borderRadius: '50%', background: 'var(--accent)' }} />
-                {pending_approvals} pending approval{pending_approvals > 1 ? 's' : ''}
+                <span className="pulse-accent" style={{ display: 'inline-block', width: 5, height: 5, borderRadius: '50%', background: 'var(--accent)' }} />
+                {pending_approvals} pending
               </a>
+            )}
+
+            {/* + Add Agent */}
+            <div style={{ marginLeft: 'auto', position: 'relative' }}>
+              <button
+                onClick={() => setShowComingSoon(true)}
+                style={{
+                  display: 'flex', alignItems: 'center', gap: 5,
+                  padding: '5px 12px', background: 'var(--bg-raised)',
+                  border: '1px solid var(--border)', borderRadius: 6,
+                  color: 'var(--text-dim)', fontSize: 11, fontFamily: 'var(--font-mono)',
+                  cursor: 'pointer', transition: 'border-color 0.15s',
+                }}
+                onMouseEnter={e => (e.currentTarget.style.borderColor = 'var(--text-dim)')}
+                onMouseLeave={e => (e.currentTarget.style.borderColor = 'var(--border)')}
+              >
+                <Plus size={12} strokeWidth={2} />
+                Add Agent
+              </button>
+              {showComingSoon && (
+                <div ref={comingSoonRef} style={{
+                  position: 'absolute', top: '100%', right: 0, marginTop: 6, zIndex: 50,
+                  padding: '12px 16px', background: 'var(--bg-surface)',
+                  border: '1px solid var(--border)', borderRadius: 8,
+                  boxShadow: '0 4px 12px rgba(0,0,0,0.3)', whiteSpace: 'nowrap',
+                  display: 'flex', alignItems: 'center', gap: 10,
+                }}>
+                  <span style={{ fontSize: 12, color: 'var(--text-secondary)' }}>Multi-agent support coming soon</span>
+                  <button
+                    onClick={() => setShowComingSoon(false)}
+                    style={{ background: 'none', border: 'none', color: 'var(--text-dim)', cursor: 'pointer', padding: 0, display: 'flex' }}
+                  >
+                    <X size={12} />
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Agent info row */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 10, flexWrap: 'wrap' }}>
+            <span style={{ fontFamily: 'var(--font-mono)', fontSize: 13, color: 'var(--text-secondary)', fontWeight: 500 }}>
+              {agent.name}
+            </span>
+            <span style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: agent.circuit_breaker_active ? 'var(--red)' : 'var(--green)', display: 'flex', alignItems: 'center', gap: 4 }}>
+              <span style={{ display: 'inline-block', width: 5, height: 5, borderRadius: '50%', background: 'currentColor' }} />
+              {agent.circuit_breaker_active ? 'tripped' : 'operational'}
+            </span>
+            {agent.evm_address && (
+              <>
+                <span style={{ fontSize: 10, color: 'var(--text-dim)' }}>·</span>
+                <span style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--text-dim)' }}>
+                  {shortAddr(agent.evm_address)}
+                </span>
+              </>
+            )}
+            {agent.chain_id && (
+              <>
+                <span style={{ fontSize: 10, color: 'var(--text-dim)' }}>·</span>
+                <span style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--text-dim)' }}>
+                  chain {agent.chain_id}
+                </span>
+              </>
+            )}
+            <span style={{ fontSize: 10, color: 'var(--text-dim)' }}>·</span>
+
+            {/* Regenerate key */}
+            {regenState === 'idle' && (
+              <button
+                onClick={() => setRegenState('confirm')}
+                title="Regenerate runtime key"
+                style={{
+                  background: 'none', border: 'none', cursor: 'pointer',
+                  color: 'var(--text-dim)', display: 'flex', alignItems: 'center',
+                  padding: 0, transition: 'color 0.15s',
+                }}
+                onMouseEnter={e => (e.currentTarget.style.color = 'var(--accent)')}
+                onMouseLeave={e => (e.currentTarget.style.color = 'var(--text-dim)')}
+              >
+                <KeyRound size={13} strokeWidth={1.5} />
+              </button>
+            )}
+            {regenState === 'confirm' && (
+              <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                <span style={{ fontSize: 11, color: 'var(--accent)', fontFamily: 'var(--font-mono)' }}>revoke current key?</span>
+                <button
+                  onClick={regenerateKey}
+                  style={{
+                    background: 'var(--accent)', border: 'none', borderRadius: 4,
+                    color: '#000', fontSize: 10, fontFamily: 'var(--font-mono)',
+                    padding: '2px 8px', cursor: 'pointer',
+                  }}
+                >
+                  yes
+                </button>
+                <button
+                  onClick={() => setRegenState('idle')}
+                  style={{
+                    background: 'none', border: '1px solid var(--border)', borderRadius: 4,
+                    color: 'var(--text-dim)', fontSize: 10, fontFamily: 'var(--font-mono)',
+                    padding: '2px 8px', cursor: 'pointer',
+                  }}
+                >
+                  no
+                </button>
+              </span>
+            )}
+            {regenState === 'loading' && (
+              <span style={{ fontSize: 11, color: 'var(--text-dim)', fontFamily: 'var(--font-mono)' }}>regenerating...</span>
+            )}
+
+            <span style={{ fontSize: 10, color: 'var(--text-dim)' }}>·</span>
+
+            {/* Delete */}
+            {confirmDelete ? (
+              <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                <span style={{ fontSize: 11, color: 'var(--red)', fontFamily: 'var(--font-mono)' }}>delete?</span>
+                <button
+                  onClick={deleteAgent}
+                  disabled={deleting}
+                  style={{
+                    background: 'var(--red)', border: 'none', borderRadius: 4,
+                    color: '#fff', fontSize: 10, fontFamily: 'var(--font-mono)',
+                    padding: '2px 8px', cursor: deleting ? 'wait' : 'pointer',
+                  }}
+                >
+                  {deleting ? '...' : 'yes'}
+                </button>
+                <button
+                  onClick={() => setConfirmDelete(false)}
+                  style={{
+                    background: 'none', border: '1px solid var(--border)', borderRadius: 4,
+                    color: 'var(--text-dim)', fontSize: 10, fontFamily: 'var(--font-mono)',
+                    padding: '2px 8px', cursor: 'pointer',
+                  }}
+                >
+                  no
+                </button>
+              </span>
+            ) : (
+              <button
+                onClick={() => setConfirmDelete(true)}
+                title="Delete agent"
+                style={{
+                  background: 'none', border: 'none', cursor: 'pointer',
+                  color: 'var(--text-dim)', display: 'flex', alignItems: 'center',
+                  padding: 0, transition: 'color 0.15s',
+                }}
+                onMouseEnter={e => (e.currentTarget.style.color = 'var(--red)')}
+                onMouseLeave={e => (e.currentTarget.style.color = 'var(--text-dim)')}
+              >
+                <Trash2 size={13} strokeWidth={1.5} />
+              </button>
             )}
           </div>
         </div>}
+
+        {/* Key reveal overlay after regeneration */}
+        {regenState === 'reveal' && (
+          <div className="fade-up" style={{
+            padding: '20px 24px', marginBottom: 20,
+            background: 'var(--bg-surface)', border: '1px solid var(--accent-dim)',
+            borderRadius: 12,
+          }}>
+            <RuntimeKeyReveal runtimeKey={newRuntimeKey} onDone={() => setRegenState('idle')} />
+          </div>
+        )}
 
         {/* First visit — show activation block */}
         {first_visit_key && (
