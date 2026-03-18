@@ -25,7 +25,7 @@ Session keys check amounts. Mandate checks intent. A `$499` transfer passes ever
 flowchart LR
     A[Agent tx] --> B{Policy Engine}
     B -->|allowed| C[Sign locally] --> D[Post txHash] --> E{Envelope check}
-    B -->|blocked| F[🚫 Halted]
+    B -->|blocked| F["🚫 Halted + counter-evidence"]
     B -->|approval| G[⏳ Owner] -->|yes| C
     G -->|no| F
     E -->|match| H[✅ Confirmed]
@@ -81,7 +81,7 @@ await wallet.transfer(to, amount, token, {
 What Mandate does with it:
 - **Scans for prompt injection** (18 hardcoded patterns + LLM judge)
 - **Evaluates against your MANDATE.md rules** — your guard, your logic
-- **Returns an adversarial counter-message** on block — overrides the manipulation
+- **Returns an adversarial counter-message** on block — explains WHY with on-chain evidence so the agent doesn't retry
 - **Shows it to the owner** on approval requests (dashboard / Slack / Telegram)
 - **Logs it in the audit trail** — full context for every transaction, forever
 
