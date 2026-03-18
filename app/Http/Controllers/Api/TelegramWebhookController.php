@@ -51,13 +51,18 @@ class TelegramWebhookController extends Controller
         Cache::forever("tg_user:{$username}", $chatId);
         $this->backfillChatId($username, $chatId);
 
+        // Generate 8-char link code for onboarding wizard verification
+        $code = strtoupper(substr(bin2hex(random_bytes(4)), 0, 8));
+        Cache::put("tg_link_code:{$code}", $chatId, 600);
+        Cache::put("tg_link_code_chat:{$chatId}", $code, 600);
+
         $this->sendMessage($chatId, implode("\n", [
             "Connected, {$firstName}!",
             '',
-            "I'll send approval notifications here when your agent needs a decision.",
+            "Your link code: <code>{$code}</code>",
+            'Paste this code in the Mandate onboarding wizard to link your Telegram.',
             '',
-            "You'll see what the agent wants, <b>WHY</b>, and the risk assessment.",
-            'Approve or reject right here with buttons.',
+            "I'll also send approval notifications here when your agent needs a decision.",
         ]));
 
         Log::info('Telegram user connected', ['username' => $username, 'chat_id' => $chatId]);

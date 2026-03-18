@@ -1,0 +1,6 @@
+{
+  "name": "mandate",
+  "description": "Enforces Mandate policy validation before any agent transaction",
+  "version": "1.0.0",
+  "author": { "name": "Mandate" }
+}

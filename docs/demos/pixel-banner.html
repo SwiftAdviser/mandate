@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mandate — Pixel Banner</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap');
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: #09090b;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  .banner {
+    padding: 60px 80px;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 24px;
+  }
+
+  .pixel-grid {
+    display: flex;
+    gap: 2px;
+  }
+
+  .letter {
+    display: grid;
+    gap: 2px;
+    margin-right: 6px;
+  }
+
+  .letter:last-child { margin-right: 0; }
+
+  .cell {
+    width: 12px;
+    height: 12px;
+    border-radius: 1px;
+  }
+
+  .cell.on {
+    background: #10b981;
+    box-shadow:
+      inset -1px -1px 0 rgba(0,0,0,0.3),
+      inset 1px 1px 0 rgba(110,231,183,0.4);
+  }
+
+  .cell.on.white {
+    background: #FFFFFF;
+    box-shadow:
+      inset -1px -1px 0 rgba(0,0,0,0.15),
+      inset 1px 1px 0 rgba(255,255,255,0.5);
+  }
+
+  .cell.off {
+    background: transparent;
+  }
+
+  .tagline {
+    color: #6ee7b7;
+    font-size: 16px;
+    font-weight: 400;
+    letter-spacing: 0.02em;
+    padding-left: 2px;
+    display: flex;
+    align-items: center;
+  }
+
+  .cursor {
+    display: inline-block;
+    width: 10px;
+    height: 18px;
+    background: #10b981;
+    margin-left: 4px;
+    animation: blink 1s step-end infinite;
+  }
+
+  @keyframes blink {
+    50% { opacity: 0; }
+  }
+
+  /* Glow effect on the whole word */
+  .pixel-grid {
+    filter: drop-shadow(0 0 8px rgba(16,185,129,0.15));
+  }
+</style>
+</head>
+<body>
+
+<div class="banner">
+  <div class="pixel-grid" id="grid"></div>
+  <div class="tagline">
+    See why your agent spends. Stop it when it shouldn't.<span class="cursor"></span>
+  </div>
+</div>
+
+<script>
+// 7-row pixel font definitions (each letter is an array of 7 strings)
+const font = {
+  M: [
+    '##...##',
+    '###.###',
+    '##.#.##',
+    '##.#.##',
+    '##...##',
+    '##...##',
+    '##...##',
+  ],
+  A: [
+    '.#####.',
+    '##...##',
+    '##...##',
+    '#######',
+    '##...##',
+    '##...##',
+    '##...##',
+  ],
+  N: [
+    '##...##',
+    '###..##',
+    '####.##',
+    '##.####',
+    '##..###',
+    '##...##',
+    '##...##',
+  ],
+  D: [
+    '#####..',
+    '##..##.',
+    '##...##',
+    '##...##',
+    '##...##',
+    '##..##.',
+    '#####..',
+  ],
+  T: [
+    '#######',
+    '..##...',
+    '..##...',
+    '..##...',
+    '..##...',
+    '..##...',
+    '..##...',
+  ],
+  E: [
+    '#######',
+    '##.....',
+    '##.....',
+    '#####..',
+    '##.....',
+    '##.....',
+    '#######',
+  ],
+  '.': [
+    '...',
+    '...',
+    '...',
+    '...',
+    '...',
+    '...',
+    '.#.',
+  ],
+};
+
+const word = 'MANDATE.MD';
+const whiteLetters = new Set(['M','A','N','D','A','T','E']);
+// Track which indices are the MANDATE part (0-6)
+const mandateIndices = new Set([0,1,2,3,4,5,6]);
+const grid = document.getElementById('grid');
+
+word.split('').forEach((ch, idx) => {
+  const def = font[ch];
+  if (!def) return;
+  const cols = def[0].length;
+  const rows = def.length;
+
+  const letterEl = document.createElement('div');
+  letterEl.className = 'letter';
+  letterEl.style.gridTemplateColumns = `repeat(${cols}, 12px)`;
+  letterEl.style.gridTemplateRows = `repeat(${rows}, 12px)`;
+
+  for (let r = 0; r < rows; r++) {
+    for (let c = 0; c < cols; c++) {
+      const cell = document.createElement('div');
+      const isOn = def[r][c] === '#';
+      const isWhite = mandateIndices.has(idx);
+      cell.className = isOn ? (isWhite ? 'cell on white' : 'cell on') : 'cell off';
+      letterEl.appendChild(cell);
+    }
+  }
+
+  grid.appendChild(letterEl);
+});
+</script>
+
+</body>
+</html>

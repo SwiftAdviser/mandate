@@ -25,7 +25,7 @@ import mandatePlugin from '../plugin.js';
 describe('openclaw plugin', () => {
   it('exports plugin with correct name and version', () => {
     expect(mandatePlugin.name).toBe('Mandate');
-    expect(mandatePlugin.version).toBe('0.3.2');
+    expect(mandatePlugin.version).toBe('0.4.3');
     expect(mandatePlugin.tools).toHaveLength(3);
   });
 
@@ -53,7 +53,7 @@ describe('register(api) pattern', () => {
   it('plugin has id, name, version, register function', () => {
     expect(mandatePlugin.id).toBe('openclaw-plugin');
     expect(mandatePlugin.name).toBe('Mandate');
-    expect(mandatePlugin.version).toBe('0.3.2');
+    expect(mandatePlugin.version).toBe('0.4.3');
     expect(typeof mandatePlugin.register).toBe('function');
   });
 
@@ -67,12 +67,8 @@ describe('register(api) pattern', () => {
     expect(names).toContain('mandate_status');
   });
 
-  it('configSchema has optional runtimeKey (no privateKey)', () => {
-    expect(mandatePlugin.configSchema).toBeDefined();
-    const schema = mandatePlugin.configSchema as any;
-    expect(schema.required).toBeUndefined();
-    expect(schema.properties).toHaveProperty('runtimeKey');
-    expect(schema.properties).not.toHaveProperty('privateKey');
+  it('no configSchema (runtimeKey obtained via mandate_register)', () => {
+    expect(mandatePlugin.configSchema).toBeUndefined();
   });
 
   it('register(api) also registers message:preprocessed hook', () => {

@@ -21,9 +21,10 @@ class DashboardController extends Controller
 
         $agents = Agent::where('user_id', $userId)->get();
         $firstVisitKey = null;
+        $needsOnboarding = $request->query('onboarding') === '1';
 
-        // Auto-create first agent on first dashboard visit
-        if ($agents->isEmpty()) {
+        // Skip auto-create when onboarding=1 (user arrived via claim redirect)
+        if ($agents->isEmpty() && !$needsOnboarding) {
             $agent = Agent::create([
                 'user_id' => $userId,
                 'name' => 'first-agent',
@@ -43,14 +44,20 @@ class DashboardController extends Controller
             $agents = Agent::where('user_id', $userId)->get();
         }
 
-        $selectedAgent = $agents->first();
+        // When onboarding, select most recently claimed agent and clear first_agent_key
+        if ($needsOnboarding) {
+            $request->session()->forget('first_agent_key');
+            $selectedAgent = $agents->sortByDesc('claimed_at')->first();
+        } else {
+            $selectedAgent = $agents->first();
+        }
 
         // Show activation block until agent makes its first API call (evm_address gets filled)
-        if ($selectedAgent && $selectedAgent->evm_address === null && $request->session()->has('first_agent_key')) {
+        if (!$needsOnboarding && $selectedAgent && $selectedAgent->evm_address === null && $request->session()->has('first_agent_key')) {
             $firstVisitKey = $request->session()->get('first_agent_key');
         }
 
-        // Agent activated — clear session key
+        // Agent activated: clear session key
         if ($selectedAgent && $selectedAgent->evm_address !== null) {
             $request->session()->forget('first_agent_key');
         }
@@ -91,8 +98,6 @@ class DashboardController extends Controller
                 ->where('expires_at', '>', now())
                 ->count();
         }
-
-        $needsOnboarding = $request->query('onboarding') === '1';
 
         return Inertia::render('Dashboard', [
             'agents' => $agents,

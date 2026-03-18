@@ -9,7 +9,7 @@ Mandate is a **non-custodial agent wallet policy layer**. It enforces spend limi
 - **Backend**: Laravel 12 (PHP 8.2) API at `app.mandate.md`
 - **Frontend**: React 19 + Inertia.js + Tailwind 4 (dashboard at `app.mandate.md`)
 - **SDK packages**: TypeScript monorepo in `packages/` (bun workspaces)
-- **SKILL.md**: Canonical API reference for the Mandate API (used as a skill by AI agents)
+- **SKILL.md**: Canonical API reference for the Mandate API (used as a skill by AI agents). `public/SKILL.md` is the **source of truth**. All other copies (plugin SKILL.md, openclaw SKILL.md) are derived from it. When changing SKILL.md: edit `public/SKILL.md` first, bump the version in frontmatter, then run `bash scripts/sync-skill.sh` to propagate.
 
 ## Commands
 
@@ -63,11 +63,12 @@ bun run build
 
 1. Agent calls `POST /api/agents/register` (no auth) → gets `runtimeKey` + `claimUrl`
 2. Human visits `claimUrl` to link agent to their dashboard account
-3. For every transaction, agent:
-   - `POST /api/validate` (RuntimeKey auth) → policy check, returns `intentId`
+3. For every transaction, agent uses one of two validation flows:
+   - **Preflight** (custodial wallets): `POST /api/validate/preflight` with `action` + `reason` (lightweight, no gas params)
+   - **Raw validate** (self-custodial): `POST /api/validate` with full tx params + intentHash
    - Signs + broadcasts locally (private key never leaves agent)
-   - `POST /api/intents/{id}/events` with `txHash` → envelope verification
-   - `GET /api/intents/{id}/status` → poll until `confirmed`
+   - `POST /api/intents/{id}/events` with `txHash` (raw validate only, envelope verification)
+   - `GET /api/intents/{id}/status` to poll until `confirmed`
 
 ### Auth Layers
 
@@ -89,7 +90,7 @@ bun run build
 
 ### Intent States
 
-`reserved → approval_pending → approved → broadcasted → confirmed/failed/expired`
+`preflight` (custodial) or `reserved → approval_pending → approved → broadcasted → confirmed/failed/expired` (self-custodial)
 
 ### TypeScript Packages
 
@@ -104,7 +105,8 @@ bun run build
 | `@mandate/game-plugin` | GAME SDK by Virtuals Protocol (TS + Python) |
 | `@mandate/openclaw-plugin` | OpenClaw plugin manifest pattern |
 | `@mandate/acp-plugin` | ACP (Agent Commerce Protocol) by Virtuals |
-| `@mandate/claude-code-hook` | Claude Code `PreToolUse` bash hook + Express server (port 5402) |
+| `@mandate/claude-code-hook` | Claude Code `PreToolUse` bash hook + Express server (port 5402) (legacy) |
+| `claude-mandate-plugin` | Claude Code plugin: stateful two-phase enforcement (preflight/validate gate) |
 
 ### SDK Key Exports (`packages/sdk/src/`)
 

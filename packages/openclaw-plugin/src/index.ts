@@ -1,4 +1,4 @@
-export { default, registerTool, validateTool, statusTool } from './plugin.js';
+export { default, registerTool, validateTool, statusTool, setRuntimeKey, getRuntimeKey } from './plugin.js';
 export { shouldIntercept, buildReason, preflightValidate } from './hook.js';
 export type { RegisterParams } from './tools/registerTool.js';
 export type { ValidateParams } from './tools/validateTool.js';

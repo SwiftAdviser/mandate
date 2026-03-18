@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Models\Agent;
+use App\Models\AgentApiKey;
 use App\Models\Policy;
 use App\Models\TxIntent;
 use App\Models\User;
@@ -77,6 +78,72 @@ class OnboardingTest extends TestCase
         );
     }
 
+    // Bug fix: onboarding=1 should skip auto-create and not set first_visit_key
+    public function test_onboarding_skips_auto_create_when_no_agents(): void
+    {
+        $user = User::factory()->create();
+
+        // Pre-create a claimed agent (simulating post-claim redirect)
+        $agent = Agent::create([
+            'name' => 'claimed-agent',
+            'evm_address' => '0xabcdef1234567890abcdef1234567890abcdef12',
+            'user_id' => $user->id,
+            'claimed_at' => now(),
+        ]);
+        Policy::create([
+            'agent_id' => $agent->id,
+            'spend_limit_per_tx_usd' => 100,
+            'spend_limit_per_day_usd' => 1000,
+            'is_active' => true,
+        ]);
+
+        $response = $this->actingAs($user)->get('/dashboard?onboarding=1');
+
+        $response->assertStatus(200);
+        $response->assertInertia(fn ($page) => $page
+            ->component('Dashboard')
+            ->where('needs_onboarding', true)
+            ->where('first_visit_key', null)
+        );
+    }
+
+    public function test_onboarding_selects_most_recently_claimed_agent(): void
+    {
+        $user = User::factory()->create();
+
+        $oldAgent = Agent::create([
+            'name' => 'old-agent',
+            'evm_address' => '0x1111111111111111111111111111111111111111',
+            'user_id' => $user->id,
+            'claimed_at' => now()->subDay(),
+        ]);
+        Policy::create([
+            'agent_id' => $oldAgent->id,
+            'spend_limit_per_tx_usd' => 100,
+            'spend_limit_per_day_usd' => 1000,
+            'is_active' => true,
+        ]);
+
+        $newAgent = Agent::create([
+            'name' => 'new-agent',
+            'evm_address' => '0x2222222222222222222222222222222222222222',
+            'user_id' => $user->id,
+            'claimed_at' => now(),
+        ]);
+        Policy::create([
+            'agent_id' => $newAgent->id,
+            'spend_limit_per_tx_usd' => 100,
+            'spend_limit_per_day_usd' => 1000,
+            'is_active' => true,
+        ]);
+
+        $response = $this->actingAs($user)->get('/dashboard?onboarding=1');
+
+        $response->assertInertia(fn ($page) => $page
+            ->where('selected_agent.name', 'new-agent')
+        );
+    }
+
     public function test_demo_intent_creates_blocked_intent(): void
     {
         $user = User::factory()->create();
@@ -96,12 +163,14 @@ class OnboardingTest extends TestCase
         $response = $this->actingAs($user)->postJson("/api/agents/{$agent->id}/demo-intent");
 
         $response->assertStatus(201)
-            ->assertJsonStructure(['intentId', 'status', 'scanResult' => ['pattern_id', 'explanation']]);
+            ->assertJsonStructure(['intentId', 'status', 'blockReason']);
 
         $this->assertDatabaseHas('tx_intents', [
             'agent_id' => $agent->id,
-            'block_reason' => 'guard_injection_detected',
-            'risk_level' => 'CRITICAL',
+            'block_reason' => 'spend_limit_exceeded',
+            'risk_level' => 'HIGH',
+            'amount_usd_computed' => 10000,
+            'to_address' => '0x0000000000000000000000000000000000000000',
         ]);
     }
 
@@ -134,8 +203,8 @@ class OnboardingTest extends TestCase
                 'agent_id' => $agent->id,
                 'policy_id' => $policy->id,
                 'status' => TxIntent::STATUS_FAILED,
-                'block_reason' => 'guard_injection_detected',
-                'to_address' => '0xdead000000000000000000000000000000000000',
+                'block_reason' => 'spend_limit_exceeded',
+                'to_address' => '0x0000000000000000000000000000000000000000',
                 'chain_id' => 84532,
                 'nonce' => $i,
                 'calldata' => '0x',
@@ -144,6 +213,7 @@ class OnboardingTest extends TestCase
                 'max_fee_per_gas' => '0x0',
                 'max_priority_fee_per_gas' => '0x0',
                 'intent_hash' => '0x'.str_pad(dechex($i + 1), 64, '0', STR_PAD_LEFT),
+                'decoded_action' => 'demo_transfer',
             ]);
         }
 

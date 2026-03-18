@@ -1,4 +1,6 @@
-# @mandate/claude-code-hook
+# @mandate/claude-code-hook (Legacy)
+
+> **Superseded by `packages/claude-mandate-plugin/`**: the new plugin adds stateful two-phase enforcement (PostToolUse tracking + PreToolUse gating), broader wallet coverage (Bankr CLI/API, generic MCP tools), read-vs-write classification, and 15-min validation tokens. Use `claude --plugin-dir ./packages/claude-mandate-plugin` instead.
 
 Claude Code `PreToolUse` hook that enforces Mandate spending policies before any agent-initiated payment or transfer action executes.
 

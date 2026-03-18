@@ -7,6 +7,7 @@ use App\Http\Controllers\Api\ApprovalController;
 use App\Http\Controllers\Api\CircuitBreakerController;
 use App\Http\Controllers\Api\DemoIntentController;
 use App\Http\Controllers\Api\IntentController;
+use App\Http\Controllers\Api\TelegramLinkController;
 use App\Http\Controllers\Api\PolicyController;
 use App\Http\Controllers\Api\RiskCheckController;
 use App\Http\Controllers\Api\TelegramWebhookController;
@@ -68,5 +69,8 @@ Route::middleware(['auth:sanctum'])->group(function () {
 
     // Demo intent (onboarding)
     Route::post('/agents/{agentId}/demo-intent', [DemoIntentController::class, 'store']);
+
+    // Telegram link via code (onboarding)
+    Route::post('/telegram/verify-code', [TelegramLinkController::class, 'verifyCode']);
 
 });

@@ -1,0 +1,31 @@
+{
+  "hooks": {
+    "SessionStart": [
+      {
+        "matcher": "startup",
+        "hooks": [{
+          "type": "command",
+          "command": "mkdir -p \"${CLAUDE_PLUGIN_DATA}\" && echo '{\"validations\":[]}' > \"${CLAUDE_PLUGIN_DATA}/validation-state.json\""
+        }]
+      }
+    ],
+    "PreToolUse": [
+      {
+        "matcher": "Bash|mcp__.*",
+        "hooks": [{
+          "type": "command",
+          "command": "\"${CLAUDE_PLUGIN_ROOT}/scripts/pre-tool-gate.sh\""
+        }]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Bash|mcp__.*",
+        "hooks": [{
+          "type": "command",
+          "command": "\"${CLAUDE_PLUGIN_ROOT}/scripts/post-validate-track.sh\""
+        }]
+      }
+    ]
+  }
+}
