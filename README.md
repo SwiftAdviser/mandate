@@ -49,7 +49,7 @@ This isn't a config file — it's a living document. As you learn your agent's p
   <img src="public/hackathon/mandate-rules.png" alt="MANDATE.md rules editor in dashboard" width="80%" />
 </p>
 
-## The `reason` field — nobody has this
+## The `reason` field
 
 AI agents already think before every action. They produce chain-of-thought, reasoning, plan steps. The `reason` field captures what the agent was already computing — and turns it into a security signal.
 
