@@ -5,7 +5,6 @@
 
 
 <p align="center">
-  <a href="https://www.npmjs.com/package/@mandate.md/sdk"><img src="https://img.shields.io/npm/v/@mandate.md/sdk?label=sdk&color=10b981" alt="npm version" /></a>
   <a href="https://github.com/SwiftAdviser/mandate"><img src="https://img.shields.io/badge/tests-304%20passed-10b981" alt="tests" /></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-BSL%201.1-f59e0b" alt="license" /></a>
 </p>
@@ -26,9 +25,9 @@ Mandate adds a reason-aware control layer to existing agent wallets. Evaluate **
 2. **Real-time risk prevention**. Stop fraud, prompt-injection payments, and costly mistakes before funds move.
 3. **Complete payment auditability**. Full audit trail of every decision with amount, timing, and rationale.
 
-## Get started
+## TLDR; Getting started
 
-We assume you already have agent with wallet.
+So you have an agent with a wallet. With Mandate you can start trust your agent budgets.
 
 Point your agent to the skill file. It handles the rest:
 
@@ -234,6 +233,7 @@ resources/js/    React 19 + Tailwind 4 dashboard
 
 ## Links
 
+- **Website**: [mandate.md](https://mandate.md)
 - **Dashboard**: [app.mandate.md](https://app.mandate.md)
 - **Agent skill file**: [app.mandate.md/SKILL.md](https://app.mandate.md/SKILL.md)
 - **npm**: [@mandate.md/sdk](https://www.npmjs.com/package/@mandate.md/sdk) · [@mandate.md/cli](https://www.npmjs.com/package/@mandate.md/cli)

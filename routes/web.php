@@ -5,7 +5,13 @@ use App\Http\Controllers\Web\DashboardController;
 use Illuminate\Support\Facades\Route;
 
 // Landing — public
-Route::get('/', fn () => \Inertia\Inertia::render('Landing'));
+Route::get('/', function () {
+    if (auth()->check()) {
+        return redirect('/dashboard');
+    }
+
+    return \Inertia\Inertia::render('Landing');
+});
 
 // Local dev: auto-login
 if (app()->environment('local')) {
