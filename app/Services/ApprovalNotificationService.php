@@ -222,7 +222,7 @@ class ApprovalNotificationService
             match ($webhook['type'] ?? null) {
                 'slack'    => $this->sendSlack($webhook['url'], $context),
                 'telegram' => $this->sendTelegram(
-                    $webhook['bot_token'] ?: config('mandate.telegram.bot_token'),
+                    ($webhook['bot_token'] ?? '') ?: config('mandate.telegram.bot_token'),
                     $webhook['chat_id'] ?? '',
                     $context,
                     $webhook['username'] ?? null,
