@@ -31,8 +31,8 @@ const mandatePlugin: OpenClawPlugin & { tools: typeof tools } = {
 
     api.registerTool({
       ...registerTool,
-      execute: async (params) => {
-        const result = await registerTool.execute(params as any);
+      execute: async (_id: unknown, params: unknown) => {
+        const result = await registerTool.execute(_id, params);
         if (result.success && result.runtimeKey) {
           setRuntimeKey(result.runtimeKey);
         }

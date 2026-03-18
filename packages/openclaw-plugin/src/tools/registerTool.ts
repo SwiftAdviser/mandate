@@ -16,7 +16,8 @@ export const registerTool = {
     },
     required: ['name', 'evmAddress'],
   },
-  async execute(params: RegisterParams): Promise<{
+  // OpenClaw: execute(_id, params)
+  async execute(_id: unknown, params?: RegisterParams | unknown): Promise<{
     success: boolean;
     runtimeKey?: string;
     claimUrl?: string;
@@ -25,11 +26,13 @@ export const registerTool = {
     error?: string;
     instruction?: string;
   }> {
+    // Handle both OpenClaw (id, params) and direct (params) signatures
+    const p = (params && typeof params === 'object' && 'name' in params ? params : _id) as RegisterParams;
     try {
       // Step 1: Register agent (no auth)
       const result = await MandateClient.register({
-        name: params.name,
-        evmAddress: params.evmAddress as `0x${string}`,
+        name: p.name,
+        evmAddress: p.evmAddress as `0x${string}`,
         chainId: 8453,
       });
 
@@ -41,7 +44,7 @@ export const registerTool = {
             'Content-Type': 'application/json',
             Authorization: `Bearer ${result.runtimeKey}`,
           },
-          body: JSON.stringify({ evmAddress: params.evmAddress }),
+          body: JSON.stringify({ evmAddress: p.evmAddress }),
         });
       } catch {
         // Activation failure is non-fatal, agent can activate later
@@ -52,7 +55,7 @@ export const registerTool = {
         runtimeKey: result.runtimeKey,
         claimUrl: result.claimUrl,
         agentId: result.agentId,
-        evmAddress: params.evmAddress,
+        evmAddress: p.evmAddress,
         instruction: [
           'Registration successful.',
           `1) Save runtimeKey "${result.runtimeKey}" in plugin config or MANDATE_RUNTIME_KEY env var.`,

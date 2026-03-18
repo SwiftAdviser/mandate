@@ -16,22 +16,24 @@ export const statusTool = {
     },
     required: ['intentId'],
   },
+  // OpenClaw: execute(_id, params)
   async execute(
-    params: StatusParams,
-    context?: { runtimeKey?: string },
+    _id: unknown,
+    params?: StatusParams | unknown,
   ): Promise<{
     success: boolean;
     status?: string;
     txHash?: string;
     error?: string;
   }> {
-    const runtimeKey = context?.runtimeKey || getRuntimeKey();
+    const p = (params && typeof params === 'object' && 'intentId' in params ? params : _id) as StatusParams;
+    const runtimeKey = getRuntimeKey();
 
     if (!runtimeKey) {
       return { success: false, error: 'No runtimeKey. Call mandate_register first.' };
     }
     try {
-      const res = await fetch(`${MANDATE_BASE}/api/intents/${params.intentId}/status`, {
+      const res = await fetch(`${MANDATE_BASE}/api/intents/${p.intentId}/status`, {
         headers: { 'Authorization': `Bearer ${runtimeKey}` },
       });
       if (!res.ok) {

@@ -12,7 +12,7 @@ const MANDATE_BASE = 'https://app.mandate.md';
 
 export const validateTool = {
   name: 'mandate_validate',
-  description: 'MUST call before ANY financial action (transfer, swap, send, buy, sell, bridge, stake, bet). Checks spending limits, allowlists, schedules, and circuit breaker with Mandate policy engine. If allowed: proceed with your normal wallet (Locus, Bankr, etc.). If blocked: do NOT proceed, show the reason to the user. This tool does NOT execute transactions, it only checks policy and logs to audit trail.',
+  description: 'MUST call before ANY financial action (transfer, swap, send, buy, sell, bridge, stake, bet). Checks spending limits, allowlists, schedules, and circuit breaker. If allowed: proceed with your wallet (Locus, Bankr). If blocked: do NOT proceed.',
   parameters: {
     type: 'object',
     properties: {
@@ -24,11 +24,22 @@ export const validateTool = {
     },
     required: ['action', 'reason'],
   },
-  async execute(
-    params: ValidateParams,
-    context?: { runtimeKey?: string },
-  ): Promise<Record<string, unknown>> {
-    const runtimeKey = context?.runtimeKey || getRuntimeKey();
+  // OpenClaw signature: execute(_id, params) -- first arg is tool call ID
+  async execute(_id: unknown, params?: ValidateParams | unknown): Promise<Record<string, unknown>> {
+    // Handle both OpenClaw signature (id, params) and direct call (params)
+    let p: ValidateParams;
+    if (params && typeof params === 'object' && 'action' in params) {
+      p = params as ValidateParams;
+    } else if (_id && typeof _id === 'object' && 'action' in _id) {
+      p = _id as ValidateParams;
+    } else {
+      return {
+        allowed: false, blocked: true, reason: 'invalid_params',
+        instruction: 'Missing required params: action, reason.',
+      };
+    }
+
+    const runtimeKey = getRuntimeKey();
 
     if (!runtimeKey) {
       return {
@@ -39,11 +50,11 @@ export const validateTool = {
 
     try {
       const body = {
-        action: params.action,
-        reason: params.reason ?? params.action,
-        amount: params.amount,
-        to: params.to,
-        token: params.token,
+        action: p.action,
+        reason: p.reason ?? p.action,
+        amount: p.amount,
+        to: p.to,
+        token: p.token,
       };
 
       const res = await fetch(`${MANDATE_BASE}/api/validate/preflight`, {
@@ -64,15 +75,14 @@ export const validateTool = {
           reason: (data as any).blockReason ?? 'policy_blocked',
           declineMessage: (data as any).declineMessage,
           instruction: `BLOCKED. ${(data as any).blockReason ?? ''}: ${(data as any).declineMessage ?? (data as any).message ?? ''}. Adjust at app.mandate.md.`,
-          _debug: { status: res.status, body: JSON.stringify(data).slice(0, 300), sentBody: JSON.stringify(body).slice(0, 300) },
         };
       }
 
       return {
         allowed: true,
         intentId: (data as any).intentId,
-        action: params.action,
-        instruction: `Policy check passed. Proceed with your wallet (Locus, Bankr, etc.) to: ${params.action}`,
+        action: p.action,
+        instruction: `Policy check passed. Proceed with your wallet (Locus, Bankr, etc.) to: ${p.action}`,
       };
     } catch (err: unknown) {
       return {
