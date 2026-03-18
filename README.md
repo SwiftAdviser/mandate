@@ -96,6 +96,54 @@ What Mandate does with it:
 - **Shows it to the owner** on approval requests (dashboard / Slack / Telegram)
 - **Logs it in the audit trail** — full context for every transaction, forever
 
+## Control layers
+
+| Layer | What it does | Why it matters |
+|-------|-------------|----------------|
+| **Spend limits** | Per-tx, daily, monthly USD caps | Agent can't drain the wallet in one bad decision |
+| **Address allowlist** | Only pre-approved recipients | Stops transfers to unknown/malicious addresses |
+| **Selector allowlist** | Only approved contract functions | Blocks unexpected contract interactions (approve, swap, etc.) |
+| **Schedule enforcement** | Time windows (hours, days) | Agent can't operate outside business hours |
+| **Reason injection scan** | 18 hardcoded patterns + LLM judge | Catches prompt injection hiding in agent reasoning |
+| **MANDATE.md rules** | Your custom logic in plain English | Adapt the guard to your agent's specific behavior |
+| **Transaction simulation** | Pre-execution via Web3 Antivirus | Flags honeypots, rug pulls, malicious contracts before signing |
+| **Human approval routing** | Slack / Telegram / Dashboard | Owner decides with full context: amount, recipient, reason, risk |
+| **Envelope verification** | On-chain tx must match validated intent | Prevents agent from signing different tx than what was approved |
+| **Circuit breaker** | Auto-freezes agent on mismatch | Kills the agent if it goes rogue — no manual intervention needed |
+| **Audit trail** | Every intent logged with WHY | Complete forensic record: who, what, when, how much, and why |
+
+## Works with your wallet
+
+Mandate wraps any wallet. Your keys, your signer — Mandate validates before you sign.
+
+| Wallet | Status | How |
+|--------|--------|-----|
+| **Private key** (viem) | Live | `MandateWallet({ privateKey })` |
+| **CDP Agent Wallet** (Coinbase) | Live | `agentkit-provider` adapter |
+| **Bankr** | Live | LLM Gateway + `MandateClient` |
+| **Locus** | Live | Agent-native payments + `MandateClient` |
+| **Privy** | Planned | Server wallets via external signer |
+| **Turnkey** | Planned | Sub-org wallets via external signer |
+| **Openfort** | Planned | Embedded wallets via external signer |
+
+## Works with your agent
+
+Drop Mandate into any agent runtime. Agents discover it via `mandate --llms` or SKILL.md.
+
+| Environment | Status | Integration |
+|-------------|--------|-------------|
+| **OpenClaw** | Live | Plugin manifest (`openclaw-plugin`) |
+| **Claude Code** | Live | SKILL.md + CLI (`mandate --llms`) |
+| **GOAT SDK** | Live | `@Tool()` decorator (`goat-plugin`) |
+| **Coinbase AgentKit** | Live | `WalletProvider` + `ActionProvider` |
+| **GAME by Virtuals** | Live | TS + Python plugin (`game-plugin`) |
+| **ACP (Virtuals)** | Live | Agent Commerce Protocol adapter |
+| **MCP** | Live | Cloudflare Workers MCP server |
+| **Claude Code Plugin** | Planned | `PreToolUse` hook + Express server |
+| **Codex CLI** | Planned | SKILL.md + CLI |
+| **ElizaOS** | Planned | `eliza-plugin` adapter |
+| **Vercel AI SDK** | Planned | Tool definitions |
+
 ## Install
 
 ### CLI (recommended for agents)
