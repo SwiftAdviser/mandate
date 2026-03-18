@@ -1,4 +1,4 @@
-# Mandate Positioning — Why "Seatbelt" Beats "Intelligence Layer"
+# Mandate Positioning — X-ray Vision, Not an Intelligence Layer
 
 **Date**: 2026-03-18 | **Authors**: Roman + Claude (CEO review session)
 
@@ -42,45 +42,62 @@ They are not thinking about "intelligence layers." They are thinking about **tru
 
 The problem isn't accuracy — it's **perspective**. "Intelligence layer" is how the builder sees the product. The user doesn't care about layers. They care about sleeping at night.
 
-## Step 3: The Seatbelt Reframe
+## Step 3: The Seatbelt Problem — Safe But Not Sexy
 
-> "Mandate is the seatbelt for agent wallets."
+Our first reframe was "the seatbelt for agent wallets." It passed every clarity test — bartender test, emotion test, slide test. But it had one fatal flaw:
 
-Now test it:
+**Seatbelts are boring.** Nobody brags about their seatbelt. Nobody tweets "just installed a seatbelt." It's a must-have that generates zero excitement.
+
+For a hackathon, for early adopters, for the people who will champion this product — we need something that feels like a **superpower**, not a safety requirement.
+
+The seatbelt is the trust foundation. But the front door needs to be sexier.
+
+## Step 4: X-ray Vision — The Superpower Framing
+
+> "X-ray vision for agent wallets."
+
+Test it:
 
 | Test | Result |
 |------|--------|
-| Can you say it to a bartender? | Yes. Everyone knows what a seatbelt does. |
-| Does it trigger emotion? | Yes. "I should probably have one of those." |
-| Does the user see themselves in it? | Yes. They're the driver. The agent is the car. |
-| Would a user Google this? | They wouldn't need to — they get it instantly. |
-| Does it fit on a slide? | 7 words. |
+| Can you say it to a bartender? | Yes. "I can see what my AI agent is thinking when it spends money." |
+| Does it trigger emotion? | Yes. "That sounds powerful." |
+| Does the user see themselves in it? | Yes. They have the superpower. They see through the black box. |
+| Would a user Google this? | They'd click on it. It's intriguing. |
+| Does it fit on a slide? | 5 words. |
+| Is it sexy? | **Yes.** X-ray vision is a superpower. |
 
-**Key properties of the seatbelt analogy:**
+**Why this works where seatbelt didn't:**
 
-1. **Speed, not restriction.** Seatbelts don't slow you down. They let you drive faster because you're protected. Same with Mandate — your agent runs full speed, you just have eyes on it.
+1. **Superpower, not restriction.** You're not being protected — you're being empowered. You can see what nobody else can see: the agent's reasoning, the injection patterns, the intent behind every transaction.
 
-2. **Obvious necessity.** Nobody argues against seatbelts. "You wouldn't drive without one" is self-evident. We want the same reaction for agent wallets.
+2. **The black box becomes transparent.** Every other wallet owner stares at a transaction log. You see through it to the WHY. That's not safety — that's an unfair advantage.
 
-3. **Non-custodial by implication.** The seatbelt doesn't drive the car for you. It protects you while YOU drive. Mandate doesn't hold keys — it protects while the agent operates.
+3. **Excitement + trust.** The seatbelt is still there (policies, circuit breaker, kill switch). But the FEELING is "I can see everything" — not "I'm strapped in."
 
-4. **New category.** Seatbelts weren't compared to steering wheel locks when they launched. The comparison was "with" vs. "without." We're not competing with session keys — we're adding a layer that didn't exist.
+4. **Status.** "I have x-ray vision into my agent's wallet" is something you'd actually say at a conference. "I have a seatbelt" is not.
 
-## Step 4: Where "Intelligence Layer" Still Lives
+**The full framing:**
+> Your agent thinks before it spends. Mandate lets you see what it's thinking.
+>
+> See the reasoning. Catch the manipulation. Write your own rules. Sleep while it works.
+>
+> The seatbelt is built in. The superpower is seeing through the black box.
 
-We don't kill the technical framing — we put it in its place:
+## Step 5: Where Each Framing Lives
 
-| Context | What we say |
-|---------|-------------|
-| **Landing page headline** | The seatbelt for agent wallets |
-| **Subheadline / tagline** | See why your agent spends. Stop it when it shouldn't. |
-| **README intro** | Same as landing page |
-| **Technical docs / SKILL.md** | Transaction intelligence and control layer |
-| **Architecture discussions** | Intelligence layer (accurate, useful shorthand) |
-| **Investor pitch** | "Seatbelt" for the hook → "intelligence layer" for the substance |
-| **Hackathon submission** | Lead with seatbelt, explain with layers |
+Three layers of positioning, three audiences:
 
-**Rule of thumb:** Lead with the user's world. Go technical only when the audience is technical.
+| Context | What we say | Why |
+|---------|-------------|-----|
+| **Headline / README / Pitch** | X-ray vision for agent wallets | Sexy, intriguing, makes them lean in |
+| **Subheadline / Explainer** | See why your agent spends. Stop it when it shouldn't. | Clear benefit, two verbs |
+| **Trust foundation** | The seatbelt is built in | Safety without the boring lead |
+| **Technical docs / SKILL.md** | Transaction intelligence and control layer | Accurate for builders |
+| **Architecture discussions** | Intelligence layer | Useful shorthand between engineers |
+| **Investor pitch** | X-ray vision → seatbelt → intelligence layer | Hook → trust → substance |
+
+**Rule of thumb:** Lead with the superpower. Deliver the safety. Go technical only when the audience is technical.
 
 ## Step 5: What Is the User Actually Comparing Us To?
 
@@ -131,28 +148,36 @@ All three make the same point: **you're flying blind without it.**
 
 Session keys are the steering wheel lock. Mandate is the seatbelt. You want both — but only one protects you while you're moving.
 
-## Step 8: What We Stopped Saying (and Why)
+## Step 9: What We Stopped Saying (and Why)
 
 | Before | Problem | After |
 |--------|---------|-------|
-| "Intelligence layer" | Nobody knows what this means outside our team | "Seatbelt for agent wallets" |
+| "Intelligence layer" | Nobody knows what this means outside our team | "X-ray vision for agent wallets" |
+| "Seatbelt" as the lead | Safe but boring — nobody gets excited | Use as trust foundation, not headline |
 | "Policy engine" | Backend jargon, sounds enterprise | "Your rules, plain language" |
-| "Non-custodial" as the lead | Users care about safety first, custody model second | Lead with the problem, mention non-custodial as proof |
-| "Nobody has this" | Sounds defensive, unverifiable claim | Let the demo speak — show the injection block |
-| "We support 11 control layers" | Feature list, not benefit | "See why. Stop when it shouldn't." |
-| "Transaction intelligence and control layer for autonomous agents" | Builder's view, not user's view | "The seatbelt for agent wallets" |
+| "Non-custodial" as the lead | Users care about seeing, not custody model | Lead with visibility, mention non-custodial as proof |
+| "Nobody has this" | Sounds defensive | Let the demo speak — show the injection block |
+| "We support 11 control layers" | Feature list, not benefit | "See what it's thinking. Stop it when it shouldn't." |
 
 ---
 
 ## Summary
 
+Three layers of the same product, three words each:
+
+| Layer | Words | Feeling |
+|-------|-------|---------|
+| **Sexy** | X-ray vision | "I want that" |
+| **Trust** | Built-in seatbelt | "I need that" |
+| **Technical** | Intelligence layer | "I understand that" |
+
+Lead with want. Deliver need. Explain with understand.
+
 "Transaction intelligence and control layer" is what Mandate IS.
-"The seatbelt for agent wallets" is what Mandate MEANS to the user.
+"X-ray vision for agent wallets" is what Mandate FEELS LIKE.
 
-Both are true. But when you talk to users, investors, judges, or anyone outside your codebase — lead with meaning, not mechanics.
-
-The user doesn't buy a layer. They buy peace of mind.
+The user doesn't buy a layer. They buy the power to see through the black box.
 
 ---
 
-*Derived from CEO review session with Claude, 2026-03-18.*
+*Derived from CEO review session with Claude, 2026-03-18. Updated after "seatbelts aren't sexy" insight.*
