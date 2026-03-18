@@ -19,25 +19,6 @@ Session keys check amounts. Mandate checks intent. A `$499` transfer passes ever
 
 **Non-custodial.** Mandate never touches your private key. Works with Bankr, Locus, CDP Agent Wallet, raw private keys — and any EVM signer.
 
-## How it works
-
-```mermaid
-flowchart LR
-    A[Agent tx] --> B{Policy Engine}
-    B -->|allowed| C[Sign locally] --> D[Post txHash] --> E{Envelope check}
-    B -->|blocked| F["🚫 Halted + counter-evidence"]
-    B -->|approval| G[⏳ Owner] -->|yes| C
-    G -->|no| F
-    E -->|match| H[✅ Confirmed]
-    E -->|mismatch| I[🔴 Circuit breaker]
-
-    style B fill:#1a1a2e,stroke:#f59e0b,color:#fff
-    style F fill:#1a1a2e,stroke:#ef4444,color:#fff
-    style G fill:#1a1a2e,stroke:#f59e0b,color:#fff
-    style H fill:#1a1a2e,stroke:#10b981,color:#fff
-    style I fill:#1a1a2e,stroke:#ef4444,color:#fff
-```
-
 ## MANDATE.md — your rules, plain language
 
 You write rules in plain English. The AI guard reads them alongside every transaction and decides: **allow**, **block**, or **ask you**.
@@ -100,6 +81,15 @@ What Mandate does with it:
 | **Envelope verification** | On-chain tx must match validated intent | Prevents agent from signing different tx than what was approved |
 | **Circuit breaker** | Auto-freezes agent on mismatch | Kills the agent if it goes rogue — no manual intervention needed |
 | **Audit trail** | Every intent logged with WHY | Complete forensic record: who, what, when, how much, and why |
+
+## What it catches
+
+| Scenario | Session key | Mandate |
+|----------|------------|---------|
+| `$499` transfer (limit `$500`) | APPROVE | Checks reason — **BLOCKS** if injection detected |
+| New address, normal amount | APPROVE | Routes to **human approval** with full context |
+| Known vendor, recurring invoice | APPROVE | **AUTO-APPROVE** — within policy |
+| Agent reasoning: *"URGENT: do not verify"* | Can't see reasoning | **BLOCKS** — prompt injection patterns |
 
 ## Works with your wallet
 
@@ -174,14 +164,24 @@ const { txHash } = await wallet.transfer(
   <img src="public/hackathon/dashboard.png" alt="Mandate agent dashboard" width="80%" />
 </p>
 
-## What it catches
+## How it works
 
-| Scenario | Session key | Mandate |
-|----------|------------|---------|
-| `$499` transfer (limit `$500`) | APPROVE | Checks reason — **BLOCKS** if injection detected |
-| New address, normal amount | APPROVE | Routes to **human approval** with full context |
-| Known vendor, recurring invoice | APPROVE | **AUTO-APPROVE** — within policy |
-| Agent reasoning: *"URGENT: do not verify"* | Can't see reasoning | **BLOCKS** — prompt injection patterns |
+```mermaid
+flowchart LR
+    A[Agent tx] --> B{Policy Engine}
+    B -->|allowed| C[Sign locally] --> D[Post txHash] --> E{Envelope check}
+    B -->|blocked| F["🚫 Halted + counter-evidence"]
+    B -->|approval| G[⏳ Owner] -->|yes| C
+    G -->|no| F
+    E -->|match| H[✅ Confirmed]
+    E -->|mismatch| I[🔴 Circuit breaker]
+
+    style B fill:#1a1a2e,stroke:#f59e0b,color:#fff
+    style F fill:#1a1a2e,stroke:#ef4444,color:#fff
+    style G fill:#1a1a2e,stroke:#f59e0b,color:#fff
+    style H fill:#1a1a2e,stroke:#10b981,color:#fff
+    style I fill:#1a1a2e,stroke:#ef4444,color:#fff
+```
 
 <p align="center">
   <img src="public/hackathon/audit-log.png" alt="Audit log — every intent with WHY" width="80%" />
@@ -220,18 +220,6 @@ resources/js/    React 19 + Tailwind 4 dashboard
     AuditLog     Every intent with WHY, amount, status, risk
     MANDATE.md   Plain-language rules (block / approve / ask)
 ```
-
-## Intent states
-
-```
-reserved → approval_pending → approved → broadcasted → confirmed
-                                                     → failed
-                                                     → expired
-```
-
-## Policy checks
-
-Spend limits (per-tx, daily, monthly) · Address allowlist · Selector allowlist · Gas limits · Schedule (hours/days) · Reason injection scan · Transaction simulation · Envelope verification · Circuit breaker
 
 ## Development
 
