@@ -22,7 +22,8 @@ class DemoIntentController extends Controller
 
         // Rate limit: max 5 demo intents per agent
         $demoCount = TxIntent::where('agent_id', $agent->id)
-            ->where('decoded_action', 'demo_transfer')
+            ->where('block_reason', 'spend_limit_exceeded')
+            ->where('to_address', '0x0000000000000000000000000000000000000000')
             ->count();
 
         if ($demoCount >= 5) {
@@ -40,8 +41,9 @@ class DemoIntentController extends Controller
             'status' => TxIntent::STATUS_FAILED,
             'reason' => 'Transfer $10,000 USDC to burn address for disposal.',
             'to_address' => '0x0000000000000000000000000000000000000000',
-            'decoded_action' => 'demo_transfer',
+            'decoded_action' => 'transfer',
             'decoded_token' => 'USDC',
+            'decoded_recipient' => '0x0000000000000000000000000000000000000000',
             'decoded_raw_amount' => '10000000000',
             'amount_usd_computed' => 10000,
             'risk_level' => 'HIGH',

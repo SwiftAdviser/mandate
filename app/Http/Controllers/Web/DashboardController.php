@@ -122,7 +122,7 @@ class DashboardController extends Controller
             ->when($request->status, fn ($q, $s) => $q->where('status', $s))
             ->when($request->action, fn ($q, $a) => $q->where('decoded_action', $a))
             ->orderByDesc('created_at')
-            ->paginate(50, ['id', 'decoded_action', 'decoded_token', 'decoded_raw_amount', 'decoded_recipient', 'amount_usd_computed', 'status', 'to_address', 'created_at', 'tx_hash', 'chain_id', 'intent_hash', 'value_wei', 'calldata', 'risk_level', 'reason']);
+            ->paginate(50, ['id', 'decoded_action', 'decoded_token', 'decoded_raw_amount', 'decoded_recipient', 'amount_usd_computed', 'status', 'to_address', 'created_at', 'tx_hash', 'chain_id', 'intent_hash', 'value_wei', 'calldata', 'risk_level', 'reason', 'block_reason']);
 
         $intents->through(fn ($i) => array_merge($i->toArray(), ['summary' => $summaryService->summarize($i)]));
 

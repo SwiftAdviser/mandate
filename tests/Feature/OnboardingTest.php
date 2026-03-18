@@ -213,7 +213,7 @@ class OnboardingTest extends TestCase
                 'max_fee_per_gas' => '0x0',
                 'max_priority_fee_per_gas' => '0x0',
                 'intent_hash' => '0x'.str_pad(dechex($i + 1), 64, '0', STR_PAD_LEFT),
-                'decoded_action' => 'demo_transfer',
+                'decoded_action' => 'transfer',
             ]);
         }
 
