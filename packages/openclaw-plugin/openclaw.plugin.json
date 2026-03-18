@@ -1,9 +1,22 @@
 {
   "id": "openclaw-plugin",
   "name": "Mandate",
-  "version": "0.3.4",
+  "version": "0.4.5",
   "description": "Policy gatekeeper for AI agent wallets. Tools: mandate_register (once), mandate_validate (before EVERY financial action), mandate_status. Also installs a hook that auto-intercepts financial tool calls as safety net. No private key needed.",
   "skills": ["./skills/mandate"],
+  "configSchema": {
+    "type": "object",
+    "properties": {
+      "runtimeKey": {
+        "type": "string",
+        "description": "Mandate runtime key (mndt_live_... or mndt_test_...). Get one via mandate_register tool or POST https://app.mandate.md/api/agents/register (no auth)."
+      }
+    }
+  },
+  "uiHints": {
+    "labels": { "runtimeKey": "Runtime Key" },
+    "sensitive": ["runtimeKey"]
+  },
   "security": {
     "envAccess": [],
     "networkAccess": ["https://app.mandate.md/api/*"],

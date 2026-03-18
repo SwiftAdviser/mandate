@@ -20,7 +20,7 @@ const tools = [registerTool, validateTool, statusTool];
 const mandatePlugin: OpenClawPlugin & { tools: typeof tools } = {
   id: 'openclaw-plugin',
   name: 'Mandate',
-  version: '0.4.3',
+  version: '0.4.5',
   description: 'Policy gatekeeper for AI agent wallets. Flow: 1) mandate_register (once, to get runtimeKey), 2) mandate_validate (before EVERY financial action), 3) if allowed, use your normal wallet (Locus, Bankr, etc.). No private key needed. Also installs a hook that auto-intercepts financial tool calls as a safety net.',
   register(api: OpenClawPluginApi, config?: OpenClawPluginConfig) {
     // Tools: explicit agent flow (register -> validate -> status)

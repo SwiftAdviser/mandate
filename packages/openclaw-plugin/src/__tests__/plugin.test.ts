@@ -25,7 +25,7 @@ import mandatePlugin from '../plugin.js';
 describe('openclaw plugin', () => {
   it('exports plugin with correct name and version', () => {
     expect(mandatePlugin.name).toBe('Mandate');
-    expect(mandatePlugin.version).toBe('0.4.3');
+    expect(mandatePlugin.version).toBe('0.4.5');
     expect(mandatePlugin.tools).toHaveLength(3);
   });
 
@@ -53,7 +53,7 @@ describe('register(api) pattern', () => {
   it('plugin has id, name, version, register function', () => {
     expect(mandatePlugin.id).toBe('openclaw-plugin');
     expect(mandatePlugin.name).toBe('Mandate');
-    expect(mandatePlugin.version).toBe('0.4.3');
+    expect(mandatePlugin.version).toBe('0.4.5');
     expect(typeof mandatePlugin.register).toBe('function');
   });
 
