@@ -13,13 +13,24 @@
 
 # Mandate
 
-**X-ray vision for agent wallets.**
+**Transaction intelligence and control for autonomous agents.**
 
-Your agent thinks before it spends. Mandate lets you see what it's thinking: the reasoning, the intent, the risk. See the manipulation before money moves. Write your own rules in plain English. Sleep while your agent works.
+**Approve intent, not just transactions.**
 
-## MANDATE.md: spawn your own AI guardian
+Mandate adds a reason-aware control layer to existing agent wallets. Evaluate why an agent wants to pay, then approve, block, or escalate before signing. Stop risky payments before funds move, and keep a complete audit trail for operations, security, and compliance.
 
-You don't configure Mandate. You **write a mandate**: a plain-language document that creates a dedicated AI judge for your agent's wallet. Every transaction passes through your guardian before a single wei moves.
+## Core value proposition
+
+1. **Intent-Aware Payment Decisions**
+   Evaluate why an agent wants to pay, then automatically approve, block, or escalate before signing.
+2. **Real-Time Risk Prevention**
+   Stop fraud, prompt-injection-driven payments, and costly mistakes in real time, before funds move.
+3. **Complete Payment Auditability**
+   Keep a full audit trail of every payment decision with amount, timing, and rationale for operations, security, and compliance.
+
+## MANDATE.md: intent-aware payment decisions
+
+You don't configure Mandate. You **write a mandate**: a plain-language document that defines transaction decisioning for your agent wallet. Every transaction is evaluated before a single wei moves.
 
 ```markdown
 # MANDATE.md
@@ -41,7 +52,7 @@ You don't configure Mandate. You **write a mandate**: a plain-language document 
 - Clear business justification with verifiable details
 ```
 
-Your guardian learns your patterns. Edit the markdown, behavior changes instantly. No code, no deploy, no waiting. You're training an AI to protect your money, in your words.
+Mandate learns your patterns. Edit the markdown, behavior changes instantly. No code, no deploy, no waiting.
 
 <p align="center">
   <img src="public/hackathon/mandate-rules.png" alt="MANDATE.md rules editor in dashboard" width="80%" />
@@ -90,11 +101,11 @@ Session keys are on-chain. They see `{to, value, calldata}`. Mandate sees the re
 
 ## Session keys vs Mandate
 
-Session keys are the bouncers. They check the ID at the door: amount, address, time. Solid.
+Session keys enforce on-chain constraints: amount, address, time.
 
-But the bouncer can't read minds. Mandate can. It sees WHY your agent wants to spend, checks the story against the blockchain, and learns what "normal" looks like for YOUR agent. The bouncer stays at the door. Mandate sits inside the agent's head.
+Mandate adds intent awareness. It evaluates WHY your agent wants to spend, validates that reasoning against on-chain context, and learns what "normal" looks like for your agent.
 
-We don't replace your session keys. We give them a brain.
+We don't replace your session keys. We make them decision-aware.
 
 | What happened | Session key | Mandate |
 |--------------|------------|---------|
@@ -111,8 +122,8 @@ We don't replace your session keys. We give them a brain.
 | **Address allowlist** | Only pre-approved recipients get money |
 | **Selector allowlist** | Only approved contract functions (no surprise `approve()` or `swap()`) |
 | **Schedule enforcement** | Agent can't spend outside business hours |
-| **Prompt injection scan** | 18 hardcoded patterns + LLM judge. Catches manipulation in reasoning |
-| **MANDATE.md guardian** | Your AI judge, your rules, your language |
+| **Prompt injection scan** | 18 hardcoded patterns + LLM classifier. Catches manipulation in reasoning |
+| **MANDATE.md controls** | Define transaction decision logic in plain English |
 | **Transaction simulation** | Pre-execution analysis flags honeypots, rug pulls, malicious contracts |
 | **ERC-8004 reputation** | On-chain identity + reputation score for counterparties via The Graph |
 | **Context enrichment** | On block, feeds agent on-chain evidence so it cancels willingly |
