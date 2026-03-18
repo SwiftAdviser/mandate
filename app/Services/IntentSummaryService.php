@@ -71,6 +71,12 @@ class IntentSummaryService
         $token     = $intent->decoded_token;
         $chainId   = $intent->chain_id;
 
+        // Preflight intents: no raw amount, use amount_usd_computed + token symbol
+        if (!$rawAmount && $intent->amount_usd_computed !== null) {
+            $usd = '$' . number_format((float) $intent->amount_usd_computed, 2);
+            return $token ? "{$usd} {$token}" : $usd;
+        }
+
         if (!$rawAmount || !$token) {
             return ($rawAmount ?? '0') . ' tokens';
         }

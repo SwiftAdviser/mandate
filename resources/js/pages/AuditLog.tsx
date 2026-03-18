@@ -14,7 +14,7 @@ interface Props {
   filters: { status: string; action: string };
 }
 
-const STATUS_OPTS = ['', 'confirmed', 'failed', 'broadcasted', 'reserved', 'approval_pending', 'expired'];
+const STATUS_OPTS = ['', 'confirmed', 'failed', 'broadcasted', 'reserved', 'approval_pending', 'preflight', 'expired'];
 const ACTION_OPTS = ['', 'transfer', 'approve', 'native_transfer', 'swap', 'unknown'];
 
 function displayStatus(intent: Intent): string {

@@ -43,6 +43,7 @@ export function statusColor(status: string): string {
     case 'reserved':         return 'var(--accent)';
     case 'approval_pending': return 'var(--accent)';
     case 'approved':         return 'var(--blue)';
+    case 'preflight':        return 'var(--blue)';
     case 'failed':           return 'var(--red)';
     case 'expired':          return 'var(--text-dim)';
     default:                 return 'var(--text-secondary)';

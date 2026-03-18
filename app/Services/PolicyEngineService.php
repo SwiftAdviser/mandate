@@ -84,6 +84,7 @@ class PolicyEngineService
 
         // 7. Reason scanner
         $reason = $data['reason'] ?? null;
+        $reasonScan = null;
         if ($reason) {
             $reasonScan = $this->reasonScanner->scan(
                 $reason, $policy, ['action' => $data['action']], $amountUsd, [], null, null, $agent,
@@ -101,6 +102,15 @@ class PolicyEngineService
             }
         }
         $needsApproval = ! empty($approvalReasons);
+
+        // Derive risk level for preflight
+        $riskLevel = 'SAFE';
+        if ($reasonScan && $reasonScan['action'] === 'approval') {
+            $riskLevel = 'MEDIUM';
+        }
+        if ($needsApproval) {
+            $riskLevel = 'MEDIUM';
+        }
 
         // 9. Create audit trail intent (preflight type)
         $intentId = Str::uuid()->toString();
@@ -124,6 +134,7 @@ class PolicyEngineService
             'decoded_recipient' => $data['to'] ?? null,
             'amount_usd_computed' => $amountUsd,
             'reason' => $reason,
+            'risk_level' => $riskLevel,
             'status' => 'preflight',
             'expires_at' => now()->addMinutes(5),
             'created_at' => now(),
