@@ -325,13 +325,14 @@ This is non-negotiable. An unreachable policy server does not mean "no policies 
 
 ## Chain Reference
 
-**Test keys** (`mndt_test_*`): Base Sepolia (84532) | **Live keys** (`mndt_live_*`): Base mainnet (8453)
+**Test keys** (`mndt_test_*`): Sepolia (11155111), Base Sepolia (84532) | **Live keys** (`mndt_live_*`): Ethereum (1), Base (8453)
 
 | Chain | Chain ID | USDC Address | Decimals |
 |-------|----------|-------------|----------|
+| Ethereum | 1 | `0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48` | 6 |
+| Sepolia | 11155111 | `0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238` | 6 |
+| Base | 8453 | `0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913` | 6 |
 | Base Sepolia | 84532 | `0x036CbD53842c5426634e7929541eC2318f3dCF7e` | 6 |
-| Base mainnet | 8453 | `0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913` | 6 |
-| Both | — | WETH: `0x4200000000000000000000000000000000000006` | 18 |
 
 ## Intent States
 

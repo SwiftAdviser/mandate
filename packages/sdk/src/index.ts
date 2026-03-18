@@ -49,11 +49,15 @@ export type {
 
 // Convenience constants
 export const USDC = {
-  BASE_SEPOLIA: '0x036CbD53842c5426634e7929541eC2318f3dCF7e' as `0x${string}`,
+  ETH_MAINNET:  '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48' as `0x${string}`,
+  ETH_SEPOLIA:  '0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238' as `0x${string}`,
   BASE_MAINNET: '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913' as `0x${string}`,
+  BASE_SEPOLIA: '0x036CbD53842c5426634e7929541eC2318f3dCF7e' as `0x${string}`,
 } as const;
 
 export const CHAIN_ID = {
-  BASE_SEPOLIA: 84532,
+  ETH_MAINNET:  1,
+  ETH_SEPOLIA:  11155111,
   BASE_MAINNET: 8453,
+  BASE_SEPOLIA: 84532,
 } as const;

@@ -23,8 +23,10 @@ return [
     ],
 
     'rpc' => [
-        84532  => 'https://base-sepolia.g.alchemy.com/v2/',
-        8453   => 'https://base-mainnet.g.alchemy.com/v2/',
+        1        => 'https://eth-mainnet.g.alchemy.com/v2/',
+        11155111 => 'https://eth-sepolia.g.alchemy.com/v2/',
+        8453     => 'https://base-mainnet.g.alchemy.com/v2/',
+        84532    => 'https://base-sepolia.g.alchemy.com/v2/',
     ],
 
     'aegis' => [
@@ -69,7 +71,17 @@ return [
     ],
 
     'token_registry' => [
-        ['chain_id' => 84532, 'address' => '0x036CbD53842c5426634e7929541eC2318f3dCF7e', 'symbol' => 'USDC', 'decimals' => 6, 'is_stable' => true],
-        ['chain_id' => 8453,  'address' => '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913', 'symbol' => 'USDC', 'decimals' => 6, 'is_stable' => true],
+        // Ethereum Mainnet
+        ['chain_id' => 1,        'address' => '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48', 'symbol' => 'USDC', 'decimals' => 6, 'is_stable' => true],
+        ['chain_id' => 1,        'address' => '0xdAC17F958D2ee523a2206206994597C13D831ec7', 'symbol' => 'USDT', 'decimals' => 6, 'is_stable' => true],
+        ['chain_id' => 1,        'address' => '0x6B175474E89094C44Da98b954EedeB131715A767', 'symbol' => 'DAI',  'decimals' => 18, 'is_stable' => true],
+        ['chain_id' => 1,        'address' => '0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2', 'symbol' => 'WETH', 'decimals' => 18, 'is_stable' => false],
+        // Ethereum Sepolia
+        ['chain_id' => 11155111, 'address' => '0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238', 'symbol' => 'USDC', 'decimals' => 6, 'is_stable' => true],
+        // Base Mainnet
+        ['chain_id' => 8453,     'address' => '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913', 'symbol' => 'USDC', 'decimals' => 6, 'is_stable' => true],
+        ['chain_id' => 8453,     'address' => '0x4200000000000000000000000000000000000006', 'symbol' => 'WETH', 'decimals' => 18, 'is_stable' => false],
+        // Base Sepolia
+        ['chain_id' => 84532,    'address' => '0x036CbD53842c5426634e7929541eC2318f3dCF7e', 'symbol' => 'USDC', 'decimals' => 6, 'is_stable' => true],
     ],
 ];
