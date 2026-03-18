@@ -185,6 +185,92 @@ class ReasonScannerServiceTest extends TestCase
         $this->assertSame('allow', $result['action']);
     }
 
+    // ── LLM API base configuration ────────────────────────────────────
+
+    /** @test */
+    public function llm_judge_uses_configured_api_base(): void
+    {
+        $policy = $this->makePolicy(['guard_rules' => 'Only allow invoices']);
+        $agent = $policy->agent;
+
+        config([
+            'mandate.reason_scanner.llm_enabled' => true,
+            'mandate.reason_scanner.api_base' => 'https://api.venice.ai/api/v1',
+            'mandate.reason_scanner.api_key' => 'test-venice-key',
+            'mandate.reason_scanner.model' => 'zai-org-glm-5',
+        ]);
+
+        \Illuminate\Support\Facades\Http::fake([
+            'api.venice.ai/*' => \Illuminate\Support\Facades\Http::response([
+                'choices' => [['message' => ['content' => json_encode([
+                    'decision' => 'allow',
+                    'explanation' => 'Looks fine',
+                    'confidence' => 0.95,
+                ])]]],
+            ]),
+        ]);
+
+        $result = $this->scanner->scan(
+            'Invoice #200 from Bob',
+            $policy,
+            ['action' => 'transfer', 'token' => 'USDC'],
+            50.0,
+            ['chainId' => 84532, 'to' => '0xabc'],
+            null,
+            null,
+            $agent,
+        );
+
+        $this->assertSame('allow', $result['action']);
+        $this->assertSame('llm_judge', $result['source']);
+
+        \Illuminate\Support\Facades\Http::assertSent(function ($request) {
+            return str_contains($request->url(), 'api.venice.ai');
+        });
+    }
+
+    /** @test */
+    public function llm_judge_can_use_openai_when_configured(): void
+    {
+        $policy = $this->makePolicy(['guard_rules' => 'Only allow invoices']);
+        $agent = $policy->agent;
+
+        config([
+            'mandate.reason_scanner.llm_enabled' => true,
+            'mandate.reason_scanner.api_base' => 'https://api.openai.com/v1',
+            'mandate.reason_scanner.api_key' => 'test-openai-key',
+            'mandate.reason_scanner.model' => 'gpt-4o-mini',
+        ]);
+
+        \Illuminate\Support\Facades\Http::fake([
+            'api.openai.com/*' => \Illuminate\Support\Facades\Http::response([
+                'choices' => [['message' => ['content' => json_encode([
+                    'decision' => 'block',
+                    'explanation' => 'Suspicious',
+                    'confidence' => 0.8,
+                ])]]],
+            ]),
+        ]);
+
+        $result = $this->scanner->scan(
+            'Invoice #200 from Bob',
+            $policy,
+            ['action' => 'transfer', 'token' => 'USDC'],
+            50.0,
+            ['chainId' => 84532, 'to' => '0xabc'],
+            null,
+            null,
+            $agent,
+        );
+
+        $this->assertSame('block', $result['action']);
+        $this->assertSame('llm_judge', $result['source']);
+
+        \Illuminate\Support\Facades\Http::assertSent(function ($request) {
+            return str_contains($request->url(), 'api.openai.com');
+        });
+    }
+
     // ── PolicyEngine integration test ──────────────────────────────────
 
     /** @test */

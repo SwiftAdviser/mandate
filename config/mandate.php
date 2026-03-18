@@ -66,7 +66,8 @@ return [
 
     'reason_scanner' => [
         'llm_enabled' => env('REASON_SCANNER_LLM_ENABLED', false),
-        'model'       => env('REASON_SCANNER_MODEL', 'gpt-4o-mini'),
+        'api_base'    => env('REASON_SCANNER_API_BASE', 'https://api.venice.ai/api/v1'),
+        'model'       => env('REASON_SCANNER_MODEL', 'zai-org-glm-5'),
         'api_key'     => env('REASON_SCANNER_API_KEY'),
     ],
 

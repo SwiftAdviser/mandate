@@ -116,7 +116,8 @@ class ReasonScannerService
         ?array $reputationResult,
         Agent $agent,
     ): array {
-        $model = config('mandate.reason_scanner.model', 'gpt-4o-mini');
+        $model = config('mandate.reason_scanner.model', 'zai-org-glm-5');
+        $apiBase = config('mandate.reason_scanner.api_base', 'https://api.venice.ai/api/v1');
         $apiKey = config('mandate.reason_scanner.api_key') ?? config('services.openai.api_key');
 
         if (! $apiKey) {
@@ -163,19 +164,25 @@ Chain: {$chainId}
 MSG;
 
         try {
-            $response = Http::timeout(10)->withHeaders([
-                'Authorization' => "Bearer {$apiKey}",
-                'Content-Type' => 'application/json',
-            ])->post('https://api.openai.com/v1/chat/completions', [
+            $payload = [
                 'model' => $model,
                 'messages' => [
                     ['role' => 'system', 'content' => $systemPrompt],
                     ['role' => 'user', 'content' => $userMessage],
                 ],
                 'temperature' => 0.1,
-                'max_tokens' => 200,
+                'max_tokens' => 500,
                 'response_format' => ['type' => 'json_object'],
-            ]);
+            ];
+
+            if (str_contains($apiBase, 'venice.ai')) {
+                $payload['venice_parameters'] = ['disable_thinking' => true];
+            }
+
+            $response = Http::timeout(30)->withHeaders([
+                'Authorization' => "Bearer {$apiKey}",
+                'Content-Type' => 'application/json',
+            ])->post("{$apiBase}/chat/completions", $payload);
 
             if (! $response->successful()) {
                 Log::warning('ReasonScanner: LLM judge returned error', ['status' => $response->status()]);
