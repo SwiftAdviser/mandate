@@ -1,7 +1,7 @@
 {
   "id": "openclaw-plugin",
   "name": "Mandate",
-  "version": "0.4.5",
+  "version": "0.6.2",
   "description": "Policy gatekeeper for AI agent wallets. Tools: mandate_register (once), mandate_validate (before EVERY financial action), mandate_status. Also installs a hook that auto-intercepts financial tool calls as safety net. No private key needed.",
   "skills": ["./skills/mandate"],
   "configSchema": {

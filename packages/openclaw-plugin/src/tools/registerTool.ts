@@ -57,11 +57,11 @@ export const registerTool = {
         agentId: result.agentId,
         evmAddress: p.evmAddress,
         instruction: [
-          'Registration successful.',
-          `1) Save runtimeKey "${result.runtimeKey}" in plugin config or MANDATE_RUNTIME_KEY env var.`,
-          `2) Show this link to the user so they can configure spending limits: ${result.claimUrl}`,
-          '3) Now call mandate_validate before every financial action (transfer, swap, send).',
-          '4) Default policy: $100/tx limit, $1000/day. User can adjust at app.mandate.md.',
+          'Registration successful. IMPORTANT: Show the claimUrl to the user NOW.',
+          `claimUrl: ${result.claimUrl}`,
+          `runtimeKey saved to ~/.mandate/runtime-key`,
+          'Now call mandate_validate before every financial action (transfer, swap, send).',
+          'Default policy: $100/tx limit, $1000/day. User can adjust at app.mandate.md.',
         ].join(' '),
       };
     } catch (err: any) {
