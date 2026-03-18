@@ -205,11 +205,12 @@ class ApprovalNotificationService
         $context = [
             'agent_name'    => $agent->name,
             'action'        => 'erc20_transfer',
+            'summary'       => 'Transfer $25.00 USDC to 0x0000...test',
             'amount_usd'    => 25.00,
             'recipient'     => '0x0000...test',
             'chain_id'      => $agent->chain_id ?? 84532,
             'risk_level'    => 'low',
-            'reason'        => 'Test notification — this is a sample reason',
+            'reason'        => 'Test notification: this is a sample reason',
             'guard_scan'    => null,
             'expires_at'    => now()->addHour()->toIso8601String(),
             'minutes_left'  => 60,
