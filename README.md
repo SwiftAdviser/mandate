@@ -2,6 +2,8 @@
   <img src="public/hackathon/cover.png" alt="Mandate. See why your agent spends. Stop it when it shouldn't." width="100%" />
 </p>
 
+
+
 <p align="center">
   <a href="https://www.npmjs.com/package/@mandate.md/sdk"><img src="https://img.shields.io/npm/v/@mandate.md/sdk?label=sdk&color=10b981" alt="npm version" /></a>
   <a href="https://github.com/SwiftAdviser/mandate"><img src="https://img.shields.io/badge/tests-304%20passed-10b981" alt="tests" /></a>
@@ -14,9 +16,9 @@
 
 **Approve intent, not just transactions.**
 
-> *Transaction intelligence and control for autonomous agents.*
+> *Meet transaction intelligence and control for autonomous agents.*
 
-Mandate adds a reason-aware control layer to existing agent wallets. Evaluate why an agent wants to pay, then approve, block, or escalate before signing. Stop risky payments before funds move, and keep a complete audit trail for operations, security, and compliance.
+Mandate adds a reason-aware control layer to existing agent wallets. Evaluate **why** an agent wants to pay, then approve, block, or escalate before signing. Stop risky payments before funds move, and keep a complete audit trail for operations, security, and compliance.
 
 ## Why it matters
 
