@@ -3,30 +3,38 @@
 </p>
 
 <p align="center">
-  <a href="https://app.mandate.md">Dashboard</a> &middot;
-  <a href="https://app.mandate.md/SKILL.md">SKILL.md</a> &middot;
-  <a href="https://www.npmjs.com/package/@mandate.md/sdk">SDK</a> &middot;
-  <a href="https://www.npmjs.com/package/@mandate.md/cli">CLI</a>
+  <a href="https://www.npmjs.com/package/@mandate.md/sdk"><img src="https://img.shields.io/npm/v/@mandate.md/sdk?label=sdk&color=10b981" alt="npm version" /></a>
+  <a href="https://github.com/SwiftAdviser/mandate"><img src="https://img.shields.io/badge/tests-304%20passed-10b981" alt="tests" /></a>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/license-BSL%201.1-f59e0b" alt="license" /></a>
 </p>
 
 ---
 
 # Mandate
 
-**Transaction intelligence and control for autonomous agents.**
-
 **Approve intent, not just transactions.**
+
+> *Transaction intelligence and control for autonomous agents.*
 
 Mandate adds a reason-aware control layer to existing agent wallets. Evaluate why an agent wants to pay, then approve, block, or escalate before signing. Stop risky payments before funds move, and keep a complete audit trail for operations, security, and compliance.
 
-## Core value proposition
+## Why it matters
 
-1. **Intent-Aware Payment Decisions**
-   Evaluate why an agent wants to pay, then automatically approve, block, or escalate before signing.
-2. **Real-Time Risk Prevention**
-   Stop fraud, prompt-injection-driven payments, and costly mistakes in real time, before funds move.
-3. **Complete Payment Auditability**
-   Keep a full audit trail of every payment decision with amount, timing, and rationale for operations, security, and compliance.
+1. **Intent-aware payment decisions**. Evaluate why an agent wants to pay, then approve, block, or escalate before signing.
+2. **Real-time risk prevention**. Stop fraud, prompt-injection payments, and costly mistakes before funds move.
+3. **Complete payment auditability**. Full audit trail of every decision with amount, timing, and rationale.
+
+## Get started
+
+We assume you already have agent with wallet.
+
+Point your agent to the skill file. It handles the rest:
+
+```
+https://app.mandate.md/SKILL.md
+```
+
+Your agent reads the skill, registers, gets a runtime key, and starts validating. Three steps, zero config.
 
 ## MANDATE.md: intent-aware payment decisions
 
@@ -122,7 +130,7 @@ We don't replace your session keys. We make them decision-aware.
 | **Address allowlist** | Only pre-approved recipients get money |
 | **Selector allowlist** | Only approved contract functions (no surprise `approve()` or `swap()`) |
 | **Schedule enforcement** | Agent can't spend outside business hours |
-| **Prompt injection scan** | 18 hardcoded patterns + LLM classifier. Catches manipulation in reasoning |
+| **Prompt injection scan** | 18 hardcoded patterns + LLM judge via Venice.ai (zero data retention). Catches manipulation in reasoning |
 | **MANDATE.md controls** | Define transaction decision logic in plain English |
 | **Transaction simulation** | Pre-execution analysis flags honeypots, rug pulls, malicious contracts |
 | **ERC-8004 reputation** | On-chain identity + reputation score for counterparties via The Graph |
@@ -135,6 +143,31 @@ We don't replace your session keys. We make them decision-aware.
 <p align="center">
   <img src="public/hackathon/audit-log.png" alt="Audit log: every intent with WHY" width="80%" />
 </p>
+
+## Private reasoning, zero retention
+
+Agent reasoning contains sensitive financial data: who gets paid, how much, why, and what contracts get called. Most policy engines send this to general-purpose LLMs that log and train on your data.
+
+Mandate routes its LLM judge through [Venice.ai](https://venice.ai), a privacy-first inference provider with **zero data retention**. Your agent's financial reasoning never gets stored, logged, or used for training.
+
+| Component | Runs where | Data retained |
+|-----------|-----------|---------------|
+| Hardcoded injection patterns (18 rules) | Mandate server | None (regex, no external call) |
+| LLM judge (reasoning analysis) | Venice.ai inference | **Zero.** No logs, no training |
+| Policy engine (limits, allowlists) | Mandate server | Intent metadata only |
+| Envelope verification | On-chain RPC | Public blockchain data |
+
+Private cognition for trusted actions.
+
+```env
+# Default: Venice.ai (zero retention)
+REASON_SCANNER_API_BASE=https://api.venice.ai/api/v1
+REASON_SCANNER_MODEL=zai-org-glm-5
+
+# Alternative: swap to OpenAI if you prefer
+# REASON_SCANNER_API_BASE=https://api.openai.com/v1
+# REASON_SCANNER_MODEL=gpt-4o-mini
+```
 
 ## Supercharges your wallet
 
@@ -166,16 +199,6 @@ Any EVM signer works. If it can sign a transaction, Mandate can protect it.
 | **ACP (Virtuals)** | Planned |
 | **ElizaOS** | Planned |
 | **Vercel AI SDK** | Planned |
-
-## Get started
-
-Point your agent to the skill file. It handles the rest:
-
-```
-https://app.mandate.md/SKILL.md
-```
-
-Your agent reads the skill, registers, gets a runtime key, and starts validating. Three steps, zero config.
 
 ## How it works
 
@@ -216,7 +239,7 @@ app/             Laravel 12 API (PHP 8.2)
     PolicyEngineService      13 control layers
     ReputationService        ERC-8004 on-chain reputation via The Graph
     AegisService             Transaction simulation + address scoring
-    ReasonScannerService     Prompt injection detection (patterns + LLM)
+    ReasonScannerService     Prompt injection detection (patterns + LLM via Venice.ai)
     QuotaManagerService      Per-tx / daily / monthly USD quotas
     IntentStateMachineService  reserved, broadcasted, confirmed/failed
     EnvelopeVerifierService  On-chain tx matches validated intent
@@ -239,6 +262,15 @@ bun run --filter '*' test # 74 TypeScript tests
 - **Agent skill file**: [app.mandate.md/SKILL.md](https://app.mandate.md/SKILL.md)
 - **npm**: [@mandate.md/sdk](https://www.npmjs.com/package/@mandate.md/sdk) · [@mandate.md/cli](https://www.npmjs.com/package/@mandate.md/cli)
 
+## Roadmap
+
+- [ ] **Intent scoring.** Numeric score per transaction, your rubric, your weights
+- [ ] **Score trends.** Spot a compromised agent before it costs money
+- [ ] **MANDATE.md presets.** DeFi, Polymarket, Payroll, Shopper: one click
+- [ ] **Community templates.** Import battle-tested rubrics from production teams
+- [ ] **Wallet partnerships.** Privy, Turnkey, Openfort, and more
+- [ ] **Tooling expansion.** VirtualsOS, MCP, Vercel AI SDK, and beyond
+
 ## License
 
-MIT
+BSL 1.1 (Business Source License). Free to use, study, and modify. Production use in competing products is not permitted. See [LICENSE](LICENSE) for details.
