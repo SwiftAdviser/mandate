@@ -300,23 +300,39 @@ try {
 
 ## OpenClaw Integration
 
-If running inside OpenClaw, install the Mandate plugin:
+Install the Mandate plugin:
 
-    openclaw plugins install @mandate/openclaw-plugin
+    openclaw plugins install @mandate.md/openclaw-plugin
 
-The plugin registers a **hook** that automatically intercepts financial tool calls
-(Bankr, Locus, Sponge, any swap/transfer/send/trade/buy/sell) and validates with
-Mandate BEFORE execution.
+### Tools
 
-- If blocked: agent sees `🚫 Mandate: blocked. <reason>: <declineMessage>`
-- If allowed: agent sees `✅ Mandate: policy check passed`
-- If unreachable: tool call is blocked (fail-closed)
+| Tool | When | What |
+|------|------|------|
+| `mandate_register` | Once, on first run | Registers agent, returns `runtimeKey` + `claimUrl` |
+| `mandate_validate` | Before EVERY financial action | Pre-flight policy check (action, amount, to, token, reason) |
+| `mandate_status` | After validate | Check intent status |
 
-The reason field is auto-populated from the tool input (e.g. Bankr prompt)
-enriched with conversation context.
+### Flow
 
-Config: set `runtimeKey` in OpenClaw plugin config or `MANDATE_RUNTIME_KEY` env var.
-After validation passes, the agent uses whatever wallet it wants (Bankr, Locus, own keys, etc.).
+1. `mandate_register` with agent name + wallet address. Save the returned `runtimeKey` in plugin config.
+2. Before any transfer/swap/send/buy/sell/bridge/stake/bet: call `mandate_validate` with `action` and `reason`.
+3. If `allowed: true`: proceed with your normal wallet (Locus, Bankr, etc.).
+4. If `blocked: true`: do NOT proceed, show `reason` + `declineMessage` to the user.
+
+### Pre-flight endpoint
+
+The plugin uses `POST /api/validate/preflight`, a lightweight endpoint for custodial wallets.
+No intentHash, nonce, or gas params needed. Just: `action`, `reason`, and optionally `amount`, `to`, `token`.
+All checks apply: circuit breaker, schedule, allowlist, spend limits, daily/monthly quotas, reason scanner.
+Every call is logged to the audit trail with the `action` field the agent provides.
+
+### Safety net hook
+
+The plugin also registers a `message:preprocessed` hook that auto-intercepts financial tool calls
+(Locus, Bankr, Sponge, any swap/transfer/send) even if the agent forgets to call `mandate_validate`.
+
+Config: set `runtimeKey` in OpenClaw plugin config (not env var).
+After validation passes, the agent uses whatever wallet it wants (Locus, Bankr, own keys, etc.).
 
 ## Default Policy
 
