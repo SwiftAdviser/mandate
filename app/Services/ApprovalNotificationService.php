@@ -156,8 +156,9 @@ class ApprovalNotificationService
         $amount = '$' . number_format($context['amount_usd'], 2);
         $addr   = $this->truncateAddress($context['recipient']);
 
+        $isTest = !empty($context['is_test']);
         $lines = [
-            '🔐 <b>Approval Required</b>',
+            $isTest ? '🧪 <b>Test Notification</b>' : '🔐 <b>Approval Required</b>',
             '',
             "<b>Summary:</b> {$context['summary']}",
         ];
@@ -217,6 +218,7 @@ class ApprovalNotificationService
             'dashboard_url' => config('app.url', 'https://app.mandate.md') . '/approvals',
             'approval_id'   => 'test-approval-id',
             'intent_id'     => 'test-intent-id',
+            'is_test'       => true,
         ];
 
         foreach ($agent->notification_webhooks ?? [] as $webhook) {
@@ -256,15 +258,22 @@ class ApprovalNotificationService
             return;
         }
 
+        $isTest = !empty($context['is_test']);
         $text = $this->formatTelegramMessage($context);
-        $buttons = $this->buildTelegramButtons($context['approval_id']);
 
         $payload = [
             'chat_id'      => $chatId,
             'text'         => $text,
             'parse_mode'   => 'HTML',
-            'reply_markup' => ['inline_keyboard' => $buttons],
         ];
+
+        if ($isTest) {
+            $payload['reply_markup'] = ['inline_keyboard' => [
+                [['text' => 'Open Dashboard', 'url' => $context['dashboard_url'] ?? config('app.url', 'https://app.mandate.md') . '/approvals']],
+            ]];
+        } else {
+            $payload['reply_markup'] = ['inline_keyboard' => $this->buildTelegramButtons($context['approval_id'])];
+        }
 
         Http::post("https://api.telegram.org/bot{$botToken}/sendMessage", $payload);
     }
