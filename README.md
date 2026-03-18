@@ -90,7 +90,11 @@ Session keys are on-chain. They see `{to, value, calldata}`. Mandate sees the re
 
 ## Session keys vs Mandate
 
-Session keys are great. They enforce limits on-chain. But they only see `{to, value, calldata}`. Mandate reads the agent's reasoning, enriches it with on-chain data, and learns your rules over time. We don't replace session keys. We make them 100x more valuable.
+Session keys are the bouncers. They check the ID at the door: amount, address, time. Solid.
+
+But the bouncer can't read minds. Mandate can. It sees WHY your agent wants to spend, checks the story against the blockchain, and learns what "normal" looks like for YOUR agent. The bouncer stays at the door. Mandate sits inside the agent's head.
+
+We don't replace your session keys. We give them a brain.
 
 | What happened | Session key | Mandate |
 |--------------|------------|---------|
