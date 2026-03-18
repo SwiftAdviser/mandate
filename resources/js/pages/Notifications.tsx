@@ -28,8 +28,7 @@ function getCookie(name: string): string | null {
   return v ? decodeURIComponent(v[2]) : null;
 }
 
-export default function Notifications({ agent_id, agent_name, webhooks: initial, telegram_links: initialTg }: Props) {
-  const [webhooks, setWebhooks] = useState<Webhook[]>(initial.filter(w => w.type !== 'telegram'));
+export default function Notifications({ agent_id, agent_name, telegram_links: initialTg }: Props) {
   const [tgLinks, setTgLinks] = useState<TelegramLink[]>(initialTg);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
@@ -43,24 +42,6 @@ export default function Notifications({ agent_id, agent_name, webhooks: initial,
   const [linkError, setLinkError] = useState('');
   const [linkSuccess, setLinkSuccess] = useState(false);
   const codeInputRef = useRef<HTMLInputElement>(null);
-
-  const slackWebhooks = webhooks.filter(w => w.type === 'slack');
-
-  function addSlack() {
-    setWebhooks(w => [...w, { type: 'slack', url: '' }]);
-  }
-
-  function removeSlack(idx: number) {
-    const slackIdx = webhooks.map((w, i) => w.type === 'slack' ? i : -1).filter(i => i >= 0);
-    const realIdx = slackIdx[idx];
-    setWebhooks(w => w.filter((_, i) => i !== realIdx));
-  }
-
-  function updateSlackUrl(idx: number, url: string) {
-    const slackIdx = webhooks.map((w, i) => w.type === 'slack' ? i : -1).filter(i => i >= 0);
-    const realIdx = slackIdx[idx];
-    setWebhooks(w => w.map((wh, i) => i === realIdx ? { ...wh, url } : wh));
-  }
 
   // Code-based Telegram linking
   function handleCodeInput(value: string) {
@@ -105,7 +86,7 @@ export default function Notifications({ agent_id, agent_name, webhooks: initial,
 
   // Build webhook array for save
   function buildWebhooksPayload(): Webhook[] {
-    const result: Webhook[] = [...webhooks.filter(w => w.type === 'slack')];
+    const result: Webhook[] = [];
     for (const link of tgLinks) {
       result.push({
         type: 'telegram',
@@ -155,7 +136,7 @@ export default function Notifications({ agent_id, agent_name, webhooks: initial,
     boxSizing: 'border-box',
   };
 
-  const hasChannels = slackWebhooks.length > 0 || tgLinks.length > 0;
+  const hasChannels = tgLinks.length > 0;
 
   return (
     <DashboardLayout>
@@ -287,54 +268,28 @@ export default function Notifications({ agent_id, agent_name, webhooks: initial,
               )}
             </div>
 
-            {/* Slack */}
+            {/* Slack — coming soon */}
             <div className="fade-up fade-up-2" style={{
               padding: '20px 24px',
               background: 'var(--bg-surface)',
-              border: `1px solid ${slackWebhooks.length > 0 ? 'rgba(74,158,255,0.3)' : 'var(--border)'}`,
+              border: '1px solid var(--border)',
               borderRadius: 12,
+              opacity: 0.5,
             }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                 <FaSlack size={20} color="#E01E5A" />
-                <div>
+                <div style={{ flex: 1 }}>
                   <div style={{ fontSize: 14, fontWeight: 500, color: 'var(--text-primary)' }}>Slack</div>
-                  <div style={{ fontSize: 11, color: 'var(--text-dim)' }}>Incoming Webhook URL</div>
+                  <div style={{ fontSize: 11, color: 'var(--text-dim)' }}>Incoming Webhook notifications</div>
                 </div>
+                <span style={{
+                  fontSize: 10, fontFamily: 'var(--font-mono)', color: 'var(--text-dim)',
+                  padding: '3px 8px', border: '1px solid var(--border)', borderRadius: 4,
+                  textTransform: 'uppercase', letterSpacing: '0.06em',
+                }}>
+                  coming soon
+                </span>
               </div>
-
-              <details style={{ marginBottom: 12 }}>
-                <summary style={{ fontSize: 11, color: 'var(--text-dim)', cursor: 'pointer', fontFamily: 'var(--font-mono)' }}>
-                  How to get a webhook URL
-                </summary>
-                <ol style={{ margin: '8px 0 0', paddingLeft: 18, color: 'var(--text-dim)', fontSize: 11, lineHeight: 1.8 }}>
-                  <li><span style={{ fontFamily: 'var(--font-mono)', color: 'var(--text-secondary)' }}>api.slack.com/apps</span> - Create New App</li>
-                  <li>Incoming Webhooks - Activate - Add New Webhook</li>
-                  <li>Pick a channel - Copy URL - Paste below</li>
-                </ol>
-              </details>
-
-              {slackWebhooks.map((wh, idx) => (
-                <div key={idx} style={{ display: 'flex', gap: 8, marginBottom: 8, alignItems: 'center' }}>
-                  <input
-                    value={wh.url ?? ''}
-                    onChange={e => updateSlackUrl(idx, e.target.value)}
-                    placeholder="https://hooks.slack.com/services/T.../B.../..."
-                    style={{ ...inputStyle, flex: 1 }}
-                  />
-                  <button onClick={() => removeSlack(idx)} style={{
-                    background: 'none', border: 'none', color: 'var(--red)',
-                    cursor: 'pointer', fontSize: 14, padding: '4px 8px', flexShrink: 0,
-                  }}>x</button>
-                </div>
-              ))}
-
-              <button onClick={addSlack} style={{
-                padding: '7px 14px', fontSize: 11, fontFamily: 'var(--font-mono)',
-                background: 'var(--bg-raised)', border: '1px solid var(--border)',
-                borderRadius: 6, color: 'var(--text-secondary)', cursor: 'pointer',
-              }}>
-                + Add Slack channel
-              </button>
             </div>
 
             {/* Error */}
