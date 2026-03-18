@@ -13,6 +13,14 @@ return [
         'reserved'         => 15 * 60,   // 15 min
         'approval_pending' => 60 * 60,   // 1 hour
         'approved'         => 10 * 60,   // 10 min
+        'preflight'        => 30 * 60,   // 30 min
+    ],
+
+    'preflight' => [
+        'reconcile_enabled'    => env('PREFLIGHT_RECONCILE_ENABLED', true),
+        'stale_after_minutes'  => 30,
+        'lookback_blocks'      => 1000,
+        'amount_tolerance_pct' => 5.0,
     ],
 
     'circuit_breaker_cache_ttl' => 30, // seconds

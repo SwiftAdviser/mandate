@@ -29,6 +29,11 @@ return Application::configure(basePath: dirname(__DIR__))
             ->everyThirtySeconds()
             ->withoutOverlapping(1)
             ->runInBackground();
+
+        $schedule->command('mandate:reconcile-preflights')
+            ->everyMinute()
+            ->withoutOverlapping(2)
+            ->runInBackground();
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         $exceptions->shouldRenderJsonWhen(function ($request, $e) {

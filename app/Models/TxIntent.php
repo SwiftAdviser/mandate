@@ -20,6 +20,7 @@ class TxIntent extends Model
     const STATUS_CONFIRMED        = 'confirmed';
     const STATUS_FAILED           = 'failed';
     const STATUS_EXPIRED          = 'expired';
+    const STATUS_PREFLIGHT        = 'preflight';
 
     const TERMINAL_STATUSES = [self::STATUS_CONFIRMED, self::STATUS_FAILED, self::STATUS_EXPIRED];
     const ACTIVE_STATUSES   = [self::STATUS_RESERVED, self::STATUS_APPROVAL_PENDING, self::STATUS_APPROVED, self::STATUS_BROADCASTED];
