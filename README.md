@@ -133,13 +133,12 @@ Drop Mandate into any agent runtime. Agents discover it via `mandate --llms` or 
 | Environment | Status | Integration |
 |-------------|--------|-------------|
 | **OpenClaw** | Live | Plugin manifest (`openclaw-plugin`) |
-| **Claude Code** | Live | SKILL.md + CLI (`mandate --llms`) |
-| **GOAT SDK** | Live | `@Tool()` decorator (`goat-plugin`) |
-| **Coinbase AgentKit** | Live | `WalletProvider` + `ActionProvider` |
-| **GAME by Virtuals** | Live | TS + Python plugin (`game-plugin`) |
-| **ACP (Virtuals)** | Live | Agent Commerce Protocol adapter |
-| **MCP** | Live | Cloudflare Workers MCP server |
-| **Claude Code Plugin** | Planned | `PreToolUse` hook + Express server |
+| **Claude Code** | Planned | SKILL.md + CLI (`mandate --llms`) |
+| **GOAT SDK** | Planned | `@Tool()` decorator (`goat-plugin`) |
+| **Coinbase AgentKit** | Planned | `WalletProvider` + `ActionProvider` |
+| **GAME by Virtuals** | Planned | TS + Python plugin (`game-plugin`) |
+| **ACP (Virtuals)** | Planned | Agent Commerce Protocol adapter |
+| **MCP** | Planned | Cloudflare Workers MCP server |
 | **Codex CLI** | Planned | SKILL.md + CLI |
 | **ElizaOS** | Planned | `eliza-plugin` adapter |
 | **Vercel AI SDK** | Planned | Tool definitions |
