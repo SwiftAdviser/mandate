@@ -1,6 +1,6 @@
 import DashboardLayout from '@/layouts/DashboardLayout';
 import { FaTelegram, FaSlack } from 'react-icons/fa';
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 
 interface Webhook {
   type: 'slack' | 'telegram' | 'custom';
@@ -11,11 +11,16 @@ interface Webhook {
   username?: string;
 }
 
+interface TelegramLink {
+  chat_id: string | null;
+  username: string | null;
+}
+
 interface Props {
   agent_id: string;
   agent_name: string;
   webhooks: Webhook[];
-  telegram_usernames: string[];
+  telegram_links: TelegramLink[];
 }
 
 function getCookie(name: string): string | null {
@@ -23,17 +28,22 @@ function getCookie(name: string): string | null {
   return v ? decodeURIComponent(v[2]) : null;
 }
 
-export default function Notifications({ agent_id, agent_name, webhooks: initial, telegram_usernames: initialTg }: Props) {
+export default function Notifications({ agent_id, agent_name, webhooks: initial, telegram_links: initialTg }: Props) {
   const [webhooks, setWebhooks] = useState<Webhook[]>(initial.filter(w => w.type !== 'telegram'));
-  const [tgUsernames, setTgUsernames] = useState<string[]>(initialTg);
-  const [tgInput, setTgInput] = useState('');
+  const [tgLinks, setTgLinks] = useState<TelegramLink[]>(initialTg);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [testing, setTesting] = useState(false);
   const [tested, setTested] = useState(false);
   const [error, setError] = useState('');
 
-  // Slack webhook helpers
+  // Code-based linking
+  const [linkCode, setLinkCode] = useState('');
+  const [verifying, setVerifying] = useState(false);
+  const [linkError, setLinkError] = useState('');
+  const [linkSuccess, setLinkSuccess] = useState(false);
+  const codeInputRef = useRef<HTMLInputElement>(null);
+
   const slackWebhooks = webhooks.filter(w => w.type === 'slack');
 
   function addSlack() {
@@ -52,24 +62,56 @@ export default function Notifications({ agent_id, agent_name, webhooks: initial,
     setWebhooks(w => w.map((wh, i) => i === realIdx ? { ...wh, url } : wh));
   }
 
-  // Telegram username helpers
-  function addTgUsername() {
-    const u = tgInput.trim().replace(/^@/, '');
-    if (u && !tgUsernames.includes(u)) {
-      setTgUsernames(prev => [...prev, u]);
+  // Code-based Telegram linking
+  function handleCodeInput(value: string) {
+    const clean = value.replace(/[^a-zA-Z0-9]/g, '').toUpperCase().slice(0, 8);
+    setLinkCode(clean);
+    setLinkError('');
+    setLinkSuccess(false);
+    if (clean.length === 8) {
+      verifyCode(clean);
     }
-    setTgInput('');
   }
 
-  function removeTgUsername(u: string) {
-    setTgUsernames(prev => prev.filter(x => x !== u));
+  async function verifyCode(code: string) {
+    setVerifying(true);
+    setLinkError('');
+    try {
+      const res = await fetch('/api/telegram/verify-code', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-XSRF-TOKEN': getCookie('XSRF-TOKEN') ?? '',
+        },
+        body: JSON.stringify({ code, agent_id }),
+      });
+      if (res.ok) {
+        setLinkSuccess(true);
+        setTgLinks(prev => [...prev, { chat_id: code, username: null }]);
+        setLinkCode('');
+        setTimeout(() => setLinkSuccess(false), 3000);
+      } else {
+        const data = await res.json().catch(() => ({}));
+        setLinkError(data.error ?? 'Verification failed.');
+      }
+    } finally {
+      setVerifying(false);
+    }
   }
 
-  // Build webhook array for save (merge slack + telegram usernames)
+  function removeTgLink(idx: number) {
+    setTgLinks(prev => prev.filter((_, i) => i !== idx));
+  }
+
+  // Build webhook array for save
   function buildWebhooksPayload(): Webhook[] {
     const result: Webhook[] = [...webhooks.filter(w => w.type === 'slack')];
-    for (const username of tgUsernames) {
-      result.push({ type: 'telegram', username, chat_id: '', bot_token: '' });
+    for (const link of tgLinks) {
+      result.push({
+        type: 'telegram',
+        chat_id: link.chat_id ?? '',
+        username: link.username ?? '',
+      });
     }
     return result;
   }
@@ -113,7 +155,7 @@ export default function Notifications({ agent_id, agent_name, webhooks: initial,
     boxSizing: 'border-box',
   };
 
-  const hasChannels = slackWebhooks.length > 0 || tgUsernames.length > 0;
+  const hasChannels = slackWebhooks.length > 0 || tgLinks.length > 0;
 
   return (
     <DashboardLayout>
@@ -133,7 +175,6 @@ export default function Notifications({ agent_id, agent_name, webhooks: initial,
             padding: '40px', textAlign: 'center',
             background: 'var(--bg-surface)', border: '1px solid var(--border)', borderRadius: 12,
           }}>
-            <div style={{ fontSize: 24, marginBottom: 12 }}>⊘</div>
             <div style={{ fontSize: 14, color: 'var(--text-secondary)' }}>No agent found</div>
             <div style={{ fontSize: 12, color: 'var(--text-dim)', marginTop: 6 }}>Create an agent first.</div>
           </div>
@@ -144,7 +185,7 @@ export default function Notifications({ agent_id, agent_name, webhooks: initial,
             <div className="fade-up fade-up-1" style={{
               padding: '20px 24px',
               background: 'var(--bg-surface)',
-              border: `1px solid ${tgUsernames.length > 0 ? 'rgba(41,182,246,0.3)' : 'var(--border)'}`,
+              border: `1px solid ${tgLinks.length > 0 ? 'rgba(41,182,246,0.3)' : 'var(--border)'}`,
               borderRadius: 12,
             }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14 }}>
@@ -160,62 +201,90 @@ export default function Notifications({ agent_id, agent_name, webhooks: initial,
                 </div>
               </div>
 
-              <div style={{ fontSize: 12, color: 'var(--text-dim)', lineHeight: 1.6, marginBottom: 12 }}>
-                Add Telegram usernames who should receive approval notifications.
-                Each person must{' '}
-                <a href="https://t.me/mandatemd_bot" target="_blank" rel="noopener noreferrer" style={{ color: '#29b6f6', textDecoration: 'none' }}>
-                  open @mandatemd_bot
-                </a>{' '}
-                and tap <strong style={{ color: 'var(--text-secondary)' }}>Start</strong> once.
-              </div>
-
-              {/* Username chips */}
-              {tgUsernames.length > 0 && (
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 10 }}>
-                  {tgUsernames.map(u => (
-                    <span key={u} style={{
-                      display: 'flex', alignItems: 'center', gap: 6,
-                      padding: '4px 10px',
-                      background: '#29b6f61a',
-                      border: '1px solid #29b6f633',
-                      borderRadius: 6,
-                      fontSize: 12,
-                      fontFamily: 'var(--font-mono)',
-                      color: '#29b6f6',
+              {/* Linked accounts */}
+              {tgLinks.length > 0 && (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginBottom: 14 }}>
+                  {tgLinks.map((link, idx) => (
+                    <div key={idx} style={{
+                      display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                      padding: '8px 12px',
+                      background: '#29b6f60a',
+                      border: '1px solid #29b6f622',
+                      borderRadius: 8,
                     }}>
-                      @{u}
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                        <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#29b6f6', flexShrink: 0 }} />
+                        <span style={{ fontSize: 12, fontFamily: 'var(--font-mono)', color: '#29b6f6' }}>
+                          {link.username ? `@${link.username}` : `chat:${link.chat_id?.slice(0, 8)}`}
+                        </span>
+                        <span style={{ fontSize: 10, color: 'var(--text-dim)' }}>linked</span>
+                      </div>
                       <button
-                        onClick={() => removeTgUsername(u)}
-                        style={{ background: 'none', border: 'none', color: '#29b6f6', cursor: 'pointer', fontSize: 14, padding: 0, lineHeight: 1 }}
+                        onClick={() => removeTgLink(idx)}
+                        style={{ background: 'none', border: 'none', color: 'var(--text-dim)', cursor: 'pointer', fontSize: 14, padding: '0 4px' }}
                       >
-                        ×
+                        x
                       </button>
-                    </span>
+                    </div>
                   ))}
                 </div>
               )}
 
-              {/* Add input */}
-              <div style={{ display: 'flex', gap: 8 }}>
-                <input
-                  value={tgInput}
-                  onChange={e => setTgInput(e.target.value)}
-                  onKeyDown={e => e.key === 'Enter' && addTgUsername()}
-                  placeholder="@username"
-                  style={{ ...inputStyle, flex: 1 }}
-                />
-                <button
-                  onClick={addTgUsername}
-                  style={{
-                    padding: '9px 16px', fontSize: 12,
-                    background: '#29b6f6', border: 'none',
-                    borderRadius: 8, color: '#fff', fontWeight: 500,
-                    cursor: 'pointer', flexShrink: 0,
-                  }}
-                >
-                  Add
-                </button>
+              {/* Link flow */}
+              <div style={{
+                padding: '14px 16px',
+                background: 'var(--bg-base)',
+                border: '1px solid var(--border-dim)',
+                borderRadius: 8,
+                marginBottom: 12,
+              }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                  <div style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
+                    <span style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: '#29b6f6', fontWeight: 600 }}>1.</span>
+                    <span style={{ fontSize: 12, color: 'var(--text-secondary)' }}>
+                      Open{' '}
+                      <a href="https://t.me/mandatemd_bot" target="_blank" rel="noopener noreferrer" style={{ color: '#29b6f6', textDecoration: 'none', fontWeight: 500 }}>
+                        @mandatemd_bot
+                      </a>{' '}
+                      and press <span style={{ fontFamily: 'var(--font-mono)', color: 'var(--text-primary)' }}>/start</span>
+                    </span>
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
+                    <span style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: '#29b6f6', fontWeight: 600 }}>2.</span>
+                    <span style={{ fontSize: 12, color: 'var(--text-secondary)' }}>Paste the 8-character code below:</span>
+                  </div>
+                </div>
               </div>
+
+              <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                <input
+                  ref={codeInputRef}
+                  type="text"
+                  value={linkCode}
+                  onChange={e => handleCodeInput(e.target.value)}
+                  placeholder="ABCD1234"
+                  maxLength={8}
+                  disabled={verifying}
+                  style={{
+                    ...inputStyle,
+                    flex: 1,
+                    textAlign: 'center',
+                    fontSize: 14,
+                    letterSpacing: '0.12em',
+                    fontWeight: 600,
+                  }}
+                />
+              </div>
+
+              {verifying && (
+                <div style={{ fontSize: 11, color: 'var(--text-dim)', marginTop: 6 }}>Verifying...</div>
+              )}
+              {linkError && (
+                <div style={{ fontSize: 11, color: 'var(--red, #ef4444)', marginTop: 6 }}>{linkError}</div>
+              )}
+              {linkSuccess && (
+                <div style={{ fontSize: 11, color: 'var(--green)', marginTop: 6 }}>Telegram linked successfully.</div>
+              )}
             </div>
 
             {/* Slack */}
@@ -238,9 +307,9 @@ export default function Notifications({ agent_id, agent_name, webhooks: initial,
                   How to get a webhook URL
                 </summary>
                 <ol style={{ margin: '8px 0 0', paddingLeft: 18, color: 'var(--text-dim)', fontSize: 11, lineHeight: 1.8 }}>
-                  <li><span style={{ fontFamily: 'var(--font-mono)', color: 'var(--text-secondary)' }}>api.slack.com/apps</span> → Create New App</li>
-                  <li>Incoming Webhooks → Activate → Add New Webhook</li>
-                  <li>Pick a channel → Copy URL → Paste below</li>
+                  <li><span style={{ fontFamily: 'var(--font-mono)', color: 'var(--text-secondary)' }}>api.slack.com/apps</span> - Create New App</li>
+                  <li>Incoming Webhooks - Activate - Add New Webhook</li>
+                  <li>Pick a channel - Copy URL - Paste below</li>
                 </ol>
               </details>
 
@@ -255,7 +324,7 @@ export default function Notifications({ agent_id, agent_name, webhooks: initial,
                   <button onClick={() => removeSlack(idx)} style={{
                     background: 'none', border: 'none', color: 'var(--red)',
                     cursor: 'pointer', fontSize: 14, padding: '4px 8px', flexShrink: 0,
-                  }}>×</button>
+                  }}>x</button>
                 </div>
               ))}
 
@@ -290,7 +359,7 @@ export default function Notifications({ agent_id, agent_name, webhooks: initial,
                   opacity: !hasChannels ? 0.4 : 1,
                 }}
               >
-                {tested ? '✓ Test sent' : testing ? 'Sending...' : 'Send test'}
+                {tested ? 'Test sent' : testing ? 'Sending...' : 'Send test'}
               </button>
               <button
                 onClick={save}
@@ -304,7 +373,7 @@ export default function Notifications({ agent_id, agent_name, webhooks: initial,
                   cursor: saving ? 'wait' : 'pointer',
                 }}
               >
-                {saved ? '✓ Saved' : saving ? 'Saving...' : 'Save'}
+                {saved ? 'Saved' : saving ? 'Saving...' : 'Save'}
               </button>
             </div>
 

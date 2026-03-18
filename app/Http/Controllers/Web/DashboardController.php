@@ -186,10 +186,13 @@ class DashboardController extends Controller
         $agent = Agent::where('user_id', $userId)->first();
 
         $webhooks = $agent?->notification_webhooks ?? [];
-        $telegramUsernames = collect($webhooks)
+        $telegramLinks = collect($webhooks)
             ->where('type', 'telegram')
-            ->pluck('username')
-            ->filter()
+            ->map(fn ($w) => [
+                'chat_id' => $w['chat_id'] ?? null,
+                'username' => $w['username'] ?? null,
+            ])
+            ->filter(fn ($w) => $w['chat_id'] || $w['username'])
             ->values()
             ->all();
 
@@ -197,7 +200,7 @@ class DashboardController extends Controller
             'agent_id' => $agent?->id ?? '',
             'agent_name' => $agent?->name ?? '',
             'webhooks' => $webhooks,
-            'telegram_usernames' => $telegramUsernames,
+            'telegram_links' => $telegramLinks,
         ]);
     }
 
