@@ -22,41 +22,20 @@ Session keys check amounts. Mandate checks intent. A `$499` transfer passes ever
 ## How it works
 
 ```mermaid
-flowchart TD
-    A["Agent wants to send $50 USDC"] --> B["mandate validate"]
-    B --> C{"Policy Engine"}
-    C -->|"spend limit
-    allowlist
-    injection scan
-    schedule
-    simulation
-    MANDATE.md rules"| D{Decision}
-    D -->|ALLOWED| E["Agent signs locally
-    (private key stays here)"]
-    D -->|BLOCKED| F["🚫 Transaction halted
-    + adversarial counter-message"]
-    D -->|NEEDS APPROVAL| G["⏳ Owner decides
-    via Slack / Telegram / Dashboard"]
-    G -->|Approved| E
-    G -->|Rejected| F
-    E --> H["mandate event (post txHash)"]
-    H --> I{"Envelope verification"}
-    I -->|"on-chain tx matches
-    validated intent"| J["✅ Confirmed"]
-    I -->|"mismatch detected"| K["🔴 Circuit breaker trips
-    Agent frozen"]
+flowchart LR
+    A[Agent tx] --> B{Policy Engine}
+    B -->|allowed| C[Sign locally] --> D[Post txHash] --> E{Envelope check}
+    B -->|blocked| F[🚫 Halted]
+    B -->|approval| G[⏳ Owner] -->|yes| C
+    G -->|no| F
+    E -->|match| H[✅ Confirmed]
+    E -->|mismatch| I[🔴 Circuit breaker]
 
-    style A fill:#1a1a2e,stroke:#10b981,color:#fff
-    style B fill:#1a1a2e,stroke:#10b981,color:#fff
-    style C fill:#1a1a2e,stroke:#10b981,color:#fff
-    style D fill:#1a1a2e,stroke:#f59e0b,color:#fff
-    style E fill:#1a1a2e,stroke:#10b981,color:#fff
+    style B fill:#1a1a2e,stroke:#f59e0b,color:#fff
     style F fill:#1a1a2e,stroke:#ef4444,color:#fff
     style G fill:#1a1a2e,stroke:#f59e0b,color:#fff
     style H fill:#1a1a2e,stroke:#10b981,color:#fff
-    style I fill:#1a1a2e,stroke:#10b981,color:#fff
-    style J fill:#1a1a2e,stroke:#10b981,color:#fff
-    style K fill:#1a1a2e,stroke:#ef4444,color:#fff
+    style I fill:#1a1a2e,stroke:#ef4444,color:#fff
 ```
 
 ## MANDATE.md — your rules, plain language
