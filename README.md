@@ -88,7 +88,9 @@ The agent reads the counter-evidence, understands WHY it was tricked, and stops.
 
 Session keys are on-chain. They see `{to, value, calldata}`. Mandate sees the reasoning: the attack surface nobody else is watching.
 
-## What it catches
+## Session keys vs Mandate
+
+Session keys are great. They enforce limits on-chain. But they only see `{to, value, calldata}`. Mandate reads the agent's reasoning, enriches it with on-chain data, and learns your rules over time. We don't replace session keys. We make them 100x more valuable.
 
 | What happened | Session key | Mandate |
 |--------------|------------|---------|
