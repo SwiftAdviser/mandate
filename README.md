@@ -146,30 +146,11 @@ We don't replace your session keys. We make them decision-aware.
 
 ## Private reasoning, zero retention
 
-Agent reasoning contains sensitive financial data: who gets paid, how much, why, and what contracts get called. Most policy engines send this to general-purpose LLMs that log and train on your data.
+Financial data is sensitive. Your rules, who gets paid, how much, why, and what contracts get called can be used to copy your trading advantage or train next big GPT.
 
-Mandate routes its LLM judge through [Venice.ai](https://venice.ai), a privacy-first inference provider with **zero data retention**. Your agent's financial reasoning never gets stored, logged, or used for training.
+Mandate routes its LLM judge through [Venice.ai](https://venice.ai), a privacy-first inference provider with **zero data retention**. By default, we rely on **GLM-5**, so your agent's financial reasoning never gets stored, logged, or used for training.
 
-| Component | Runs where | Data retained |
-|-----------|-----------|---------------|
-| Hardcoded injection patterns (18 rules) | Mandate server | None (regex, no external call) |
-| LLM judge (reasoning analysis) | Venice.ai inference | **Zero.** No logs, no training |
-| Policy engine (limits, allowlists) | Mandate server | Intent metadata only |
-| Envelope verification | On-chain RPC | Public blockchain data |
-
-Private cognition for trusted actions.
-
-```env
-# Default: Venice.ai (zero retention)
-REASON_SCANNER_API_BASE=https://api.venice.ai/api/v1
-REASON_SCANNER_MODEL=zai-org-glm-5
-
-# Alternative: swap to OpenAI if you prefer
-# REASON_SCANNER_API_BASE=https://api.openai.com/v1
-# REASON_SCANNER_MODEL=gpt-4o-mini
-```
-
-## Supercharges your wallet
+## Supercharges your Wallet
 
 Mandate doesn't replace your wallet. It makes your wallet **unstoppable**. Day 1 support:
 
@@ -179,13 +160,14 @@ Mandate doesn't replace your wallet. It makes your wallet **unstoppable**. Day 1
 | **Locus** | Live |
 | **CDP Agent Wallet** (Coinbase) | Live |
 | **Private key** (viem / ethers) | Live |
+| **Sponge** | Planned |
 | **Privy** | Planned |
 | **Turnkey** | Planned |
 | **Openfort** | Planned |
 
 Any EVM signer works. If it can sign a transaction, Mandate can protect it.
 
-## Works with your agent
+## Works with your Agent
 
 | Environment | Status |
 |-------------|--------|
@@ -200,7 +182,7 @@ Any EVM signer works. If it can sign a transaction, Mandate can protect it.
 | **ElizaOS** | Planned |
 | **Vercel AI SDK** | Planned |
 
-## How it works
+## How MANDATE works
 
 **The same flow you see in the [live demo](https://app.mandate.md) on the dashboard:**
 
@@ -248,14 +230,6 @@ app/             Laravel 12 API (PHP 8.2)
 resources/js/    React 19 + Tailwind 4 dashboard
 ```
 
-## Development
-
-```bash
-composer dev              # Laravel server + queue + Vite
-composer test             # 230 tests (SQLite in-memory)
-bun run --filter '*' test # 74 TypeScript tests
-```
-
 ## Links
 
 - **Dashboard**: [app.mandate.md](https://app.mandate.md)
@@ -266,7 +240,7 @@ bun run --filter '*' test # 74 TypeScript tests
 
 - [ ] **Intent scoring.** Numeric score per transaction, your rubric, your weights
 - [ ] **Score trends.** Spot a compromised agent before it costs money
-- [ ] **MANDATE.md presets.** DeFi, Polymarket, Payroll, Shopper: one click
+- [ ] **MANDATE.md presets.** DeFi, Polymarket, Payroll, Shopper
 - [ ] **Community templates.** Import battle-tested rubrics from production teams
 - [ ] **Wallet partnerships.** Privy, Turnkey, Openfort, and more
 - [ ] **Tooling expansion.** VirtualsOS, MCP, Vercel AI SDK, and beyond
