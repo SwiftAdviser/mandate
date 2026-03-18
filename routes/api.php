@@ -26,6 +26,7 @@ Route::post('/telegram/webhook/{secret}', TelegramWebhookController::class);
 Route::middleware([RuntimeKeyAuth::class])->group(function () {
     Route::post('/activate', [ActivateController::class, 'activate']);
     Route::post('/validate', [ValidateController::class, 'validate']);
+    Route::post('/validate/preflight', [ValidateController::class, 'preflight']);
 
     Route::prefix('intents/{intentId}')->group(function () {
         Route::post('/events', [IntentController::class, 'postEvent']);

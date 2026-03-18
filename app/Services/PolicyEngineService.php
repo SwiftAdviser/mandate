@@ -25,6 +25,146 @@ class PolicyEngineService
     ) {}
 
     /**
+     * Lightweight pre-flight validation for custodial wallets.
+     * No intentHash, no tx params. Checks policy constraints and logs to audit trail.
+     */
+    public function preflight(Agent $agent, array $data): array
+    {
+        // 1. Circuit breaker (also checked in middleware, but double-check)
+        if ($this->circuitBreaker->isActive($agent->id)) {
+            return $this->block('circuit_breaker_active', 'Agent circuit breaker is tripped');
+        }
+
+        // 2. Active policy
+        $policy = $agent->activePolicy()->first();
+        if (! $policy) {
+            return $this->block('no_active_policy', 'No policy found for this agent');
+        }
+
+        // 3. Schedule check
+        if ($policy->schedule && ! $this->checkSchedule($policy->schedule)) {
+            $now = now();
+            $day = strtolower($now->format('l'));
+            $hour = (int) $now->format('G');
+
+            return $this->block('outside_schedule', "{$hour}:00 {$day} outside allowed schedule");
+        }
+
+        // 4. Address allowlist (if 'to' provided)
+        if (! empty($data['to']) && $policy->allowed_addresses && ! empty($policy->allowed_addresses)) {
+            $to = strtolower($data['to']);
+            if (! in_array($to, array_map('strtolower', $policy->allowed_addresses), true)) {
+                return $this->block('address_not_allowed', "{$to} not in allowlist");
+            }
+        }
+
+        // 5. Per-tx spend limit (if amount + token provided)
+        $amountUsd = null;
+        if (! empty($data['amount']) && is_numeric($data['amount'])) {
+            // For preflight: treat amount as USD directly (stablecoins) or use token hint
+            $amountUsd = (float) $data['amount'];
+        }
+
+        if ($amountUsd !== null && $policy->spend_limit_per_tx_usd) {
+            if ($amountUsd > (float) $policy->spend_limit_per_tx_usd) {
+                return $this->block('per_tx_limit_exceeded', '$'.number_format($amountUsd, 2)." exceeds \${$policy->spend_limit_per_tx_usd}/tx limit");
+            }
+        }
+
+        // 6. Daily/monthly quota check
+        if ($amountUsd !== null && $amountUsd > 0) {
+            $quotaCheck = $this->quota->check($agent->id, $policy, $amountUsd);
+            if (! $quotaCheck['daily_ok']) {
+                return $this->block('daily_quota_exceeded', "Daily spend would exceed \${$policy->spend_limit_per_day_usd}/day limit");
+            }
+            if (! $quotaCheck['monthly_ok']) {
+                return $this->block('monthly_quota_exceeded', 'Monthly spend would exceed limit');
+            }
+        }
+
+        // 7. Reason scanner
+        $reason = $data['reason'] ?? null;
+        if ($reason) {
+            $reasonScan = $this->reasonScanner->scan(
+                $reason, $policy, ['action' => $data['action']], $amountUsd, [], null, null, $agent,
+            );
+            if ($reasonScan['action'] === 'block') {
+                return $this->block('reason_blocked', $reasonScan['explanation']);
+            }
+        }
+
+        // 8. Approval check
+        $approvalReasons = [];
+        if ($policy->require_approval_above_usd && $amountUsd !== null) {
+            if ($amountUsd > (float) $policy->require_approval_above_usd) {
+                $approvalReasons[] = 'amount_above_threshold';
+            }
+        }
+        $needsApproval = ! empty($approvalReasons);
+
+        // 9. Create audit trail intent (preflight type)
+        $intentId = Str::uuid()->toString();
+        DB::table('tx_intents')->insert([
+            'id' => $intentId,
+            'agent_id' => $agent->id,
+            'policy_id' => $policy->id,
+            'intent_hash' => '0x'.hash('sha256', 'preflight:'.$intentId), // unique per preflight
+            'chain_id' => $agent->chain_id ?? 8453,
+            'nonce' => 0,
+            'to_address' => strtolower($data['to'] ?? '0x0000000000000000000000000000000000000000'),
+            'calldata' => '0x',
+            'value_wei' => '0',
+            'gas_limit' => '0',
+            'max_fee_per_gas' => '0',
+            'max_priority_fee_per_gas' => '0',
+            'tx_type' => 2,
+            'access_list' => '[]',
+            'decoded_action' => $data['action'],
+            'decoded_token' => $data['token'] ?? null,
+            'decoded_recipient' => $data['to'] ?? null,
+            'amount_usd_computed' => $amountUsd,
+            'reason' => $reason,
+            'status' => 'preflight',
+            'expires_at' => now()->addMinutes(5),
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        // 10. Audit event
+        DB::table('tx_events')->insert([
+            'id' => Str::uuid(),
+            'intent_id' => $intentId,
+            'agent_id' => $agent->id,
+            'event_type' => 'preflight_validated',
+            'actor_id' => $agent->id,
+            'actor_role' => 'agent',
+            'metadata' => json_encode([
+                'action' => $data['action'],
+                'amount' => $data['amount'] ?? null,
+                'amount_usd' => $amountUsd,
+                'token' => $data['token'] ?? null,
+                'to' => $data['to'] ?? null,
+                'reason' => $reason,
+                'needs_approval' => $needsApproval,
+            ]),
+            'created_at' => now(),
+        ]);
+
+        // Reserve quota if applicable
+        if ($amountUsd !== null && $amountUsd > 0) {
+            $this->quota->reserve($agent->id, $amountUsd);
+        }
+
+        return [
+            'allowed' => true,
+            'intentId' => $intentId,
+            'requiresApproval' => $needsApproval,
+            'approvalId' => null,
+            'blockReason' => null,
+        ];
+    }
+
+    /**
      * Validate an intent against policy. Returns result array.
      *
      * Result: {

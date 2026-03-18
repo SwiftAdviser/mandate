@@ -1,5 +1,5 @@
 /**
- * Integration tests for openclaw-plugin + real @mandate/sdk.
+ * Integration tests for openclaw-plugin + real @mandate.md/sdk.
  *
  * Mocks ONLY the network layer (global fetch). Real SDK classes, real viem
  * encodeFunctionData, real computeIntentHash all run end-to-end.
@@ -11,7 +11,8 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { transferTool } from '../tools/transferTool.js';
 import { x402Tool } from '../tools/x402Tool.js';
 import { sendEthTool } from '../tools/sendEthTool.js';
-import { PolicyBlockedError, CircuitBreakerError, ApprovalRequiredError } from '@mandate/sdk';
+import { PolicyBlockedError, CircuitBreakerError, ApprovalRequiredError } from '@mandate.md/sdk';
+import mandatePlugin from '../plugin.js';
 
 const RECIPIENT = '0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045';
 const USDC_BASE_SEPOLIA = '0x036CbD53842c5426634e7929541eC2318f3dCF7e';
@@ -252,6 +253,65 @@ describe('integration: sendEth tool + real SDK', () => {
     expect(result.success).toBe(false);
     expect(result.blocked).toBe(true);
     expect(result.declineMessage).toContain('per-transaction spending limit');
+  });
+});
+
+// ── register(api) + Hook Integration ─────────────────────────────────────────
+
+describe('integration: register(api) + hook', () => {
+  it('register(api) registers 3 tools (register, validate, status)', () => {
+    const api = { registerTool: vi.fn(), on: vi.fn() };
+    mandatePlugin.register(api, { runtimeKey: 'mndt_test_integration' });
+    expect(api.registerTool).toHaveBeenCalledTimes(3);
+    const names = api.registerTool.mock.calls.map((c: any[]) => c[0].name);
+    expect(names).toContain('mandate_register');
+    expect(names).toContain('mandate_validate');
+    expect(names).toContain('mandate_status');
+  });
+
+  it('validate tool returns allowed when policy passes', async () => {
+    vi.stubGlobal('fetch', createFetchMock('allowed'));
+    const api = { registerTool: vi.fn(), on: vi.fn() };
+    mandatePlugin.register(api, { runtimeKey: 'mndt_test_integration' });
+
+    const validateFn = api.registerTool.mock.calls.find((c: any[]) => c[0].name === 'mandate_validate')![0];
+    const result = await validateFn.execute({ action: 'transfer 0.02 USDC to 0xAlice' });
+    expect(result.allowed).toBe(true);
+    expect(result.instruction).toContain('Policy check passed');
+  });
+
+  it('validate tool returns blocked when policy fails', async () => {
+    vi.stubGlobal('fetch', createFetchMock('blocked'));
+    const api = { registerTool: vi.fn(), on: vi.fn() };
+    mandatePlugin.register(api, { runtimeKey: 'mndt_test_integration' });
+
+    const validateFn = api.registerTool.mock.calls.find((c: any[]) => c[0].name === 'mandate_validate')![0];
+    const result = await validateFn.execute({ action: 'transfer 999 USDC' });
+    expect(result.allowed).toBe(false);
+    expect(result.blocked).toBe(true);
+    expect(result.instruction).toContain('BLOCKED');
+  });
+
+  it('validate tool returns blocked when Mandate unreachable (fail-closed)', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new TypeError('fetch failed')));
+    const api = { registerTool: vi.fn(), on: vi.fn() };
+    mandatePlugin.register(api, { runtimeKey: 'mndt_test_integration' });
+
+    const validateFn = api.registerTool.mock.calls.find((c: any[]) => c[0].name === 'mandate_validate')![0];
+    const result = await validateFn.execute({ action: 'swap ETH' });
+    expect(result.allowed).toBe(false);
+    expect(result.reason).toBe('mandate_unreachable');
+  });
+
+  it('validate tool guides to register when no runtimeKey', async () => {
+    const api = { registerTool: vi.fn(), on: vi.fn() };
+    mandatePlugin.register(api, { runtimeKey: '' });
+
+    const validateFn = api.registerTool.mock.calls.find((c: any[]) => c[0].name === 'mandate_validate')![0];
+    const result = await validateFn.execute({ action: 'send USDC' });
+    expect(result.allowed).toBe(false);
+    expect(result.reason).toBe('no_runtime_key');
+    expect(result.instruction).toContain('mandate_register');
   });
 });
 

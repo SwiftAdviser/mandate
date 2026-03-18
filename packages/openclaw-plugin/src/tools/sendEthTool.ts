@@ -1,4 +1,4 @@
-import { MandateWallet, PolicyBlockedError, ApprovalRequiredError } from '@mandate/sdk';
+import { MandateWallet, PolicyBlockedError, ApprovalRequiredError } from '@mandate.md/sdk';
 
 export interface SendEthParams {
   to: string;
@@ -31,7 +31,7 @@ export const sendEthTool = {
     params: SendEthParams,
     context?: { runtimeKey?: string; privateKey?: string; chainId?: number },
   ): Promise<{ success: boolean; txHash?: string; intentId?: string; blocked?: boolean; reason?: string; declineMessage?: string; requiresApproval?: boolean; approvalReason?: string }> => {
-    const runtimeKey = context?.runtimeKey ?? process.env.MANDATE_RUNTIME_KEY ?? '';
+    const runtimeKey = context?.runtimeKey ?? '';
     const privateKey = (context?.privateKey ?? process.env.MANDATE_PRIVATE_KEY ?? '') as `0x${string}`;
     const chainId = params.chainId ?? context?.chainId ?? Number(process.env.MANDATE_CHAIN_ID ?? '84532');
 

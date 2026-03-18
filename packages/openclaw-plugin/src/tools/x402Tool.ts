@@ -1,4 +1,4 @@
-import { MandateWallet, PolicyBlockedError } from '@mandate/sdk';
+import { MandateWallet, PolicyBlockedError } from '@mandate.md/sdk';
 
 export interface X402Params {
   url: string;
@@ -32,7 +32,7 @@ export const x402Tool = {
     params: X402Params,
     context?: { runtimeKey?: string; privateKey?: string; chainId?: number },
   ): Promise<{ success: boolean; status?: number; blocked?: boolean; reason?: string; declineMessage?: string }> => {
-    const runtimeKey = context?.runtimeKey ?? process.env.MANDATE_RUNTIME_KEY ?? '';
+    const runtimeKey = context?.runtimeKey ?? '';
     const privateKey = (context?.privateKey ?? process.env.MANDATE_PRIVATE_KEY ?? '') as `0x${string}`;
     const chainId = params.chainId ?? context?.chainId ?? Number(process.env.MANDATE_CHAIN_ID ?? '84532');
 

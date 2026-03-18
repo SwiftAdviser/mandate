@@ -1,113 +1,117 @@
 import { describe, it, expect, vi } from 'vitest';
 
-vi.mock('@mandate/sdk', () => {
+vi.mock('@mandate.md/sdk', () => {
   const PolicyBlockedError = class extends Error {
     blockReason: string;
     declineMessage?: string;
-    constructor(r: string, d?: string, dm?: string) { super(r); this.blockReason = r; this.declineMessage = dm; }
+    constructor(r: string, _d?: string, dm?: string) { super(r); this.blockReason = r; this.declineMessage = dm; }
   };
-  const ApprovalRequiredError = class extends Error {
-    intentId = 'id2'; approvalId = 'appr1'; approvalReason = 'Amount above threshold.';
-  };
-  const MandateWallet = vi.fn().mockImplementation(() => ({
-    transfer: vi.fn().mockResolvedValue({ txHash: '0xabc', intentId: 'id1', status: { status: 'confirmed' } }),
-    x402Pay: vi.fn().mockResolvedValue({ status: 200, ok: true }),
-    sendEth: vi.fn().mockResolvedValue({ txHash: '0xdef', intentId: 'id3', status: { status: 'confirmed' } }),
+  const CircuitBreakerError = class extends Error { statusCode = 403; };
+  const MandateClient = vi.fn().mockImplementation(() => ({
+    validate: vi.fn().mockResolvedValue({ allowed: true, intentId: 'id1' }),
+    preflight: vi.fn().mockResolvedValue({ allowed: true, intentId: 'id1', action: 'transfer' }),
+    getStatus: vi.fn().mockResolvedValue({ status: 'confirmed', txHash: '0xabc' }),
   }));
-  return { MandateWallet, PolicyBlockedError, ApprovalRequiredError };
+  (MandateClient as any).register = vi.fn().mockResolvedValue({
+    agentId: 'ag1', runtimeKey: 'mndt_test_new', claimUrl: 'https://app.mandate.md/claim/x',
+    evmAddress: '0x1234', chainId: 8453,
+  });
+  const computeIntentHash = vi.fn().mockReturnValue('0xdeadbeef');
+  return { MandateClient, PolicyBlockedError, CircuitBreakerError, computeIntentHash };
 });
 
-import mandatePlugin, { transferTool, x402Tool, sendEthTool } from '../plugin.js';
+import mandatePlugin from '../plugin.js';
 
 describe('openclaw plugin', () => {
   it('exports plugin with correct name and version', () => {
-    expect(mandatePlugin.name).toBe('mandate');
-    expect(mandatePlugin.version).toBe('0.2.0');
+    expect(mandatePlugin.name).toBe('Mandate');
+    expect(mandatePlugin.version).toBe('0.3.2');
     expect(mandatePlugin.tools).toHaveLength(3);
   });
 
-  it('transfer tool has correct JSON schema without privateKey', () => {
-    expect(transferTool.parameters.required).toContain('to');
-    expect(transferTool.parameters.required).toContain('amount');
-    expect(transferTool.parameters.required).toContain('tokenAddress');
-    expect(transferTool.parameters.properties).not.toHaveProperty('privateKey');
-    expect(transferTool.parameters.properties).not.toHaveProperty('runtimeKey');
-    expect(transferTool.parameters.properties).toHaveProperty('chainId');
+  it('tools are register, validate, status', () => {
+    const names = mandatePlugin.tools.map(t => t.name);
+    expect(names).toContain('mandate_register');
+    expect(names).toContain('mandate_validate');
+    expect(names).toContain('mandate_status');
   });
 
-  it('transfer tool executes successfully via context', async () => {
-    const result = await transferTool.execute(
-      { to: '0xRecipient', amount: '1000000', tokenAddress: '0xToken' },
-      { runtimeKey: 'mndt_test', privateKey: '0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef' },
-    );
-    expect(result.success).toBe(true);
-    expect(result.txHash).toBe('0xabc');
+  it('validate tool has action as required param', () => {
+    const vt = mandatePlugin.tools.find(t => t.name === 'mandate_validate')!;
+    expect(vt.parameters.required).toContain('action');
+    expect(vt.parameters.properties).not.toHaveProperty('privateKey');
   });
 
-  it('transfer tool returns blocked=true with declineMessage on policy violation', async () => {
-    const { MandateWallet, PolicyBlockedError } = await import('@mandate/sdk') as {
-      MandateWallet: ReturnType<typeof vi.fn>;
-      PolicyBlockedError: new (r: string, d?: string, dm?: string) => Error & { blockReason: string; declineMessage?: string };
-    };
-    const blockedTransfer = vi.fn().mockRejectedValueOnce(
-      new PolicyBlockedError('per_tx_limit_exceeded', 'over limit', 'Split into smaller amounts'),
-    );
-    (MandateWallet as ReturnType<typeof vi.fn>).mockImplementationOnce(() => ({
-      transfer: blockedTransfer,
-      x402Pay: vi.fn(),
-      sendEth: vi.fn(),
+  it('register tool has name and evmAddress as required', () => {
+    const rt = mandatePlugin.tools.find(t => t.name === 'mandate_register')!;
+    expect(rt.parameters.required).toContain('name');
+    expect(rt.parameters.required).toContain('evmAddress');
+  });
+});
+
+describe('register(api) pattern', () => {
+  it('plugin has id, name, version, register function', () => {
+    expect(mandatePlugin.id).toBe('openclaw-plugin');
+    expect(mandatePlugin.name).toBe('Mandate');
+    expect(mandatePlugin.version).toBe('0.3.2');
+    expect(typeof mandatePlugin.register).toBe('function');
+  });
+
+  it('register(api) registers 3 tools: register, validate, status', () => {
+    const api = { registerTool: vi.fn(), on: vi.fn() };
+    mandatePlugin.register(api, { runtimeKey: 'mndt_test_x' });
+    expect(api.registerTool).toHaveBeenCalledTimes(3);
+    const names = api.registerTool.mock.calls.map((c: any[]) => c[0].name);
+    expect(names).toContain('mandate_register');
+    expect(names).toContain('mandate_validate');
+    expect(names).toContain('mandate_status');
+  });
+
+  it('configSchema has optional runtimeKey (no privateKey)', () => {
+    expect(mandatePlugin.configSchema).toBeDefined();
+    const schema = mandatePlugin.configSchema as any;
+    expect(schema.required).toBeUndefined();
+    expect(schema.properties).toHaveProperty('runtimeKey');
+    expect(schema.properties).not.toHaveProperty('privateKey');
+  });
+
+  it('register(api) also registers message:preprocessed hook', () => {
+    const api = { registerTool: vi.fn(), on: vi.fn() };
+    mandatePlugin.register(api, { runtimeKey: 'mndt_test_x' });
+    expect(api.on).toHaveBeenCalledTimes(1);
+    expect(api.on).toHaveBeenCalledWith('message:preprocessed', expect.any(Function), { priority: 100 });
+  });
+
+  it('hook skips mandate_* tools (no recursion)', async () => {
+    const api = { registerTool: vi.fn(), on: vi.fn() };
+    mandatePlugin.register(api, { runtimeKey: 'mndt_test_x' });
+    const hookHandler = api.on.mock.calls[0][1];
+    const pushMessage = vi.fn();
+    await hookHandler({ type: 'message', action: 'preprocessed', toolName: 'mandate_validate', pushMessage });
+    expect(pushMessage).not.toHaveBeenCalled();
+  });
+
+  it('hook blocks financial tools when policy fails', async () => {
+    const { MandateClient } = await import('@mandate.md/sdk') as any;
+    const { PolicyBlockedError } = await import('@mandate.md/sdk') as any;
+    MandateClient.mockImplementationOnce(() => ({
+      validate: vi.fn().mockRejectedValueOnce(new PolicyBlockedError('daily_quota_exceeded', '', 'Daily limit reached')),
     }));
-
-    const result = await transferTool.execute(
-      { to: '0xRecipient', amount: '100000000', tokenAddress: '0xToken' },
-      { runtimeKey: 'mndt_test', privateKey: '0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef' },
-    );
-    expect(result.success).toBe(false);
-    expect(result.blocked).toBe(true);
-    expect(result.declineMessage).toBe('Split into smaller amounts');
+    const api = { registerTool: vi.fn(), on: vi.fn() };
+    mandatePlugin.register(api, { runtimeKey: 'mndt_test_x' });
+    const hookHandler = api.on.mock.calls[0][1];
+    const pushMessage = vi.fn();
+    await hookHandler({ type: 'message', action: 'preprocessed', toolName: 'locus_transfer', toolInput: { to: '0xabc' }, pushMessage });
+    expect(pushMessage).toHaveBeenCalledWith(expect.stringContaining('blocked'));
   });
 
-  it('x402 tool has chainId param but no privateKey', () => {
-    expect(x402Tool.parameters.properties).not.toHaveProperty('privateKey');
-    expect(x402Tool.parameters.properties).not.toHaveProperty('runtimeKey');
-    expect(x402Tool.parameters.properties).toHaveProperty('chainId');
-  });
-
-  it('sendEth tool executes successfully', async () => {
-    const result = await sendEthTool.execute(
-      { to: '0xRecipient', valueWei: '1000000000000000000' },
-      { runtimeKey: 'mndt_test', privateKey: '0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef' },
-    );
-    expect(result.success).toBe(true);
-    expect(result.txHash).toBe('0xdef');
-  });
-
-  it('sendEth tool returns blocked=true on policy violation', async () => {
-    const { MandateWallet, PolicyBlockedError } = await import('@mandate/sdk') as {
-      MandateWallet: ReturnType<typeof vi.fn>;
-      PolicyBlockedError: new (r: string, d?: string, dm?: string) => Error & { blockReason: string; declineMessage?: string };
-    };
-    const blockedSend = vi.fn().mockRejectedValueOnce(
-      new PolicyBlockedError('value_wei_exceeded', 'too much', 'Native value exceeds policy maximum.'),
-    );
-    (MandateWallet as ReturnType<typeof vi.fn>).mockImplementationOnce(() => ({
-      transfer: vi.fn(),
-      x402Pay: vi.fn(),
-      sendEth: blockedSend,
-    }));
-
-    const result = await sendEthTool.execute(
-      { to: '0xRecipient', valueWei: '99999999999999999999' },
-      { runtimeKey: 'mndt_test', privateKey: '0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef' },
-    );
-    expect(result.success).toBe(false);
-    expect(result.blocked).toBe(true);
-    expect(result.declineMessage).toBe('Native value exceeds policy maximum.');
-  });
-
-  it('sendEth tool has correct JSON schema', () => {
-    expect(sendEthTool.parameters.required).toContain('to');
-    expect(sendEthTool.parameters.required).toContain('valueWei');
-    expect(sendEthTool.parameters.properties).not.toHaveProperty('privateKey');
+  it('registered validate tool returns allowed or blocked', async () => {
+    const api = { registerTool: vi.fn(), on: vi.fn() };
+    mandatePlugin.register(api, { runtimeKey: 'mndt_test_x' });
+    const validateCall = api.registerTool.mock.calls.find((c: any[]) => c[0].name === 'mandate_validate');
+    expect(validateCall).toBeDefined();
+    const result = await validateCall![0].execute({ action: 'transfer 0.02 USDC to 0xAlice' });
+    expect(result).toHaveProperty('allowed');
+    expect(result).toHaveProperty('instruction');
   });
 });

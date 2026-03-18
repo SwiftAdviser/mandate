@@ -1,0 +1,72 @@
+import { MandateClient } from '@mandate.md/sdk';
+
+export interface RegisterParams {
+  name: string;
+  evmAddress: string;
+}
+
+export const registerTool = {
+  name: 'mandate_register',
+  description: 'Register this agent with Mandate to get a runtimeKey. Call ONCE before using mandate_validate. No auth required. Returns runtimeKey (save it to config), claimUrl (show to user to configure spending limits). After registration, the agent is automatically activated.',
+  parameters: {
+    type: 'object',
+    properties: {
+      name: { type: 'string', description: 'Agent name, e.g. "OpenClaw Agent"' },
+      evmAddress: { type: 'string', description: 'Agent EVM wallet address (0x...). Use the address of the wallet that sends transactions (e.g. Locus wallet address).' },
+    },
+    required: ['name', 'evmAddress'],
+  },
+  async execute(params: RegisterParams): Promise<{
+    success: boolean;
+    runtimeKey?: string;
+    claimUrl?: string;
+    agentId?: string;
+    evmAddress?: string;
+    error?: string;
+    instruction?: string;
+  }> {
+    try {
+      // Step 1: Register agent (no auth)
+      const result = await MandateClient.register({
+        name: params.name,
+        evmAddress: params.evmAddress as `0x${string}`,
+        chainId: 8453,
+      });
+
+      // Step 2: Activate (set EVM address)
+      try {
+        await fetch('https://app.mandate.md/api/activate', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${result.runtimeKey}`,
+          },
+          body: JSON.stringify({ evmAddress: params.evmAddress }),
+        });
+      } catch {
+        // Activation failure is non-fatal, agent can activate later
+      }
+
+      return {
+        success: true,
+        runtimeKey: result.runtimeKey,
+        claimUrl: result.claimUrl,
+        agentId: result.agentId,
+        evmAddress: params.evmAddress,
+        instruction: [
+          'Registration successful.',
+          `1) Save runtimeKey "${result.runtimeKey}" in plugin config or MANDATE_RUNTIME_KEY env var.`,
+          `2) Show this link to the user so they can configure spending limits: ${result.claimUrl}`,
+          '3) Now call mandate_validate before every financial action (transfer, swap, send).',
+          '4) Default policy: $100/tx limit, $1000/day. User can adjust at app.mandate.md.',
+        ].join(' '),
+      };
+    } catch (err: any) {
+      return {
+        success: false,
+        error: err.message ?? 'Registration failed',
+        instruction: 'Registration failed. Check the error and retry.',
+      };
+    }
+  },
+};

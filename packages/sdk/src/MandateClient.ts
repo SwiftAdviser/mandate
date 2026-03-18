@@ -74,6 +74,32 @@ export class MandateClient {
     return data;
   }
 
+  // ── Pre-flight validation (custodial wallets) ───────────────────────
+  async preflight(params: {
+    action: string;
+    amount?: string;
+    to?: string;
+    token?: string;
+    reason: string;
+  }): Promise<ValidateResult & { action: string }> {
+    const res = await this.post('/api/validate/preflight', params);
+
+    if (res.status === 403) throw new CircuitBreakerError();
+
+    if (res.status === 422) {
+      const data = await res.json();
+      const reason = data.blockReason ?? 'unknown';
+      throw new PolicyBlockedError(reason, data.blockDetail, data.declineMessage);
+    }
+
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}));
+      throw new MandateError(data.error ?? 'Preflight failed', res.status);
+    }
+
+    return res.json();
+  }
+
   // ── Post event (after broadcast) ─────────────────────────────────────
   async postEvent(intentId: string, txHash: `0x${string}`): Promise<void> {
     const res = await this.post(`/api/intents/${intentId}/events`, { txHash });

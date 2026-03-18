@@ -11,6 +11,44 @@ class ValidateController extends Controller
 {
     public function __construct(private PolicyEngineService $engine) {}
 
+    /**
+     * Lightweight pre-flight check for custodial wallets (Locus, Bankr, Sponge).
+     * No intentHash, no tx details. Checks: circuit breaker, schedule, allowlist,
+     * quotas, reason scanner. Creates an audit trail intent with action field.
+     */
+    public function preflight(Request $request): JsonResponse
+    {
+        $data = $request->validate([
+            'action' => ['required', 'string', 'max:100'],
+            'amount' => ['sometimes', 'string'],
+            'to' => ['sometimes', 'string', 'regex:/^0x[a-fA-F0-9]{40}$/'],
+            'token' => ['sometimes', 'string', 'max:20'],
+            'reason' => ['required', 'string', 'max:1000'],
+        ]);
+
+        $agent = $request->attributes->get('agent');
+
+        $result = $this->engine->preflight($agent, $data);
+
+        if (! $result['allowed']) {
+            return response()->json([
+                'allowed' => false,
+                'blockReason' => $result['blockReason'],
+                'blockDetail' => $result['blockDetail'] ?? null,
+                'declineMessage' => $result['declineMessage'] ?? null,
+                'action' => $data['action'],
+            ], 422);
+        }
+
+        return response()->json([
+            'allowed' => true,
+            'intentId' => $result['intentId'],
+            'action' => $data['action'],
+            'requiresApproval' => $result['requiresApproval'] ?? false,
+            'approvalId' => $result['approvalId'] ?? null,
+        ]);
+    }
+
     public function validate(Request $request): JsonResponse
     {
         $data = $request->validate([

@@ -1,6 +1,6 @@
 {
-  "name": "@mandate/openclaw-plugin",
-  "version": "0.1.0",
+  "name": "@mandate.md/openclaw-plugin",
+  "version": "0.4.0",
   "description": "OpenClaw plugin for Mandate policy-enforced on-chain tools",
   "type": "module",
   "main": "./dist/index.js",
@@ -16,8 +16,12 @@
     "test": "vitest run",
     "test:watch": "vitest"
   },
+  "openclaw": {
+    "extensions": ["./dist/index.js"]
+  },
   "dependencies": {
-    "@mandate.md/sdk": "workspace:*"
+    "@mandate.md/sdk": "^0.1.1",
+    "viem": ">=2.0.0"
   },
   "devDependencies": {
     "tsup": "^8.0.0",
