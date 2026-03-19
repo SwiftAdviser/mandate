@@ -25,17 +25,25 @@ Mandate adds a reason-aware control layer to existing agent wallets. Evaluate **
 2. **Real-time risk prevention**. Stop fraud, prompt-injection payments, and costly mistakes before funds move.
 3. **Complete payment auditability**. Full audit trail of every decision with amount, timing, and rationale.
 
-## TLDR; Getting started
+## Getting started
 
-So you have an agent with a wallet. With Mandate you can start trust your agent budgets.
+### OpenClaw (recommended)
 
-Point your agent to the skill file. It handles the rest:
+```bash
+openclaw plugins install @mandate.md/openclaw-plugin
+```
+
+The plugin registers tools (`mandate_register`, `mandate_validate`, `mandate_status`) and a safety-net hook that intercepts financial tool calls automatically. After install, the agent self-registers and starts validating. Mandate needs hooks to reliably catch payment intents, so the plugin is the preferred integration.
+
+### Other agent frameworks
+
+Point your agent to the skill file:
 
 ```
 https://app.mandate.md/SKILL.md
 ```
 
-Your agent reads the skill, registers, gets a runtime key, and starts validating. Three steps, zero config.
+> **Note:** Without hooks, Mandate relies on the agent voluntarily calling `/validate/preflight` before every transaction. The SKILL.md instructs agents to do this, but there is no enforcement. For reliable interception, use the OpenClaw plugin or Claude Code plugin which provide hook-based gating.
 
 ## MANDATE.md: intent-aware payment decisions
 

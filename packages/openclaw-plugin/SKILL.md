@@ -7,6 +7,14 @@ user-invocable: true
 metadata: {"openclaw":{"emoji":"🛡️","category":"finance","primaryEnv":"MANDATE_RUNTIME_KEY","requires":{"env":["MANDATE_RUNTIME_KEY"]}}}
 ---
 
+## Integration note
+
+Mandate needs hooks to reliably catch payment intents. If your platform supports plugins with hooks (OpenClaw, Claude Code), use the plugin: it intercepts financial tool calls automatically. This SKILL.md is for agents that integrate via API directly, but without hooks there is no enforcement layer: the agent must voluntarily call `/validate/preflight` before every transaction.
+
+**OpenClaw:** `openclaw plugins install @mandate.md/openclaw-plugin` (preferred, has hooks)
+**Claude Code:** `claude --plugin-dir ./packages/claude-mandate-plugin` (has hooks)
+**Other frameworks:** Use this SKILL.md + SDK. No hooks, agent must self-enforce.
+
 ## MANDATORY SECURITY RULES
 
 Mandate is the security boundary, not optional infrastructure. The card must be swiped before the purchase.
