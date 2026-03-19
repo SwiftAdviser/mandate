@@ -57,38 +57,32 @@ await agent.run('Send 10 USDC to alice.eth');`,
   },
   {
     id: 'claude-code',
+    comingSoon: true,
     framework: 'Claude Code',
-    package: 'mandate-hook.sh',
+    package: 'claude-mandate-plugin',
     category: 'assistant',
     icon: '🤖',
     logo: '/logos/claude.svg',
-    tagline: 'PreToolUse hook for Claude Code sessions',
-    install: 'cp mandate-hook.sh ~/.claude/hooks/mandate-hook.sh',
-    quickStart: 'curl -sL https://app.mandate.md/hooks/claude.sh -o ~/.claude/hooks/mandate-hook.sh && chmod +x ~/.claude/hooks/mandate-hook.sh',
-    code: `{
-  "hooks": {
-    "PreToolUse": [
-      {
-        "matcher": "mcp__.*__.*pay.*|mcp__.*__.*transfer.*|mcp__.*__.*send.*",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "~/.claude/hooks/mandate-hook.sh"
-          }
-        ]
-      }
-    ]
-  }
-}`,
-    lang: 'json',
+    tagline: 'Plugin with stateful two-phase enforcement gate',
+    install: 'claude --plugin-dir ./claude-mandate-plugin',
+    quickStart: 'claude --plugin-dir ./claude-mandate-plugin',
+    code: `// Plugin auto-blocks transaction tools until you preflight with Mandate.
+// 1. PostToolUse watches for mandate preflight / validate calls
+// 2. PreToolUse intercepts wallet tools, checks for valid token
+// 3. No token = DENY with instructions
+
+// Flow:
+mandate preflight --action "swap" --reason "Swap ETH for USDC"
+bankr prompt "Swap 0.1 ETH for USDC"  // now allowed`,
+    lang: 'bash',
     envVars: [
       { name: 'MANDATE_RUNTIME_KEY', note: 'from dashboard' },
-      { name: 'MANDATE_API_URL', note: 'optional, defaults to hosted endpoint' },
     ],
-    prerequisites: ['~/.claude/hooks directory'],
+    prerequisites: ['Claude Code CLI'],
   },
   {
     id: 'mcp',
+    comingSoon: true,
     framework: 'MCP / Codex',
     package: '@mandate/mcp-worker',
     category: 'assistant',
@@ -249,6 +243,31 @@ export const agent = withMandate(acpClient, {
       { name: 'MANDATE_RUNTIME_KEY', note: 'from dashboard' },
     ],
     prerequisites: ['ACP API key required (AcpConfig.acpApiKey)'],
+  },
+  {
+    id: 'skill',
+    framework: 'SKILL.md',
+    package: 'app.mandate.md/SKILL.md',
+    category: 'core',
+    icon: '📄',
+    tagline: 'Drop this URL into any agent chat. It self-integrates.',
+    install: 'https://app.mandate.md/SKILL.md',
+    quickStart: 'https://app.mandate.md/SKILL.md',
+    code: `# Paste this into your agent's chat:
+Follow https://app.mandate.md/SKILL.md to add Mandate policy
+enforcement. Use this runtime_key: <your-key>
+
+# Or add to agent config / system prompt:
+# The agent reads the skill file, registers itself,
+# and starts calling /validate/preflight before every transaction.
+
+# Works with any agent that can read URLs:
+# Claude, ChatGPT, Codex, OpenClaw, custom agents`,
+    lang: 'bash',
+    envVars: [
+      { name: 'MANDATE_RUNTIME_KEY', note: 'from dashboard' },
+    ],
+    prerequisites: [],
   },
   {
     id: 'sdk',

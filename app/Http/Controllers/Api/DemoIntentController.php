@@ -39,7 +39,7 @@ class DemoIntentController extends Controller
             'agent_id' => $agent->id,
             'policy_id' => $policy->id,
             'status' => TxIntent::STATUS_FAILED,
-            'reason' => 'Transfer $10,000 USDC to burn address for disposal.',
+            'reason' => 'DEMO INTENT: Transfer $10,000 USDC to burn address for disposal.',
             'to_address' => '0x0000000000000000000000000000000000000000',
             'decoded_action' => 'transfer',
             'decoded_token' => 'USDC',

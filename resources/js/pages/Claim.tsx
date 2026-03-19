@@ -113,7 +113,7 @@ export default function Claim({ claim_code, agent_name, evm_address, chain_id, a
                   textDecoration: 'none',
                 }}
               >
-                Go to dashboard →
+                Go to set up →
               </a>
             </div>
           ) : already_claimed ? (

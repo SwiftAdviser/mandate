@@ -158,7 +158,18 @@ export default function AuditLog({ intents, filters }: Props) {
                           }}
                           title={hasLongReason && !isExpanded ? intent.reason : undefined}
                         >
-                          {intent.reason}
+                          {intent.reason?.startsWith('DEMO INTENT:') ? (
+                            <>
+                              <span style={{
+                                fontFamily: 'var(--font-mono)', fontSize: 9, fontWeight: 600,
+                                color: '#f59e0b', background: 'rgba(245,158,11,0.12)',
+                                padding: '1px 6px', borderRadius: 3,
+                                border: '1px solid rgba(245,158,11,0.25)',
+                                marginRight: 6, letterSpacing: '0.04em',
+                              }}>DEMO</span>
+                              {intent.reason.slice(13)}
+                            </>
+                          ) : intent.reason}
                         </div>
                       ) : (
                         <span style={{ color: 'var(--text-dim)' }}>-</span>

@@ -1,5 +1,6 @@
 import { MANDATE_PREFILL, MANDATE_TEMPLATES, POLICY_PRESETS } from '@/lib/defaults';
 import type { MandateTemplateKey } from '@/lib/defaults';
+import LiveSimulationDemo from '@/components/LiveSimulationDemo';
 import { useState, useEffect, useRef } from 'react';
 
 interface Agent {
@@ -60,10 +61,8 @@ export default function OnboardingWizard({ agent, onComplete }: Props) {
   const [verifyingCode, setVerifyingCode] = useState(false);
   const [telegramLinked, setTelegramLinked] = useState(false);
   const [telegramError, setTelegramError] = useState('');
-
-  // Step 4: Simulator
-  const [demoLoading, setDemoLoading] = useState(false);
-  const [demoBlocked, setDemoBlocked] = useState(false);
+  const [testingSend, setTestingSend] = useState(false);
+  const [testSent, setTestSent] = useState(false);
 
   const codeInputRef = useRef<HTMLInputElement>(null);
 
@@ -141,13 +140,20 @@ export default function OnboardingWizard({ agent, onComplete }: Props) {
     }
   }
 
-  async function runDemo() {
-    setDemoLoading(true);
-    const res = await apiPost(`/api/agents/${agent.id}/demo-intent`, {});
+  async function sendTestNotification() {
+    setTestingSend(true);
+    const res = await fetch(`/api/agents/${agent.id}/webhooks/test`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-XSRF-TOKEN': getXsrf(),
+      },
+    });
     if (res.ok) {
-      setDemoBlocked(true);
+      setTestSent(true);
+      setTimeout(() => setTestSent(false), 3000);
     }
-    setDemoLoading(false);
+    setTestingSend(false);
   }
 
   function finish() {
@@ -278,37 +284,55 @@ export default function OnboardingWizard({ agent, onComplete }: Props) {
       <div style={stepLabel}>Step 2 of {TOTAL_STEPS}</div>
       <h2 style={stepTitle}>Spend Limits</h2>
       <p style={{ fontSize: 13, color: 'var(--text-secondary)', lineHeight: 1.6, marginBottom: 20, marginTop: 0 }}>
-        Set maximum amounts your agent can spend. Customize or pick a preset.
+        Set maximum amounts your agent can spend.
       </p>
 
-      {/* Input fields */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 12, marginBottom: 16 }}>
-        {([
-          ['Per Transaction', perTx, (v: number) => setPerTx(v)] as const,
-          ['Per Day', perDay, (v: number) => setPerDay(v)] as const,
-          ['Per Month', perMonth, (v: number) => setPerMonth(v)] as const,
-        ]).map(([label, value, setter]) => (
-          <div key={label}>
-            <label style={{ display: 'block', fontSize: 10, color: 'var(--text-dim)', fontFamily: 'var(--font-mono)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 6 }}>
-              {label} ($)
-            </label>
-            <input
-              type="number"
-              value={value}
-              onChange={e => { setter(Number(e.target.value)); setSelectedPreset('' as PresetKey); }}
-              style={inputStyle}
-            />
-          </div>
-        ))}
+      {/* Presets */}
+      <div style={{ marginBottom: 20 }}>
+        <div style={{ fontSize: 11, color: 'var(--text-dim)', fontFamily: 'var(--font-mono)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 8 }}>
+          Use our default presets
+        </div>
+        <div style={{ display: 'flex', gap: 8 }}>
+          {(Object.keys(POLICY_PRESETS) as PresetKey[]).map(key => (
+            <button key={key} onClick={() => selectPreset(key)} style={btnPreset(key === selectedPreset)}>
+              {POLICY_PRESETS[key].label}
+            </button>
+          ))}
+        </div>
       </div>
 
-      {/* Presets */}
-      <div style={{ display: 'flex', gap: 8, marginBottom: 24 }}>
-        {(Object.keys(POLICY_PRESETS) as PresetKey[]).map(key => (
-          <button key={key} onClick={() => selectPreset(key)} style={btnPreset(key === selectedPreset)}>
-            {POLICY_PRESETS[key].label}
-          </button>
-        ))}
+      {/* Input fields */}
+      <div style={{ marginBottom: 24 }}>
+        <div style={{ fontSize: 11, color: 'var(--text-dim)', fontFamily: 'var(--font-mono)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 8 }}>
+          Or write yours
+        </div>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 12 }}>
+          {([
+            ['Per Transaction', perTx, (v: number) => setPerTx(v)] as const,
+            ['Per Day', perDay, (v: number) => setPerDay(v)] as const,
+            ['Per Month', perMonth, (v: number) => setPerMonth(v)] as const,
+          ]).map(([label, value, setter]) => (
+            <div key={label}>
+              <label style={{ display: 'block', fontSize: 10, color: 'var(--text-dim)', fontFamily: 'var(--font-mono)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 6 }}>
+                {label} ($)
+              </label>
+              <input
+                type="text"
+                inputMode="decimal"
+                value={value}
+                onChange={e => {
+                  const raw = e.target.value.replace(',', '.');
+                  const num = parseFloat(raw);
+                  if (raw === '' || raw === '.' || !isNaN(num)) {
+                    setter(raw === '' || raw === '.' ? 0 : num);
+                    setSelectedPreset('' as PresetKey);
+                  }
+                }}
+                style={inputStyle}
+              />
+            </div>
+          ))}
+        </div>
       </div>
 
       <div style={{ textAlign: 'right' }}>
@@ -443,113 +467,37 @@ export default function OnboardingWizard({ agent, onComplete }: Props) {
       )}
 
       <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10, marginTop: 16 }}>
-        <button onClick={next} style={btnSecondary}>
+        {telegramLinked && (
+          <button
+            onClick={sendTestNotification}
+            disabled={testingSend}
+            style={{
+              ...btnSecondary,
+              color: testSent ? 'var(--green)' : 'var(--text-secondary)',
+            }}
+          >
+            {testSent ? 'Test sent' : testingSend ? 'Sending...' : 'Send test'}
+          </button>
+        )}
+        <button onClick={next} style={telegramLinked ? btnPrimary : btnSecondary}>
           {telegramLinked ? 'Continue' : 'Skip for now'}
         </button>
-        {telegramLinked && (
-          <button onClick={next} style={btnPrimary}>Continue</button>
-        )}
       </div>
     </div>,
 
     // Step 4: Simulator
-    <div key={4} style={cardStyle}>
+    <div key={4} style={{ ...cardStyle, maxWidth: 680 }}>
       <div style={stepLabel}>Step 5 of {TOTAL_STEPS}</div>
       <h2 style={stepTitle}>See your guard in action</h2>
       <p style={{ fontSize: 13, color: 'var(--text-secondary)', lineHeight: 1.6, marginBottom: 20, marginTop: 0 }}>
-        Let's see what happens when your agent tries something suspicious.
+        Watch how Mandate detects and blocks a social engineering attack in real time.
       </p>
 
-      {!demoBlocked ? (
-        <>
-          {/* Simulated scenario card */}
-          <div style={{
-            padding: '18px 20px',
-            background: 'var(--bg-base)',
-            border: '1px solid var(--border-dim)',
-            borderRadius: 10,
-            marginBottom: 20,
-          }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-              <span style={{ fontSize: 11, color: 'var(--text-dim)', fontFamily: 'var(--font-mono)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
-                Simulated Transaction
-              </span>
-              <span style={{
-                fontSize: 10, fontFamily: 'var(--font-mono)', fontWeight: 600,
-                color: '#f59e0b', background: 'rgba(245,158,11,0.12)',
-                padding: '2px 8px', borderRadius: 4, border: '1px solid rgba(245,158,11,0.3)',
-              }}>
-                SUSPICIOUS
-              </span>
-            </div>
-            <div style={{ fontSize: 18, fontWeight: 600, color: 'var(--text-primary)', fontFamily: 'var(--font-mono)', marginBottom: 6 }}>
-              $10,000.00 USDC
-            </div>
-            <div style={{ fontSize: 12, color: 'var(--text-dim)', fontFamily: 'var(--font-mono)' }}>
-              To: 0x0000...0000 <span style={{ color: 'var(--red, #ef4444)', fontSize: 10, marginLeft: 6 }}>(burn address)</span>
-            </div>
-          </div>
+      <LiveSimulationDemo />
 
-          <div style={{ textAlign: 'center' }}>
-            <button onClick={runDemo} disabled={demoLoading} style={btnPrimary}>
-              {demoLoading ? 'Simulating...' : 'Simulate'}
-            </button>
-          </div>
-        </>
-      ) : (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-          {/* Blocked result */}
-          <div style={{
-            padding: '16px 18px',
-            background: 'rgba(239,68,68,0.06)',
-            border: '1px solid rgba(239,68,68,0.3)',
-            borderRadius: 10,
-          }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
-              <span style={{
-                fontSize: 10, fontFamily: 'var(--font-mono)', fontWeight: 600,
-                color: '#fff', background: 'var(--red, #ef4444)',
-                padding: '2px 8px', borderRadius: 4,
-              }}>
-                BLOCKED
-              </span>
-              <span style={{ fontSize: 10, fontFamily: 'var(--font-mono)', color: 'var(--red, #ef4444)' }}>
-                HIGH RISK
-              </span>
-            </div>
-            <div style={{ fontSize: 12, color: 'var(--text-primary)', fontWeight: 500, marginBottom: 4 }}>
-              Burn address, exceeds per-tx limit
-            </div>
-            <div style={{ fontSize: 11, color: 'var(--text-secondary)', lineHeight: 1.5 }}>
-              $10,000 transfer to 0x0000...0000 blocked by spend limit policy. This transaction exceeds your per-transaction limit.
-            </div>
-          </div>
-
-          {/* Insight */}
-          <div style={{
-            fontSize: 12, color: 'var(--text-secondary)', lineHeight: 1.6,
-            padding: '12px 16px',
-            background: 'var(--accent-glow)',
-            border: '1px solid var(--accent-dim)',
-            borderRadius: 8,
-          }}>
-            This intent is now in your Audit Log. Every transaction your agent attempts is recorded and reviewable.
-          </div>
-
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 4 }}>
-            <span style={{ fontSize: 11, color: 'var(--text-dim)' }}>
-              Don't see it?{' '}
-              <a href="https://t.me/SwiftAdviser" target="_blank" rel="noopener noreferrer" style={{ color: 'var(--text-dim)', textDecoration: 'underline' }}>
-                Report
-              </a>
-            </span>
-            <div style={{ display: 'flex', gap: 10 }}>
-              <a href="/audit" style={btnSecondary}>Check Audit Log</a>
-              <button onClick={finish} style={btnPrimary}>Done</button>
-            </div>
-          </div>
-        </div>
-      )}
+      <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 20 }}>
+        <a href="/audit" onClick={() => { sessionStorage.removeItem(STORAGE_KEY); }} style={btnPrimary}>Check Audit Log</a>
+      </div>
     </div>,
   ];
 
