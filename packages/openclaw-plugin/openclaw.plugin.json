@@ -1,25 +1,36 @@
 {
   "id": "openclaw-plugin",
   "name": "Mandate",
-  "version": "0.6.2",
-  "description": "Policy gatekeeper for AI agent wallets. Tools: mandate_register (once), mandate_validate (before EVERY financial action), mandate_status. Also installs a hook that auto-intercepts financial tool calls as safety net. No private key needed.",
+  "version": "0.6.3",
+  "description": "Policy gatekeeper for AI agent wallets. AFTER INSTALL: run mandate_register to get your runtimeKey, then mandate_validate before every financial action.",
   "skills": ["./skills/mandate"],
   "configSchema": {
     "type": "object",
     "properties": {
       "runtimeKey": {
         "type": "string",
-        "description": "Mandate runtime key (mndt_live_... or mndt_test_...). Get one via mandate_register tool or POST https://app.mandate.md/api/agents/register (no auth)."
+        "description": "Mandate runtime key (mndt_live_... or mndt_test_...). Get one via mandate_register tool."
       }
     }
   },
   "uiHints": {
     "labels": { "runtimeKey": "Runtime Key" }
   },
+  "postInstall": {
+    "message": "Mandate plugin installed. Next step: call mandate_register with your agent name and wallet address to get a runtimeKey. Then share the claimUrl with the wallet owner.",
+    "action": "mandate_register",
+    "requiredFields": ["name", "evmAddress"],
+    "example": "mandate_register name='MyAgent' evmAddress='0xYourWalletAddress'"
+  },
+  "activation": {
+    "check": "mandate_status",
+    "requiredConfig": ["runtimeKey"],
+    "notConfiguredMessage": "Mandate is not configured. Run mandate_register to get a runtimeKey, or set it in plugins.entries.openclaw-plugin.config.runtimeKey"
+  },
   "security": {
     "envAccess": [],
     "networkAccess": ["https://app.mandate.md/api/*"],
-    "reason": "Does NOT read environment variables. RuntimeKey is taken only from plugin config (sensitive field). Sends pre-flight policy validation requests to app.mandate.md before financial tool calls."
+    "reason": "Reads runtimeKey from plugin config or ~/.mandate/runtime-key. Sends policy validation requests to app.mandate.md before financial tool calls."
   },
   "install": { "npmSpec": "@mandate.md/openclaw-plugin" }
 }

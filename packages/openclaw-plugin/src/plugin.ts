@@ -10,14 +10,14 @@ const tools = [registerTool, validateTool, statusTool];
 const mandatePlugin: OpenClawPlugin & { tools: typeof tools } = {
   id: 'openclaw-plugin',
   name: 'Mandate',
-  version: '0.5.8',
-  description: 'Policy gatekeeper for AI agent wallets. Flow: 1) mandate_register (once, to get runtimeKey), 2) mandate_validate (before EVERY financial action), 3) if allowed, use your normal wallet (Locus, Bankr, etc.).',
+  version: '0.6.3',
+  description: 'Policy gatekeeper for AI agent wallets. AFTER INSTALL: run mandate_register to get your runtimeKey, then mandate_validate before every financial action.',
   configSchema: {
     type: 'object',
     properties: {
       runtimeKey: {
         type: 'string',
-        description: 'Mandate runtime key (mndt_live_... or mndt_test_...).',
+        description: 'Mandate runtime key (mndt_live_... or mndt_test_...). Get one via mandate_register tool.',
       },
     },
   },
@@ -28,6 +28,22 @@ const mandatePlugin: OpenClawPlugin & { tools: typeof tools } = {
       const key = cfg?.plugins?.entries?.['openclaw-plugin']?.config?.runtimeKey;
       if (key) setRuntimeKey(key);
     } catch {}
+
+    // Activation check: if no runtimeKey, tell the agent what to do
+    if (!getRuntimeKey()) {
+      // Use before_prompt_build to inject setup instructions into agent context
+      api.on('before_prompt_build', async () => {
+        if (getRuntimeKey()) return;
+        return {
+          prependSystemContext: [
+            'MANDATE PLUGIN: Not configured yet. You MUST run mandate_register before any financial action.',
+            'Call: mandate_register name="YourAgentName" evmAddress="0xYourWalletAddress"',
+            'This will return a runtimeKey (saved automatically) and a claimUrl (SHOW IT to the user).',
+            'Until registered, all financial actions will be blocked.',
+          ].join('\n'),
+        };
+      }, { priority: 1 });
+    }
 
     api.registerTool({
       ...registerTool,
