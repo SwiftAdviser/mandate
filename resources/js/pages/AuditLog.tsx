@@ -31,7 +31,6 @@ function displayStatusColor(intent: Intent): string {
 export default function AuditLog({ intents, filters }: Props) {
   const [status, setStatus] = useState(filters.status);
   const [action, setAction] = useState(filters.action);
-  const [expandedReason, setExpandedReason] = useState<string | null>(null);
 
   function applyFilters() {
     router.get('/audit', { status, action }, { preserveState: true, replace: true });
@@ -96,8 +95,6 @@ export default function AuditLog({ intents, filters }: Props) {
               {intents.data.map((intent, i) => {
                 const ds = displayStatus(intent);
                 const dsColor = displayStatusColor(intent);
-                const isExpanded = expandedReason === intent.id;
-                const hasLongReason = (intent.reason?.length ?? 0) > 50;
 
                 return (
                   <tr
@@ -143,20 +140,15 @@ export default function AuditLog({ intents, filters }: Props) {
                     <td style={{ padding: '12px 16px', fontFamily: 'var(--font-mono)', fontWeight: 500, color: 'var(--text-primary)', fontSize: 12, whiteSpace: 'nowrap' }}>
                       {intent.amount_usd_computed ? formatUsd(parseFloat(intent.amount_usd_computed)) : '-'}
                     </td>
-                    <td style={{ padding: '12px 16px', maxWidth: 280, fontSize: 11 }}>
+                    <td style={{ padding: '12px 16px', minWidth: 200, fontSize: 11 }}>
                       {intent.reason ? (
                         <div
-                          onClick={hasLongReason ? () => setExpandedReason(isExpanded ? null : intent.id) : undefined}
                           style={{
-                            color: 'var(--text-secondary)',
+                            color: 'var(--text-dim)',
                             lineHeight: 1.5,
-                            cursor: hasLongReason ? 'pointer' : 'default',
-                            ...(isExpanded
-                              ? { whiteSpace: 'pre-wrap', wordBreak: 'break-word' as const }
-                              : { overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' as const }
-                            ),
+                            whiteSpace: 'normal',
+                            wordBreak: 'break-word',
                           }}
-                          title={hasLongReason && !isExpanded ? intent.reason : undefined}
                         >
                           {intent.reason?.startsWith('DEMO INTENT:') ? (
                             <>
