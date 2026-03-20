@@ -100,13 +100,15 @@ export default function AuditLog({ intents, filters }: Props) {
                   ['Tx Hash', 'On-chain transaction hash with explorer link'],
                 ] as const).map(([h, tip]) => (
                   <th key={h} style={{ padding: '11px 16px', textAlign: 'left', color: 'var(--text-dim)', fontWeight: 400, fontFamily: 'var(--font-mono)', fontSize: 10, textTransform: 'uppercase', letterSpacing: '0.06em', whiteSpace: 'nowrap' }}>
-                    {h}
-                    <Info
-                      size={12}
-                      data-tooltip-id="audit-tip"
-                      data-tooltip-content={tip}
-                      style={{ marginLeft: 4, opacity: 0.5, cursor: 'help', verticalAlign: 'middle' }}
-                    />
+                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+                      {h}
+                      <Info
+                        size={12}
+                        data-tooltip-id="audit-tip"
+                        data-tooltip-content={tip}
+                        style={{ opacity: 0.5, cursor: 'help', flexShrink: 0 }}
+                      />
+                    </span>
                   </th>
                 ))}
               </tr>
