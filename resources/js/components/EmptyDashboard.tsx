@@ -79,10 +79,6 @@ export default function EmptyDashboard({ runtimeKey }: Props) {
         }}>
           <span style={{ color: 'var(--text-dim)' }}>$</span>{' '}
           <span style={{ color: 'var(--accent)' }}>openclaw plugins install @mandate.md/mandate-openclaw-plugin</span>
-          <br />
-          <span style={{ color: 'var(--text-dim)', fontSize: 11 }}>
-            Plugin auto-registers tools + safety-net hook. Agent self-registers on first run.
-          </span>
         </div>
 
         <button
@@ -102,6 +98,10 @@ export default function EmptyDashboard({ runtimeKey }: Props) {
         >
           {copiedOc ? 'Copied!' : 'Copy install command'}
         </button>
+
+        <div style={{ marginTop: 10, fontSize: 11, color: 'var(--text-dim)', lineHeight: 1.5, textAlign: 'center' }}>
+          Plugin auto-registers tools + safety-net hook. Agent self-registers on first run.
+        </div>
       </div>
 
       {/* Other agents */}
