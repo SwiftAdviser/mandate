@@ -2,7 +2,39 @@ import DashboardLayout from '@/layouts/DashboardLayout';
 import { explorerTxUrl } from '@/lib/chains';
 import { formatUsd, riskColor, shortAddr, statusColor, timeAgo } from '@/lib/utils';
 import { router } from '@inertiajs/react';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
+
+function InfoTip({ text, color = 'var(--text-dim)' }: { text: string; color?: string }) {
+  const [show, setShow] = useState(false);
+  const ref = useRef<HTMLSpanElement>(null);
+
+  return (
+    <span
+      ref={ref}
+      onMouseEnter={() => setShow(true)}
+      onMouseLeave={() => setShow(false)}
+      style={{ position: 'relative', marginLeft: 4, cursor: 'help', display: 'inline-flex', alignItems: 'center' }}
+    >
+      <svg width="13" height="13" viewBox="0 0 16 16" fill="none" style={{ opacity: 0.6 }}>
+        <circle cx="8" cy="8" r="7" stroke={color} strokeWidth="1.5" />
+        <text x="8" y="12" textAnchor="middle" fill={color} fontSize="10" fontWeight="600" fontFamily="var(--font-mono)">i</text>
+      </svg>
+      {show && (
+        <span style={{
+          position: 'absolute', bottom: '100%', left: '50%', transform: 'translateX(-50%)',
+          marginBottom: 6, padding: '6px 10px', borderRadius: 6,
+          background: 'var(--bg-raised)', border: '1px solid var(--border)',
+          color: 'var(--text-secondary)', fontSize: 11, lineHeight: 1.4,
+          whiteSpace: 'normal', width: 200, textAlign: 'left',
+          boxShadow: '0 4px 12px rgba(0,0,0,0.3)', zIndex: 50,
+          pointerEvents: 'none', textTransform: 'none', letterSpacing: 'normal', fontWeight: 400,
+        }}>
+          {text}
+        </span>
+      )}
+    </span>
+  );
+}
 
 interface Intent {
   id: string; decoded_action: string | null; amount_usd_computed: string | null;
@@ -99,7 +131,7 @@ export default function AuditLog({ intents, filters }: Props) {
                 ] as const).map(([h, tip]) => (
                   <th key={h} style={{ padding: '11px 16px', textAlign: 'left', color: 'var(--text-dim)', fontWeight: 400, fontFamily: 'var(--font-mono)', fontSize: 10, textTransform: 'uppercase', letterSpacing: '0.06em', whiteSpace: 'nowrap' }}>
                     {h}
-                    <span title={tip} style={{ marginLeft: 4, fontSize: 10, opacity: 0.5, cursor: 'help' }}>&#9432;</span>
+                    <InfoTip text={tip} />
                   </th>
                 ))}
               </tr>
@@ -181,12 +213,7 @@ export default function AuditLog({ intents, filters }: Props) {
                       )}
                       {ds === 'blocked' && intent.block_reason && (
                         <div style={{ marginTop: intent.reason ? 6 : 0, display: 'flex', alignItems: 'flex-start', gap: 5 }}>
-                          <span
-                            title="Reason provided by Mandate AI based on security checks and your MANDATE.md rules"
-                            style={{ color: '#f97316', fontSize: 12, lineHeight: 1, flexShrink: 0, cursor: 'help' }}
-                          >
-                            &#9432;
-                          </span>
+                          <InfoTip text="Reason provided by Mandate AI based on security checks and your MANDATE.md rules" color="#f97316" />
                           <span style={{ color: '#f97316', fontSize: 11, lineHeight: 1.4 }}>
                             {intent.block_reason}
                           </span>
