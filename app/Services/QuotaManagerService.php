@@ -14,7 +14,7 @@ class QuotaManagerService
      */
     public function check(string $agentId, Policy $policy, float $amountUsd): array
     {
-        $dailyKey   = now()->format('Y-m-d');
+        $dailyKey = now()->format('Y-m-d');
         $monthlyKey = now()->format('Y-m');
 
         $rows = DB::table('quota_reservations')
@@ -23,23 +23,23 @@ class QuotaManagerService
             ->get()
             ->keyBy('window_key');
 
-        $dailyRow   = $rows->get($dailyKey);
+        $dailyRow = $rows->get($dailyKey);
         $monthlyRow = $rows->get($monthlyKey);
 
-        $dailyUsed   = $dailyRow   ? (float) $dailyRow->reserved_usd   : 0.0;
+        $dailyUsed = $dailyRow ? (float) $dailyRow->reserved_usd : 0.0;
         $monthlyUsed = $monthlyRow ? (float) $monthlyRow->reserved_usd : 0.0;
 
-        $dailyOk   = $policy->spend_limit_per_day_usd === null
+        $dailyOk = $policy->spend_limit_per_day_usd === null
             || ($dailyUsed + $amountUsd) <= (float) $policy->spend_limit_per_day_usd;
 
         $monthlyOk = $policy->spend_limit_per_month_usd === null
             || ($monthlyUsed + $amountUsd) <= (float) $policy->spend_limit_per_month_usd;
 
         return [
-            'daily_ok'    => $dailyOk,
-            'monthly_ok'  => $monthlyOk,
-            'daily_used'  => $dailyUsed,
-            'monthly_used'=> $monthlyUsed,
+            'daily_ok' => $dailyOk,
+            'monthly_ok' => $monthlyOk,
+            'daily_used' => $dailyUsed,
+            'monthly_used' => $monthlyUsed,
         ];
     }
 
@@ -49,7 +49,7 @@ class QuotaManagerService
      */
     public function reserve(string $agentId, float $amountUsd): void
     {
-        $dailyKey   = now()->format('Y-m-d');
+        $dailyKey = now()->format('Y-m-d');
         $monthlyKey = now()->format('Y-m');
 
         foreach ([['daily', $dailyKey], ['monthly', $monthlyKey]] as [$type, $key]) {
@@ -68,12 +68,12 @@ class QuotaManagerService
                     ->update(['reserved_usd' => DB::raw("reserved_usd + {$amountUsd}")]);
             } else {
                 DB::table('quota_reservations')->insertOrIgnore([
-                    'agent_id'      => $agentId,
-                    'window_type'   => $type,
-                    'window_key'    => $key,
-                    'reserved_usd'  => $amountUsd,
+                    'agent_id' => $agentId,
+                    'window_type' => $type,
+                    'window_key' => $key,
+                    'reserved_usd' => $amountUsd,
                     'confirmed_usd' => 0,
-                    'updated_at'    => now(),
+                    'updated_at' => now(),
                 ]);
             }
         }
@@ -85,9 +85,11 @@ class QuotaManagerService
      */
     public function release(string $agentId, float $amountUsd): void
     {
-        if ($amountUsd <= 0) return;
+        if ($amountUsd <= 0) {
+            return;
+        }
 
-        $dailyKey   = now()->format('Y-m-d');
+        $dailyKey = now()->format('Y-m-d');
         $monthlyKey = now()->format('Y-m');
 
         // MAX(0, x) works in both SQLite and PostgreSQL; GREATEST() is PG-only
@@ -108,9 +110,11 @@ class QuotaManagerService
     public function confirm(string $agentId, TxIntent $intent): void
     {
         $amountUsd = (float) ($intent->amount_usd_computed ?? 0);
-        if ($amountUsd <= 0) return;
+        if ($amountUsd <= 0) {
+            return;
+        }
 
-        $dailyKey   = $intent->created_at->format('Y-m-d');
+        $dailyKey = $intent->created_at->format('Y-m-d');
         $monthlyKey = $intent->created_at->format('Y-m');
 
         $clamp = "CASE WHEN reserved_usd > {$amountUsd} THEN reserved_usd - {$amountUsd} ELSE 0 END";
@@ -121,7 +125,7 @@ class QuotaManagerService
                 ->where('window_type', $type)
                 ->where('window_key', $key)
                 ->update([
-                    'reserved_usd'  => DB::raw($clamp),
+                    'reserved_usd' => DB::raw($clamp),
                     'confirmed_usd' => DB::raw("confirmed_usd + {$amountUsd}"),
                 ]);
         }

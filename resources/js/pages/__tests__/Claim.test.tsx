@@ -6,8 +6,8 @@ import Claim from '../Claim';
 const defaultProps = {
   claim_code: 'ABC123',
   agent_name: 'TradeBot',
-  evm_address: '0xabcdef1234567890abcdef1234567890abcdef12',
-  chain_id: 84532,
+  wallet_address: '0xabcdef1234567890abcdef1234567890abcdef12',
+  chain_id: '84532',
   already_claimed: false,
 };
 

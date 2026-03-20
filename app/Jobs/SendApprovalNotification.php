@@ -16,7 +16,8 @@ class SendApprovalNotification implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
-    public int $tries   = 3;
+    public int $tries = 3;
+
     public int $backoff = 5;
 
     public function __construct(
@@ -28,13 +29,14 @@ class SendApprovalNotification implements ShouldQueue
     public function handle(ApprovalNotificationService $service): void
     {
         $approval = ApprovalQueue::find($this->approvalId);
-        $agent    = Agent::find($this->agentId);
+        $agent = Agent::find($this->agentId);
 
-        if (!$approval || !$agent) {
+        if (! $approval || ! $agent) {
             Log::warning('SendApprovalNotification: missing approval or agent', [
                 'approval_id' => $this->approvalId,
-                'agent_id'    => $this->agentId,
+                'agent_id' => $this->agentId,
             ]);
+
             return;
         }
 
@@ -45,8 +47,8 @@ class SendApprovalNotification implements ShouldQueue
     {
         Log::error('SendApprovalNotification failed permanently', [
             'approval_id' => $this->approvalId,
-            'agent_id'    => $this->agentId,
-            'error'       => $e->getMessage(),
+            'agent_id' => $this->agentId,
+            'error' => $e->getMessage(),
         ]);
     }
 }

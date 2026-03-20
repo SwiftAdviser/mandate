@@ -22,34 +22,34 @@ class VerifyIntentEnvelopeTest extends TestCase
     private function createBroadcastedIntent(): TxIntent
     {
         $agent = Agent::create([
-            'id'          => Str::uuid(),
-            'name'        => 'TestAgent',
-            'evm_address' => '0xabcdef1234567890abcdef1234567890abcdef12',
-            'chain_id'    => 84532,
+            'id' => Str::uuid(),
+            'name' => 'TestAgent',
+            'wallet_address' => '0xabcdef1234567890abcdef1234567890abcdef12',
+            'chain_id' => '84532',
         ]);
 
         $policy = Policy::create([
-            'agent_id'               => $agent->id,
+            'agent_id' => $agent->id,
             'spend_limit_per_tx_usd' => 100,
-            'is_active'              => true,
-            'version'                => 1,
+            'is_active' => true,
+            'version' => 1,
         ]);
 
         return TxIntent::create([
-            'id'                       => Str::uuid(),
-            'agent_id'                 => $agent->id,
-            'policy_id'                => $policy->id,
-            'chain_id'                 => 84532,
-            'nonce'                    => 0,
-            'to_address'               => '0x036cbd53842c5426634e7929541ec2318f3dcf7e',
-            'calldata'                 => '0xa9059cbb',
-            'value_wei'                => '0',
-            'gas_limit'                => '100000',
-            'max_fee_per_gas'          => '1000000000',
+            'id' => Str::uuid(),
+            'agent_id' => $agent->id,
+            'policy_id' => $policy->id,
+            'chain_id' => '84532',
+            'nonce' => 0,
+            'to_address' => '0x036cbd53842c5426634e7929541ec2318f3dcf7e',
+            'calldata' => '0xa9059cbb',
+            'value_wei' => '0',
+            'gas_limit' => '100000',
+            'max_fee_per_gas' => '1000000000',
             'max_priority_fee_per_gas' => '1000000000',
-            'status'                   => TxIntent::STATUS_BROADCASTED,
-            'intent_hash'              => '0x' . str_repeat('ab', 32),
-            'tx_hash'                  => '0x' . str_repeat('ff', 32),
+            'status' => TxIntent::STATUS_BROADCASTED,
+            'intent_hash' => '0x'.str_repeat('ab', 32),
+            'tx_hash' => '0x'.str_repeat('ff', 32),
         ]);
     }
 

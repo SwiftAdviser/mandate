@@ -7,7 +7,6 @@ use App\Models\ApprovalQueue;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
-use App\Services\IntentSummaryService;
 
 class ApprovalNotificationService
 {
@@ -23,21 +22,21 @@ class ApprovalNotificationService
         foreach ($webhooks as $webhook) {
             try {
                 match ($webhook['type'] ?? null) {
-                    'slack'    => $this->sendSlack($webhook['url'], $context),
+                    'slack' => $this->sendSlack($webhook['url'], $context),
                     'telegram' => $this->sendTelegram(
                         $webhook['bot_token'] ?: config('mandate.telegram.bot_token'),
                         $webhook['chat_id'] ?? '',
                         $context,
                         $webhook['username'] ?? null,
                     ),
-                    'custom'   => $this->sendCustomWebhook($webhook['url'], $webhook['secret'] ?? '', $context),
-                    default    => Log::warning('Unknown webhook type', ['type' => $webhook['type'] ?? 'null']),
+                    'custom' => $this->sendCustomWebhook($webhook['url'], $webhook['secret'] ?? '', $context),
+                    default => Log::warning('Unknown webhook type', ['type' => $webhook['type'] ?? 'null']),
                 };
             } catch (\Throwable $e) {
                 Log::warning('Approval notification failed', [
-                    'type'        => $webhook['type'] ?? 'unknown',
+                    'type' => $webhook['type'] ?? 'unknown',
                     'approval_id' => $approval->id,
-                    'error'       => $e->getMessage(),
+                    'error' => $e->getMessage(),
                 ]);
             }
         }
@@ -45,48 +44,53 @@ class ApprovalNotificationService
 
     public function buildContext(ApprovalQueue $approval, Agent $agent): array
     {
-        $intent    = $approval->intent;
+        $intent = $approval->intent;
         $expiresAt = $approval->expires_at;
         $amountUsd = (float) ($intent->amount_usd_computed ?? 0);
 
         $summary = app(IntentSummaryService::class)->summarize($intent);
 
         // Extract reason scan info from risk_assessment JSON
-        $riskData  = $intent->risk_assessment ?? [];
+        $riskData = $intent->risk_assessment ?? [];
         $guardScan = $riskData['reason_scan'] ?? null;
 
         return [
-            'agent_name'    => $agent->name,
-            'summary'       => $summary,
-            'action'        => $intent->decoded_action ?? 'unknown',
-            'amount_usd'    => $amountUsd,
-            'recipient'     => $intent->decoded_recipient ?? $intent->to_address,
-            'chain_id'      => $intent->chain_id,
-            'risk_level'    => $this->computeRiskLevel($amountUsd),
-            'reason'        => $intent->reason,
-            'guard_scan'    => $guardScan,
-            'expires_at'    => $expiresAt?->toIso8601String(),
-            'minutes_left'  => $expiresAt ? (int) now()->diffInMinutes($expiresAt, false) : null,
-            'dashboard_url' => config('app.url', 'https://app.mandate.md') . '/approvals',
-            'approval_id'   => $approval->id,
-            'intent_id'     => $intent->id,
+            'agent_name' => $agent->name,
+            'summary' => $summary,
+            'action' => $intent->decoded_action ?? 'unknown',
+            'amount_usd' => $amountUsd,
+            'recipient' => $intent->decoded_recipient ?? $intent->to_address,
+            'chain_id' => $intent->chain_id,
+            'risk_level' => $this->computeRiskLevel($amountUsd),
+            'reason' => $intent->reason,
+            'guard_scan' => $guardScan,
+            'expires_at' => $expiresAt?->toIso8601String(),
+            'minutes_left' => $expiresAt ? (int) now()->diffInMinutes($expiresAt, false) : null,
+            'dashboard_url' => config('app.url', 'https://app.mandate.md').'/approvals',
+            'approval_id' => $approval->id,
+            'intent_id' => $intent->id,
         ];
     }
 
     public function computeRiskLevel(float $amountUsd): string
     {
-        if ($amountUsd < 50) return 'low';
-        if ($amountUsd < 500) return 'medium';
+        if ($amountUsd < 50) {
+            return 'low';
+        }
+        if ($amountUsd < 500) {
+            return 'medium';
+        }
+
         return 'high';
     }
 
     public function formatSlackBlocks(array $context): array
     {
         $riskEmoji = match ($context['risk_level']) {
-            'low'    => '🟢',
+            'low' => '🟢',
             'medium' => '🟡',
-            'high'   => '🔴',
-            default  => '⚪',
+            'high' => '🔴',
+            default => '⚪',
         };
 
         $blocks = [
@@ -119,24 +123,24 @@ class ApprovalNotificationService
         }
 
         $blocks[] = [
-            'type'   => 'section',
+            'type' => 'section',
             'fields' => [
                 ['type' => 'mrkdwn', 'text' => "*Agent:*\n{$context['agent_name']}"],
-                ['type' => 'mrkdwn', 'text' => '*Amount:*\n$' . number_format($context['amount_usd'], 2)],
+                ['type' => 'mrkdwn', 'text' => '*Amount:*\n$'.number_format($context['amount_usd'], 2)],
                 ['type' => 'mrkdwn', 'text' => "*Action:*\n{$context['action']}"],
-                ['type' => 'mrkdwn', 'text' => "*Recipient:*\n" . $this->truncateAddress($context['recipient'])],
+                ['type' => 'mrkdwn', 'text' => "*Recipient:*\n".$this->truncateAddress($context['recipient'])],
                 ['type' => 'mrkdwn', 'text' => "*Risk:*\n{$riskEmoji} {$context['risk_level']}"],
                 ['type' => 'mrkdwn', 'text' => "*Expires:*\n{$context['minutes_left']} min"],
             ],
         ];
 
         $blocks[] = [
-            'type'     => 'actions',
+            'type' => 'actions',
             'elements' => [
                 [
                     'type' => 'button',
                     'text' => ['type' => 'plain_text', 'text' => 'Review in Dashboard →'],
-                    'url'  => $context['dashboard_url'],
+                    'url' => $context['dashboard_url'],
                 ],
             ],
         ];
@@ -147,16 +151,16 @@ class ApprovalNotificationService
     public function formatTelegramMessage(array $context): string
     {
         $riskEmoji = match ($context['risk_level']) {
-            'low'    => '🟢',
+            'low' => '🟢',
             'medium' => '🟡',
-            'high'   => '🔴',
-            default  => '⚪',
+            'high' => '🔴',
+            default => '⚪',
         };
 
-        $amount = '$' . number_format($context['amount_usd'], 2);
-        $addr   = $this->truncateAddress($context['recipient']);
+        $amount = '$'.number_format($context['amount_usd'], 2);
+        $addr = $this->truncateAddress($context['recipient']);
 
-        $isTest = !empty($context['is_test']);
+        $isTest = ! empty($context['is_test']);
         $lines = [
             $isTest ? '🧪 <b>Test Notification</b>' : '🔐 <b>Approval Required</b>',
             '',
@@ -196,7 +200,7 @@ class ApprovalNotificationService
                 ['text' => '❌ Reject', 'callback_data' => "reject:{$approvalId}"],
             ],
             [
-                ['text' => 'Review in Dashboard →', 'url' => config('app.url', 'https://app.mandate.md') . '/approvals'],
+                ['text' => 'Review in Dashboard →', 'url' => config('app.url', 'https://app.mandate.md').'/approvals'],
             ],
         ];
     }
@@ -204,34 +208,34 @@ class ApprovalNotificationService
     public function sendTest(Agent $agent): void
     {
         $context = [
-            'agent_name'    => $agent->name,
-            'action'        => 'erc20_transfer',
-            'summary'       => 'Transfer $25.00 USDC to 0x0000...test',
-            'amount_usd'    => 25.00,
-            'recipient'     => '0x0000...test',
-            'chain_id'      => $agent->chain_id ?? 84532,
-            'risk_level'    => 'low',
-            'reason'        => 'Test notification: this is a sample reason',
-            'guard_scan'    => null,
-            'expires_at'    => now()->addHour()->toIso8601String(),
-            'minutes_left'  => 60,
-            'dashboard_url' => config('app.url', 'https://app.mandate.md') . '/approvals',
-            'approval_id'   => 'test-approval-id',
-            'intent_id'     => 'test-intent-id',
-            'is_test'       => true,
+            'agent_name' => $agent->name,
+            'action' => 'erc20_transfer',
+            'summary' => 'Transfer $25.00 USDC to 0x0000...test',
+            'amount_usd' => 25.00,
+            'recipient' => '0x0000...test',
+            'chain_id' => $agent->chain_id ?? 84532,
+            'risk_level' => 'low',
+            'reason' => 'Test notification: this is a sample reason',
+            'guard_scan' => null,
+            'expires_at' => now()->addHour()->toIso8601String(),
+            'minutes_left' => 60,
+            'dashboard_url' => config('app.url', 'https://app.mandate.md').'/approvals',
+            'approval_id' => 'test-approval-id',
+            'intent_id' => 'test-intent-id',
+            'is_test' => true,
         ];
 
         foreach ($agent->notification_webhooks ?? [] as $webhook) {
             match ($webhook['type'] ?? null) {
-                'slack'    => $this->sendSlack($webhook['url'], $context),
+                'slack' => $this->sendSlack($webhook['url'], $context),
                 'telegram' => $this->sendTelegram(
                     ($webhook['bot_token'] ?? '') ?: config('mandate.telegram.bot_token'),
                     $webhook['chat_id'] ?? '',
                     $context,
                     $webhook['username'] ?? null,
                 ),
-                'custom'   => $this->sendCustomWebhook($webhook['url'], $webhook['secret'] ?? '', $context),
-                default    => null,
+                'custom' => $this->sendCustomWebhook($webhook['url'], $webhook['secret'] ?? '', $context),
+                default => null,
             };
         }
     }
@@ -241,7 +245,7 @@ class ApprovalNotificationService
         $blocks = $this->formatSlackBlocks($context);
 
         Http::post($url, [
-            'text'   => "🔐 Approval required for {$context['agent_name']} — \${$context['amount_usd']}",
+            'text' => "🔐 Approval required for {$context['agent_name']} — \${$context['amount_usd']}",
             'blocks' => $blocks,
         ]);
     }
@@ -255,21 +259,22 @@ class ApprovalNotificationService
 
         if (empty($chatId)) {
             Log::warning('Telegram notification skipped — no chat_id', ['username' => $username]);
+
             return;
         }
 
-        $isTest = !empty($context['is_test']);
+        $isTest = ! empty($context['is_test']);
         $text = $this->formatTelegramMessage($context);
 
         $payload = [
-            'chat_id'      => $chatId,
-            'text'         => $text,
-            'parse_mode'   => 'HTML',
+            'chat_id' => $chatId,
+            'text' => $text,
+            'parse_mode' => 'HTML',
         ];
 
         if ($isTest) {
             $payload['reply_markup'] = ['inline_keyboard' => [
-                [['text' => 'Open Dashboard', 'url' => $context['dashboard_url'] ?? config('app.url', 'https://app.mandate.md') . '/approvals']],
+                [['text' => 'Open Dashboard', 'url' => $context['dashboard_url'] ?? config('app.url', 'https://app.mandate.md').'/approvals']],
             ]];
         } else {
             $payload['reply_markup'] = ['inline_keyboard' => $this->buildTelegramButtons($context['approval_id'])];
@@ -280,18 +285,21 @@ class ApprovalNotificationService
 
     private function sendCustomWebhook(string $url, string $secret, array $context): void
     {
-        $payload   = json_encode($context);
+        $payload = json_encode($context);
         $signature = hash_hmac('sha256', $payload, $secret);
 
         Http::withHeaders([
             'X-Mandate-Signature' => $signature,
-            'Content-Type'        => 'application/json',
+            'Content-Type' => 'application/json',
         ])->withBody($payload, 'application/json')->post($url);
     }
 
     private function truncateAddress(string $address): string
     {
-        if (strlen($address) <= 13) return $address;
-        return substr($address, 0, 6) . '...' . substr($address, -4);
+        if (strlen($address) <= 13) {
+            return $address;
+        }
+
+        return substr($address, 0, 6).'...'.substr($address, -4);
     }
 }

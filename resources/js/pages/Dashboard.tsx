@@ -5,12 +5,13 @@ import OnboardingWizard from '@/components/OnboardingWizard';
 import RuntimeKeyReveal from '@/components/RuntimeKeyReveal';
 import DashboardLayout from '@/layouts/DashboardLayout';
 import { formatUsd, riskColor, shortAddr, statusColor, timeAgo } from '@/lib/utils';
+import ChainBadge from '@/components/ChainBadge';
 import { KeyRound, Plus, Sparkles, Trash2, X } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 
 /* ── Types ─────────────────────────────────────────────────────────────── */
 interface Agent {
-  id: string; name: string; evm_address: string | null; chain_id: number | null;
+  id: string; name: string; wallet_address: string | null; chain_id: string | null;
   circuit_breaker_active: boolean; claimed_at: string | null;
 }
 interface QuotaWindow {
@@ -298,20 +299,18 @@ export default function Dashboard({ agents, selected_agent, daily_quota, monthly
               <span style={{ display: 'inline-block', width: 5, height: 5, borderRadius: '50%', background: 'currentColor' }} />
               {agent.circuit_breaker_active ? 'tripped' : 'operational'}
             </span>
-            {agent.evm_address && (
+            {agent.wallet_address && (
               <>
                 <span style={{ fontSize: 10, color: 'var(--text-dim)' }}>·</span>
                 <span style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--text-dim)' }}>
-                  {shortAddr(agent.evm_address)}
+                  {shortAddr(agent.wallet_address)}
                 </span>
               </>
             )}
             {agent.chain_id && (
               <>
                 <span style={{ fontSize: 10, color: 'var(--text-dim)' }}>·</span>
-                <span style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--text-dim)' }}>
-                  chain {agent.chain_id}
-                </span>
+                <ChainBadge chainId={agent.chain_id} />
               </>
             )}
             <span style={{ fontSize: 10, color: 'var(--text-dim)' }}>·</span>

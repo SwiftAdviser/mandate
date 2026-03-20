@@ -6,6 +6,7 @@ export interface ValidateParams {
   to?: string;
   token?: string;
   reason?: string;
+  chain?: string;
 }
 
 const MANDATE_BASE = 'https://app.mandate.md';
@@ -18,9 +19,10 @@ export const validateTool = {
     properties: {
       action: { type: 'string', description: 'What you are about to do: transfer, swap, bridge, stake, buy, sell, bet, lend, etc.' },
       amount: { type: 'string', description: 'Amount in human-readable units, e.g. "0.02"' },
-      to: { type: 'string', description: 'Recipient address 0x...' },
+      to: { type: 'string', description: 'Recipient address (EVM 0x..., Solana base58, or TON)' },
       token: { type: 'string', description: 'Token symbol, e.g. "USDC", "ETH"' },
       reason: { type: 'string', description: 'Why this transaction is happening (audit trail + prompt injection scan).' },
+      chain: { type: 'string', description: 'Chain identifier: "8453" (Base), "solana", "ton", etc.' },
     },
     required: ['action', 'reason'],
   },
@@ -49,15 +51,16 @@ export const validateTool = {
     }
 
     try {
-      const body = {
+      const body: Record<string, string | undefined> = {
         action: p.action,
         reason: p.reason ?? p.action,
         amount: p.amount,
         to: p.to,
         token: p.token,
+        chain: p.chain,
       };
 
-      const res = await fetch(`${MANDATE_BASE}/api/validate/preflight`, {
+      const res = await fetch(`${MANDATE_BASE}/api/validate`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${runtimeKey}` },
         body: JSON.stringify(body),

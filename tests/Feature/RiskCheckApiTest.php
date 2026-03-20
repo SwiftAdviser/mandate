@@ -28,20 +28,20 @@ class RiskCheckApiTest extends TestCase
         ]);
 
         $agent = Agent::create([
-            'id'          => Str::uuid(),
-            'name'        => 'RiskTestAgent',
-            'evm_address' => '0xabcdef1234567890abcdef1234567890abcdef12',
-            'chain_id'    => 84532,
+            'id' => Str::uuid(),
+            'name' => 'RiskTestAgent',
+            'wallet_address' => '0xabcdef1234567890abcdef1234567890abcdef12',
+            'chain_id' => '84532',
         ]);
 
         [$rawKey] = AgentApiKey::generate($agent);
         $this->runtimeKey = $rawKey;
 
         Policy::create([
-            'agent_id'               => $agent->id,
+            'agent_id' => $agent->id,
             'spend_limit_per_tx_usd' => 100,
-            'is_active'              => true,
-            'version'                => 1,
+            'is_active' => true,
+            'version' => 1,
         ]);
     }
 
@@ -50,11 +50,11 @@ class RiskCheckApiTest extends TestCase
     {
         Http::fake([
             'https://api.web3antivirus.io/api/public/v1/extension/simulation/*' => Http::response(['detectors' => []]),
-            'https://api.web3antivirus.io/api/public/v1/extension/account/*'    => Http::response(['toxic_score' => 10]),
+            'https://api.web3antivirus.io/api/public/v1/extension/account/*' => Http::response(['toxic_score' => 10]),
         ]);
 
         $response = $this->postJson('/api/risk/check', [
-            'to'      => '0xabc123abc123abc123abc123abc123abc123abc1',
+            'to' => '0xabc123abc123abc123abc123abc123abc123abc1',
             'chainId' => 84532,
         ], [
             'Authorization' => "Bearer {$this->runtimeKey}",
@@ -73,7 +73,7 @@ class RiskCheckApiTest extends TestCase
         ]);
 
         $response = $this->postJson('/api/risk/check', [
-            'to'      => '0xabc123abc123abc123abc123abc123abc123abc1',
+            'to' => '0xabc123abc123abc123abc123abc123abc123abc1',
             'chainId' => 84532,
         ], [
             'Authorization' => "Bearer {$this->runtimeKey}",
@@ -87,7 +87,7 @@ class RiskCheckApiTest extends TestCase
     public function it_requires_authentication(): void
     {
         $response = $this->postJson('/api/risk/check', [
-            'to'      => '0xabc123abc123abc123abc123abc123abc123abc1',
+            'to' => '0xabc123abc123abc123abc123abc123abc123abc1',
             'chainId' => 84532,
         ]);
 

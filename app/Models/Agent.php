@@ -15,7 +15,7 @@ class Agent extends Model
     protected $fillable = [
         'user_id',
         'name',
-        'evm_address',
+        'wallet_address',
         'chain_id',
         'claim_code',
         'claimed_at',
@@ -29,12 +29,12 @@ class Agent extends Model
     ];
 
     protected $casts = [
-        'claimed_at'                 => 'datetime',
-        'circuit_breaker_active'     => 'boolean',
+        'claimed_at' => 'datetime',
+        'circuit_breaker_active' => 'boolean',
         'circuit_breaker_tripped_at' => 'datetime',
-        'notification_webhooks'      => 'array',
-        'reputation_score'           => 'float',
-        'reputation_checked_at'      => 'datetime',
+        'notification_webhooks' => 'array',
+        'reputation_score' => 'float',
+        'reputation_checked_at' => 'datetime',
     ];
 
     public function user(): BelongsTo

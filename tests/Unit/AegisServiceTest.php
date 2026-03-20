@@ -18,19 +18,19 @@ class AegisServiceTest extends TestCase
         Cache::flush();
 
         config([
-            'mandate.aegis.enabled'  => true,
-            'mandate.aegis.api_key'  => 'test-key',
-            'mandate.aegis.api_url'  => 'https://api.web3antivirus.io',
-            'mandate.aegis.timeout'  => 8,
-            'mandate.aegis.retries'  => 0,
+            'mandate.aegis.enabled' => true,
+            'mandate.aegis.api_key' => 'test-key',
+            'mandate.aegis.api_url' => 'https://api.web3antivirus.io',
+            'mandate.aegis.timeout' => 8,
+            'mandate.aegis.retries' => 0,
             'mandate.aegis.circuit_breaker' => [
-                'threshold'   => 5,
-                'window'      => 60,
+                'threshold' => 5,
+                'window' => 60,
                 'reset_after' => 30,
             ],
         ]);
 
-        $this->service = new AegisService();
+        $this->service = new AegisService;
     }
 
     /** @test */
@@ -85,7 +85,7 @@ class AegisServiceTest extends TestCase
     {
         Http::fake([
             '*/simulation/transaction*' => Http::response(['detectors' => []]),
-            '*/account/*/toxic-score*'  => Http::response(['toxic_score' => 75]),
+            '*/account/*/toxic-score*' => Http::response(['toxic_score' => 75]),
         ]);
 
         $result = $this->service->assess(
@@ -116,7 +116,7 @@ class AegisServiceTest extends TestCase
     public function it_respects_circuit_breaker_after_failures(): void
     {
         config(['mandate.aegis.circuit_breaker.threshold' => 2]);
-        $this->service = new AegisService();
+        $this->service = new AegisService;
 
         Http::fake([
             '*' => Http::response(null, 500),
@@ -187,7 +187,7 @@ class AegisServiceTest extends TestCase
     {
         Http::fake([
             '*/simulation/transaction*' => Http::response(['detectors' => []]),
-            '*/account/*/toxic-score*'  => Http::response(['toxic_score' => 35]),
+            '*/account/*/toxic-score*' => Http::response(['toxic_score' => 35]),
         ]);
 
         $result = $this->service->assess(

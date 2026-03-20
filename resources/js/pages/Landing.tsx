@@ -741,6 +741,77 @@ export default function LandingV3() {
         </div>
       </section>
 
+      {/* ── Supported Chains ──────────────────────────────────────────────── */}
+      <section style={{
+        padding: '80px 0',
+        borderTop: '1px solid var(--border-hair)',
+      }}>
+        <div style={{ ...wrap }}>
+          <div style={{
+            fontFamily: 'var(--font-jet)', fontSize: 11,
+            color: 'var(--btc-orange)', letterSpacing: '0.1em',
+            textTransform: 'uppercase', marginBottom: 20,
+          }}>
+            Multi-Chain
+          </div>
+          <h2 style={{
+            fontFamily: 'var(--font-space)',
+            fontSize: 'clamp(24px, 2.5vw, 36px)',
+            fontWeight: 700, letterSpacing: '-0.03em', lineHeight: 1.1,
+            margin: '0 0 40px', color: 'var(--text-primary)',
+          }}>
+            One policy layer. Every chain.
+          </h2>
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))',
+            gap: 16,
+          }}>
+            {[
+              { name: 'Ethereum', type: 'evm', color: '#627EEA' },
+              { name: 'Base', type: 'evm', color: '#0052FF' },
+              { name: 'Solana', type: 'solana', color: '#9945FF' },
+              { name: 'TON', type: 'ton', color: '#0098EA' },
+            ].map((chain) => (
+              <div key={chain.name} style={{
+                padding: '24px 20px',
+                borderRadius: 8,
+                border: '1px solid var(--border-dim)',
+                background: 'rgba(15,17,21,0.6)',
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                gap: 12,
+              }}>
+                <div style={{
+                  width: 40, height: 40, borderRadius: '50%',
+                  background: `${chain.color}20`,
+                  border: `1px solid ${chain.color}40`,
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  fontSize: 16, fontWeight: 700, color: chain.color,
+                  fontFamily: 'var(--font-space)',
+                }}>
+                  {chain.name[0]}
+                </div>
+                <div style={{
+                  fontFamily: 'var(--font-space)', fontSize: 14,
+                  fontWeight: 600, color: 'var(--text-primary)',
+                }}>
+                  {chain.name}
+                </div>
+                <div style={{
+                  fontFamily: 'var(--font-jet)', fontSize: 10,
+                  color: 'var(--text-dim)', textTransform: 'uppercase',
+                  letterSpacing: '0.08em',
+                }}>
+                  {chain.type}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
       {/* ── Pricing ───────────────────────────────────────────────────────── */}
       {/* ── Contact ───────────────────────────────────────────────────────── */}
       <section id="contact" style={{

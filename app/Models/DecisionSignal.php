@@ -21,7 +21,7 @@ class DecisionSignal extends Model
 
     protected $casts = [
         'amount_usd' => 'decimal:6',
-        'chain_id'   => 'integer',
+        'chain_id' => 'string',
         'hour_of_day' => 'integer',
     ];
 

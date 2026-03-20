@@ -14,11 +14,11 @@ class RiskCheckController extends Controller
     public function check(Request $request): JsonResponse
     {
         $data = $request->validate([
-            'to'       => ['required', 'string', 'regex:/^0x[a-fA-F0-9]{40}$/'],
-            'chainId'  => ['required', 'integer'],
+            'to' => ['required', 'string', 'regex:/^0x[a-fA-F0-9]{40}$/'],
+            'chainId' => ['required', 'integer'],
             'calldata' => ['sometimes', 'string'],
-            'value'    => ['sometimes', 'string'],
-            'from'     => ['sometimes', 'string', 'regex:/^0x[a-fA-F0-9]{40}$/'],
+            'value' => ['sometimes', 'string'],
+            'from' => ['sometimes', 'string', 'regex:/^0x[a-fA-F0-9]{40}$/'],
         ]);
 
         $result = $this->aegis->check(

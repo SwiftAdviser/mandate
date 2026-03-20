@@ -32,47 +32,47 @@ class IntentStateMachineServiceTest extends TestCase
     private function createAgentWithPolicy(array $policyOverrides = []): array
     {
         $agent = Agent::create([
-            'id'          => Str::uuid(),
-            'name'        => 'TestAgent',
-            'evm_address' => '0xabcdef1234567890abcdef1234567890abcdef12',
-            'chain_id'    => 84532,
+            'id' => Str::uuid(),
+            'name' => 'TestAgent',
+            'wallet_address' => '0xabcdef1234567890abcdef1234567890abcdef12',
+            'chain_id' => '84532',
         ]);
 
         $policy = Policy::create(array_merge([
-            'agent_id'                => $agent->id,
-            'spend_limit_per_tx_usd'  => 100,
+            'agent_id' => $agent->id,
+            'spend_limit_per_tx_usd' => 100,
             'spend_limit_per_day_usd' => 1000,
-            'is_active'               => true,
-            'version'                 => 1,
+            'is_active' => true,
+            'version' => 1,
         ], $policyOverrides));
 
         return [$agent, $policy];
     }
 
     private function createIntent(
-        Agent  $agent,
+        Agent $agent,
         Policy $policy,
         string $status = TxIntent::STATUS_RESERVED,
-        array  $overrides = []
+        array $overrides = []
     ): TxIntent {
         return TxIntent::create(array_merge([
-            'id'                      => Str::uuid(),
-            'agent_id'                => $agent->id,
-            'policy_id'               => $policy->id,
-            'intent_hash'             => '0x' . bin2hex(random_bytes(32)),
-            'chain_id'                => 84532,
-            'nonce'                   => 0,
-            'to_address'              => '0x1234567890123456789012345678901234567890',
-            'calldata'                => '0x',
-            'value_wei'               => '0',
-            'gas_limit'               => '100000',
-            'max_fee_per_gas'         => '1000000000',
-            'max_priority_fee_per_gas'=> '1000000000',
-            'tx_type'                 => 2,
-            'access_list'             => '[]',
-            'status'                  => $status,
-            'amount_usd_computed'     => 10.0,
-            'expires_at'              => now()->addMinutes(15),
+            'id' => Str::uuid(),
+            'agent_id' => $agent->id,
+            'policy_id' => $policy->id,
+            'intent_hash' => '0x'.bin2hex(random_bytes(32)),
+            'chain_id' => '84532',
+            'nonce' => 0,
+            'to_address' => '0x1234567890123456789012345678901234567890',
+            'calldata' => '0x',
+            'value_wei' => '0',
+            'gas_limit' => '100000',
+            'max_fee_per_gas' => '1000000000',
+            'max_priority_fee_per_gas' => '1000000000',
+            'tx_type' => 2,
+            'access_list' => '[]',
+            'status' => $status,
+            'amount_usd_computed' => 10.0,
+            'expires_at' => now()->addMinutes(15),
         ], $overrides));
     }
 
@@ -89,7 +89,7 @@ class IntentStateMachineServiceTest extends TestCase
     public function it_transitions_from_reserved_to_broadcasted(): void
     {
         [$agent, $policy] = $this->createAgentWithPolicy();
-        $intent           = $this->createIntent($agent, $policy, TxIntent::STATUS_RESERVED);
+        $intent = $this->createIntent($agent, $policy, TxIntent::STATUS_RESERVED);
 
         $updated = $this->service()->transition(
             $intent,
@@ -100,7 +100,7 @@ class IntentStateMachineServiceTest extends TestCase
 
         $this->assertSame(TxIntent::STATUS_BROADCASTED, $updated->status);
         $this->assertDatabaseHas('tx_intents', [
-            'id'     => $intent->id,
+            'id' => $intent->id,
             'status' => TxIntent::STATUS_BROADCASTED,
         ]);
     }
@@ -176,7 +176,7 @@ class IntentStateMachineServiceTest extends TestCase
     public function it_appends_tx_event_on_every_transition(): void
     {
         [$agent, $policy] = $this->createAgentWithPolicy();
-        $intent           = $this->createIntent($agent, $policy, TxIntent::STATUS_RESERVED);
+        $intent = $this->createIntent($agent, $policy, TxIntent::STATUS_RESERVED);
 
         $this->service()->transition(
             $intent,
@@ -187,10 +187,10 @@ class IntentStateMachineServiceTest extends TestCase
         );
 
         $this->assertDatabaseHas('tx_events', [
-            'intent_id'  => $intent->id,
-            'agent_id'   => $agent->id,
+            'intent_id' => $intent->id,
+            'agent_id' => $agent->id,
             'event_type' => TxIntent::STATUS_BROADCASTED,
-            'actor_id'   => $agent->id,
+            'actor_id' => $agent->id,
             'actor_role' => 'agent',
         ]);
     }
@@ -209,7 +209,7 @@ class IntentStateMachineServiceTest extends TestCase
 
         $this->assertGreaterThanOrEqual(1, $count);
         $this->assertDatabaseHas('tx_intents', [
-            'id'     => $intent->id,
+            'id' => $intent->id,
             'status' => TxIntent::STATUS_EXPIRED,
         ]);
     }
@@ -227,7 +227,7 @@ class IntentStateMachineServiceTest extends TestCase
         $this->service()->expireStale();
 
         $this->assertDatabaseHas('tx_intents', [
-            'id'     => $intent->id,
+            'id' => $intent->id,
             'status' => TxIntent::STATUS_BROADCASTED,
         ]);
     }

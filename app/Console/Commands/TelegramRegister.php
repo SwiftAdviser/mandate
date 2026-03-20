@@ -7,7 +7,8 @@ use Illuminate\Support\Facades\Http;
 
 class TelegramRegister extends Command
 {
-    protected $signature   = 'mandate:telegram-register';
+    protected $signature = 'mandate:telegram-register';
+
     protected $description = 'Register Telegram webhook URL with the bot API (run once)';
 
     public function handle(): int

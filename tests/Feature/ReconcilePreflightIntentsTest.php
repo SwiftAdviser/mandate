@@ -22,11 +22,11 @@ class ReconcilePreflightIntentsTest extends TestCase
         Http::preventStrayRequests();
 
         config([
-            'mandate.rpc.84532'                      => 'https://rpc.test/',
-            'mandate.alchemy_api_key'                => null,
-            'mandate.preflight.reconcile_enabled'    => true,
-            'mandate.preflight.stale_after_minutes'  => 30,
-            'mandate.preflight.lookback_blocks'      => 1000,
+            'mandate.rpc.84532' => 'https://rpc.test/',
+            'mandate.alchemy_api_key' => null,
+            'mandate.preflight.reconcile_enabled' => true,
+            'mandate.preflight.stale_after_minutes' => 30,
+            'mandate.preflight.lookback_blocks' => 1000,
             'mandate.preflight.amount_tolerance_pct' => 5.0,
         ]);
     }
@@ -34,17 +34,17 @@ class ReconcilePreflightIntentsTest extends TestCase
     private function createPreflightIntent(array $agentOverrides = [], array $intentOverrides = []): TxIntent
     {
         $agent = Agent::create(array_merge([
-            'id'          => Str::uuid(),
-            'name'        => 'TestAgent',
-            'evm_address' => '0xSenderAddr',
-            'chain_id'    => 84532,
+            'id' => Str::uuid(),
+            'name' => 'TestAgent',
+            'wallet_address' => '0xSenderAddr',
+            'chain_id' => '84532',
         ], $agentOverrides));
 
         $policy = Policy::create([
-            'agent_id'               => $agent->id,
+            'agent_id' => $agent->id,
             'spend_limit_per_tx_usd' => 1000,
-            'is_active'              => true,
-            'version'                => 1,
+            'is_active' => true,
+            'version' => 1,
         ]);
 
         $intentId = Str::uuid()->toString();
@@ -52,22 +52,22 @@ class ReconcilePreflightIntentsTest extends TestCase
         unset($intentOverrides['created_at']);
 
         $intent = TxIntent::create(array_merge([
-            'id'                       => $intentId,
-            'agent_id'                 => $agent->id,
-            'policy_id'                => $policy->id,
-            'intent_hash'              => '0x' . hash('sha256', 'preflight:' . $intentId),
-            'chain_id'                 => 84532,
-            'nonce'                    => 0,
-            'to_address'               => '0x0000000000000000000000000000000000000000',
-            'calldata'                 => '0x',
-            'value_wei'                => '0',
-            'gas_limit'                => '0',
-            'max_fee_per_gas'          => '0',
+            'id' => $intentId,
+            'agent_id' => $agent->id,
+            'policy_id' => $policy->id,
+            'intent_hash' => '0x'.hash('sha256', 'preflight:'.$intentId),
+            'chain_id' => '84532',
+            'nonce' => 0,
+            'to_address' => '0x0000000000000000000000000000000000000000',
+            'calldata' => '0x',
+            'value_wei' => '0',
+            'gas_limit' => '0',
+            'max_fee_per_gas' => '0',
             'max_priority_fee_per_gas' => '0',
-            'status'                   => TxIntent::STATUS_PREFLIGHT,
-            'decoded_recipient'        => '0xRecipientAddr',
-            'decoded_token'            => 'USDC',
-            'amount_usd_computed'      => '10.000000',
+            'status' => TxIntent::STATUS_PREFLIGHT,
+            'decoded_recipient' => '0xRecipientAddr',
+            'decoded_token' => 'USDC',
+            'amount_usd_computed' => '10.000000',
         ], $intentOverrides));
 
         DB::table('tx_intents')
@@ -91,16 +91,16 @@ class ReconcilePreflightIntentsTest extends TestCase
                 // alchemy_getAssetTransfers
                 ->push(['jsonrpc' => '2.0', 'id' => 2, 'result' => ['transfers' => [
                     [
-                        'hash'     => '0xFoundTxHash',
+                        'hash' => '0xFoundTxHash',
                         'blockNum' => '0xABC',
-                        'value'    => 10.0,
+                        'value' => 10.0,
                         'metadata' => ['blockTimestamp' => $transferTimestamp],
                     ],
                 ]]])
                 // eth_getTransactionReceipt
                 ->push(['jsonrpc' => '2.0', 'id' => 3, 'result' => [
-                    'status'      => '0x1',
-                    'gasUsed'     => '0x5208',
+                    'status' => '0x1',
+                    'gasUsed' => '0x5208',
                     'blockNumber' => '0xABC',
                 ]]),
         ]);
@@ -125,15 +125,15 @@ class ReconcilePreflightIntentsTest extends TestCase
                 ->push(['jsonrpc' => '2.0', 'id' => 1, 'result' => '0x100000'])
                 ->push(['jsonrpc' => '2.0', 'id' => 2, 'result' => ['transfers' => [
                     [
-                        'hash'     => '0xFailedTxHash',
+                        'hash' => '0xFailedTxHash',
                         'blockNum' => '0xABC',
-                        'value'    => 10.0,
+                        'value' => 10.0,
                         'metadata' => ['blockTimestamp' => $transferTimestamp],
                     ],
                 ]]])
                 ->push(['jsonrpc' => '2.0', 'id' => 3, 'result' => [
-                    'status'      => '0x0',
-                    'gasUsed'     => '0x5208',
+                    'status' => '0x0',
+                    'gasUsed' => '0x5208',
                     'blockNumber' => '0xABC',
                 ]]),
         ]);
@@ -177,9 +177,9 @@ class ReconcilePreflightIntentsTest extends TestCase
         $this->assertEquals(TxIntent::STATUS_EXPIRED, $intent->status);
     }
 
-    public function test_skips_agents_without_evm_address(): void
+    public function test_skips_agents_without_wallet_address(): void
     {
-        $intent = $this->createPreflightIntent(['evm_address' => null]);
+        $intent = $this->createPreflightIntent(['wallet_address' => null]);
 
         Http::fake();
 
@@ -201,15 +201,15 @@ class ReconcilePreflightIntentsTest extends TestCase
                 ->push(['jsonrpc' => '2.0', 'id' => 1, 'result' => '0x100000'])
                 ->push(['jsonrpc' => '2.0', 'id' => 2, 'result' => ['transfers' => [
                     [
-                        'hash'     => '0xAuditTxHash',
+                        'hash' => '0xAuditTxHash',
                         'blockNum' => '0xABC',
-                        'value'    => 10.0,
+                        'value' => 10.0,
                         'metadata' => ['blockTimestamp' => $transferTimestamp],
                     ],
                 ]]])
                 ->push(['jsonrpc' => '2.0', 'id' => 3, 'result' => [
-                    'status'      => '0x1',
-                    'gasUsed'     => '0x5208',
+                    'status' => '0x1',
+                    'gasUsed' => '0x5208',
                     'blockNumber' => '0xABC',
                 ]]),
         ]);
@@ -217,7 +217,7 @@ class ReconcilePreflightIntentsTest extends TestCase
         $this->artisan('mandate:reconcile-preflights')->assertSuccessful();
 
         $this->assertDatabaseHas('tx_events', [
-            'intent_id'  => $intent->id,
+            'intent_id' => $intent->id,
             'event_type' => TxIntent::STATUS_CONFIRMED,
             'actor_role' => 'system',
         ]);

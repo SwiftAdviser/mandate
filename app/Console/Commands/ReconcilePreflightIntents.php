@@ -11,19 +11,20 @@ use Illuminate\Support\Facades\Log;
 
 class ReconcilePreflightIntents extends Command
 {
-    protected $signature   = 'mandate:reconcile-preflights';
+    protected $signature = 'mandate:reconcile-preflights';
+
     protected $description = 'Find on-chain transfers matching preflight intents and enrich with tx data';
 
     public function __construct(
         private AlchemyTransferSearchService $transferSearch,
-        private IntentStateMachineService    $stateMachine,
+        private IntentStateMachineService $stateMachine,
     ) {
         parent::__construct();
     }
 
     public function handle(): void
     {
-        if (!config('mandate.preflight.reconcile_enabled', true)) {
+        if (! config('mandate.preflight.reconcile_enabled', true)) {
             return;
         }
 
@@ -37,7 +38,7 @@ class ReconcilePreflightIntents extends Command
     {
         $intents = TxIntent::with('agent')
             ->where('status', TxIntent::STATUS_PREFLIGHT)
-            ->whereHas('agent', fn ($q) => $q->whereNotNull('evm_address'))
+            ->whereHas('agent', fn ($q) => $q->whereNotNull('wallet_address'))
             ->where('created_at', '>', now()->subMinutes($staleMinutes))
             ->get();
 
@@ -57,26 +58,26 @@ class ReconcilePreflightIntents extends Command
 
                 if ($receipt !== null) {
                     $txStatus = $receipt['status'] ?? null;
-                    $success  = $txStatus === '0x1';
-                    $gasUsed  = $receipt['gasUsed'] ?? null;
+                    $success = $txStatus === '0x1';
+                    $gasUsed = $receipt['gasUsed'] ?? null;
                     $blockNum = $receipt['blockNumber'] ?? null;
 
                     $intent->update([
-                        'gas_used'     => $gasUsed ? (string) hexdec($gasUsed) : null,
+                        'gas_used' => $gasUsed ? (string) hexdec($gasUsed) : null,
                         'block_number' => $blockNum ? (string) hexdec($blockNum) : null,
                     ]);
 
                     $newStatus = $success ? TxIntent::STATUS_CONFIRMED : TxIntent::STATUS_FAILED;
 
                     $this->stateMachine->transition($intent, $newStatus, 'system', 'system', [
-                        'source'         => 'preflight_reconcile',
+                        'source' => 'preflight_reconcile',
                         'receipt_status' => $txStatus,
-                        'gas_used'       => $gasUsed,
+                        'gas_used' => $gasUsed,
                     ]);
                 }
 
             } catch (\Throwable $e) {
-                Log::warning("ReconcilePreflightIntents: error processing intent {$intent->id}: " . $e->getMessage());
+                Log::warning("ReconcilePreflightIntents: error processing intent {$intent->id}: ".$e->getMessage());
             }
         }
     }
@@ -93,7 +94,7 @@ class ReconcilePreflightIntents extends Command
                     'reason' => 'preflight_stale',
                 ]);
             } catch (\Throwable $e) {
-                Log::warning("ReconcilePreflightIntents: error expiring intent {$intent->id}: " . $e->getMessage());
+                Log::warning("ReconcilePreflightIntents: error expiring intent {$intent->id}: ".$e->getMessage());
             }
         }
     }
@@ -101,18 +102,20 @@ class ReconcilePreflightIntents extends Command
     private function fetchReceipt(TxIntent $intent): ?array
     {
         $rpcBase = config("mandate.rpc.{$intent->chain_id}");
-        $apiKey  = config('mandate.alchemy_api_key');
+        $apiKey = config('mandate.alchemy_api_key');
 
-        if (!$rpcBase) return null;
+        if (! $rpcBase) {
+            return null;
+        }
 
-        $rpcUrl = $apiKey ? $rpcBase . $apiKey : $rpcBase;
+        $rpcUrl = $apiKey ? $rpcBase.$apiKey : $rpcBase;
 
         try {
             $response = Http::timeout(8)->post($rpcUrl, [
                 'jsonrpc' => '2.0',
-                'id'      => 1,
-                'method'  => 'eth_getTransactionReceipt',
-                'params'  => [$intent->tx_hash],
+                'id' => 1,
+                'method' => 'eth_getTransactionReceipt',
+                'params' => [$intent->tx_hash],
             ]);
 
             return $response->json('result') ?: null;

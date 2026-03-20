@@ -17,8 +17,8 @@ const agentProps = {
   selected_agent: {
     id: 'agent-1',
     name: 'TradeBot',
-    evm_address: '0xabcdef1234567890abcdef1234567890abcdef12',
-    chain_id: 84532,
+    wallet_address: '0xabcdef1234567890abcdef1234567890abcdef12',
+    chain_id: '84532',
     circuit_breaker_active: false,
     claimed_at: '2026-03-01',
   },

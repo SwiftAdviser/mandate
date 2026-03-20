@@ -7,8 +7,11 @@ use Illuminate\Database\Eloquent\Model;
 class TokenRegistry extends Model
 {
     protected $table = 'token_registry';
+
     public $timestamps = false;
+
     public $incrementing = false;
+
     protected $primaryKey = null;
 
     protected $fillable = [
@@ -17,7 +20,7 @@ class TokenRegistry extends Model
 
     protected $casts = [
         'is_stable' => 'boolean',
-        'decimals'  => 'integer',
-        'chain_id'  => 'integer',
+        'decimals' => 'integer',
+        'chain_id' => 'string',
     ];
 }

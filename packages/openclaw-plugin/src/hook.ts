@@ -34,7 +34,7 @@ export async function preflightValidate(
   const action = toolName.replace(/^.*?_/, '') || toolName;
 
   try {
-    const res = await fetch(`${MANDATE_BASE}/api/validate/preflight`, {
+    const res = await fetch(`${MANDATE_BASE}/api/validate`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

@@ -24,10 +24,10 @@ class ApprovalNotificationServiceTest extends TestCase
     private function createAgentWithWebhooks(array $webhooks): Agent
     {
         return Agent::create([
-            'id'                    => Str::uuid(),
-            'name'                  => 'TraderBot',
-            'evm_address'           => '0xabcdef1234567890abcdef1234567890abcdef12',
-            'chain_id'              => 84532,
+            'id' => Str::uuid(),
+            'name' => 'TraderBot',
+            'wallet_address' => '0xabcdef1234567890abcdef1234567890abcdef12',
+            'chain_id' => '84532',
             'notification_webhooks' => $webhooks,
         ]);
     }
@@ -35,39 +35,39 @@ class ApprovalNotificationServiceTest extends TestCase
     private function createApproval(Agent $agent): ApprovalQueue
     {
         $policy = Policy::create([
-            'agent_id'               => $agent->id,
+            'agent_id' => $agent->id,
             'spend_limit_per_tx_usd' => 1000,
-            'spend_limit_per_day_usd'=> 10000,
-            'is_active'              => true,
-            'version'                => 1,
+            'spend_limit_per_day_usd' => 10000,
+            'is_active' => true,
+            'version' => 1,
         ]);
 
         $intent = TxIntent::create([
-            'id'             => Str::uuid(),
-            'agent_id'       => $agent->id,
-            'policy_id'      => $policy->id,
-            'intent_hash'    => '0x' . str_repeat('ab', 32),
-            'chain_id'       => 84532,
-            'nonce'          => 0,
-            'to_address'     => '0x036cbd53842c5426634e7929541ec2318f3dcf7e',
-            'calldata'       => '0xa9059cbb',
-            'value_wei'      => '0',
-            'gas_limit'      => '100000',
-            'max_fee_per_gas'         => '1000000000',
-            'max_priority_fee_per_gas'=> '1000000000',
-            'tx_type'        => 2,
-            'access_list'    => '[]',
+            'id' => Str::uuid(),
+            'agent_id' => $agent->id,
+            'policy_id' => $policy->id,
+            'intent_hash' => '0x'.str_repeat('ab', 32),
+            'chain_id' => '84532',
+            'nonce' => 0,
+            'to_address' => '0x036cbd53842c5426634e7929541ec2318f3dcf7e',
+            'calldata' => '0xa9059cbb',
+            'value_wei' => '0',
+            'gas_limit' => '100000',
+            'max_fee_per_gas' => '1000000000',
+            'max_priority_fee_per_gas' => '1000000000',
+            'tx_type' => 2,
+            'access_list' => '[]',
             'decoded_action' => 'erc20_transfer',
             'amount_usd_computed' => 150.00,
-            'status'         => TxIntent::STATUS_APPROVAL_PENDING,
-            'expires_at'     => now()->addHour(),
+            'status' => TxIntent::STATUS_APPROVAL_PENDING,
+            'expires_at' => now()->addHour(),
         ]);
 
         return ApprovalQueue::create([
-            'id'         => Str::uuid(),
-            'intent_id'  => $intent->id,
-            'agent_id'   => $agent->id,
-            'status'     => ApprovalQueue::STATUS_PENDING,
+            'id' => Str::uuid(),
+            'intent_id' => $intent->id,
+            'agent_id' => $agent->id,
+            'status' => ApprovalQueue::STATUS_PENDING,
             'expires_at' => now()->addHour(),
         ]);
     }
@@ -77,7 +77,7 @@ class ApprovalNotificationServiceTest extends TestCase
     /** @test */
     public function it_builds_context_with_all_required_fields(): void
     {
-        $agent    = $this->createAgentWithWebhooks([]);
+        $agent = $this->createAgentWithWebhooks([]);
         $approval = $this->createApproval($agent);
 
         $context = $this->service()->buildContext($approval, $agent);
@@ -122,9 +122,9 @@ class ApprovalNotificationServiceTest extends TestCase
     /** @test */
     public function it_formats_slack_blocks_correctly(): void
     {
-        $agent    = $this->createAgentWithWebhooks([]);
+        $agent = $this->createAgentWithWebhooks([]);
         $approval = $this->createApproval($agent);
-        $context  = $this->service()->buildContext($approval, $agent);
+        $context = $this->service()->buildContext($approval, $agent);
 
         $blocks = $this->service()->formatSlackBlocks($context);
 
@@ -141,9 +141,9 @@ class ApprovalNotificationServiceTest extends TestCase
     /** @test */
     public function it_formats_telegram_markdown(): void
     {
-        $agent    = $this->createAgentWithWebhooks([]);
+        $agent = $this->createAgentWithWebhooks([]);
         $approval = $this->createApproval($agent);
-        $context  = $this->service()->buildContext($approval, $agent);
+        $context = $this->service()->buildContext($approval, $agent);
 
         $text = $this->service()->formatTelegramMessage($context);
 
@@ -166,8 +166,7 @@ class ApprovalNotificationServiceTest extends TestCase
 
         $this->service()->notify($approval, $agent);
 
-        Http::assertSent(fn ($req) =>
-            str_contains($req->url(), 'hooks.slack.com') &&
+        Http::assertSent(fn ($req) => str_contains($req->url(), 'hooks.slack.com') &&
             isset($req->data()['blocks'])
         );
     }
@@ -184,8 +183,7 @@ class ApprovalNotificationServiceTest extends TestCase
 
         $this->service()->notify($approval, $agent);
 
-        Http::assertSent(fn ($req) =>
-            str_contains($req->url(), 'api.telegram.org/bot123:ABC/sendMessage') &&
+        Http::assertSent(fn ($req) => str_contains($req->url(), 'api.telegram.org/bot123:ABC/sendMessage') &&
             $req->data()['chat_id'] === '-100123'
         );
     }
@@ -213,7 +211,7 @@ class ApprovalNotificationServiceTest extends TestCase
     {
         Http::fake();
 
-        $agent    = $this->createAgentWithWebhooks([]);
+        $agent = $this->createAgentWithWebhooks([]);
         $approval = $this->createApproval($agent);
 
         $this->service()->notify($approval, $agent);

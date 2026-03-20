@@ -39,7 +39,7 @@ class TelegramLinkTest extends TestCase
         $this->assertEquals('12345', $chatId);
 
         // Check that a link code was generated for this chat
-        $code = Cache::get("tg_link_code_chat:12345");
+        $code = Cache::get('tg_link_code_chat:12345');
         $this->assertNotNull($code);
         $this->assertEquals(8, strlen($code));
 
@@ -53,7 +53,7 @@ class TelegramLinkTest extends TestCase
         $user = User::factory()->create();
         $agent = Agent::create([
             'name' => 'tg-agent',
-            'evm_address' => '0xabcdef1234567890abcdef1234567890abcdef12',
+            'wallet_address' => '0xabcdef1234567890abcdef1234567890abcdef12',
             'user_id' => $user->id,
             'claimed_at' => now(),
         ]);
@@ -67,7 +67,7 @@ class TelegramLinkTest extends TestCase
         // Simulate: bot generated code ABCD1234 for chat 12345
         $code = 'ABCD1234';
         Cache::put("tg_link_code:{$code}", '12345', 600);
-        Cache::put("tg_link_code_chat:12345", $code, 600);
+        Cache::put('tg_link_code_chat:12345', $code, 600);
 
         \Illuminate\Support\Facades\Http::fake();
 
@@ -95,7 +95,7 @@ class TelegramLinkTest extends TestCase
         $user = User::factory()->create();
         $agent = Agent::create([
             'name' => 'tg-agent',
-            'evm_address' => '0xabcdef1234567890abcdef1234567890abcdef12',
+            'wallet_address' => '0xabcdef1234567890abcdef1234567890abcdef12',
             'user_id' => $user->id,
             'claimed_at' => now(),
         ]);

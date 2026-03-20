@@ -15,8 +15,8 @@ class IntentController extends Controller
 {
     public function __construct(
         private IntentStateMachineService $stateMachine,
-        private CircuitBreakerService     $circuitBreaker,
-        private IntentSummaryService      $summary,
+        private CircuitBreakerService $circuitBreaker,
+        private IntentSummaryService $summary,
     ) {}
 
     /**
@@ -24,12 +24,12 @@ class IntentController extends Controller
      */
     public function postEvent(Request $request, string $intentId): JsonResponse
     {
-        $agent  = $request->attributes->get('agent');
+        $agent = $request->attributes->get('agent');
         $intent = TxIntent::where('id', $intentId)
             ->where('agent_id', $agent->id)
             ->first();
 
-        if (!$intent) {
+        if (! $intent) {
             return response()->json(['error' => 'Intent not found.'], 404);
         }
 
@@ -41,9 +41,9 @@ class IntentController extends Controller
             'txHash' => ['required', 'string', 'regex:/^0x[a-fA-F0-9]{64}$/'],
         ]);
 
-        if (!in_array($intent->status, [TxIntent::STATUS_RESERVED, TxIntent::STATUS_APPROVED], true)) {
+        if (! in_array($intent->status, [TxIntent::STATUS_RESERVED, TxIntent::STATUS_APPROVED], true)) {
             return response()->json([
-                'error'  => 'Intent must be in reserved or approved state to post a txHash.',
+                'error' => 'Intent must be in reserved or approved state to post a txHash.',
                 'status' => $intent->status,
             ], 409);
         }
@@ -63,8 +63,8 @@ class IntentController extends Controller
 
         return response()->json([
             'intentId' => $intent->id,
-            'status'   => TxIntent::STATUS_BROADCASTED,
-            'txHash'   => $data['txHash'],
+            'status' => TxIntent::STATUS_BROADCASTED,
+            'txHash' => $data['txHash'],
         ]);
     }
 
@@ -73,28 +73,28 @@ class IntentController extends Controller
      */
     public function status(Request $request, string $intentId): JsonResponse
     {
-        $agent  = $request->attributes->get('agent');
+        $agent = $request->attributes->get('agent');
         $intent = TxIntent::where('id', $intentId)
             ->where('agent_id', $agent->id)
             ->first();
 
-        if (!$intent) {
+        if (! $intent) {
             return response()->json(['error' => 'Intent not found.'], 404);
         }
 
         return response()->json([
-            'intentId'         => $intent->id,
-            'status'           => $intent->status,
-            'txHash'           => $intent->tx_hash,
-            'blockNumber'      => $intent->block_number,
-            'gasUsed'          => $intent->gas_used,
-            'amountUsd'        => $intent->amount_usd_computed,
-            'decodedAction'    => $intent->decoded_action,
-            'summary'          => $this->summary->summarize($intent),
-            'blockReason'      => $intent->block_reason,
+            'intentId' => $intent->id,
+            'status' => $intent->status,
+            'txHash' => $intent->tx_hash,
+            'blockNumber' => $intent->block_number,
+            'gasUsed' => $intent->gas_used,
+            'amountUsd' => $intent->amount_usd_computed,
+            'decodedAction' => $intent->decoded_action,
+            'summary' => $this->summary->summarize($intent),
+            'blockReason' => $intent->block_reason,
             'requiresApproval' => $intent->status === TxIntent::STATUS_APPROVAL_PENDING,
-            'approvalId'       => $intent->approvalQueue?->id,
-            'expiresAt'        => $intent->expires_at,
+            'approvalId' => $intent->approvalQueue?->id,
+            'expiresAt' => $intent->expires_at,
         ]);
     }
 
@@ -106,7 +106,7 @@ class IntentController extends Controller
         $userId = auth()->id();
         $intent = TxIntent::find($intentId);
 
-        if (!$intent || $intent->isTerminal()) {
+        if (! $intent || $intent->isTerminal()) {
             return response()->json(['error' => 'Intent not found or already terminal.'], 404);
         }
 

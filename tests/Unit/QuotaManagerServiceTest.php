@@ -30,18 +30,18 @@ class QuotaManagerServiceTest extends TestCase
     private function createAgentWithPolicy(array $policyOverrides = []): array
     {
         $agent = Agent::create([
-            'id'          => Str::uuid(),
-            'name'        => 'TestAgent',
-            'evm_address' => '0xabcdef1234567890abcdef1234567890abcdef12',
-            'chain_id'    => 84532,
+            'id' => Str::uuid(),
+            'name' => 'TestAgent',
+            'wallet_address' => '0xabcdef1234567890abcdef1234567890abcdef12',
+            'chain_id' => '84532',
         ]);
 
         $policy = Policy::create(array_merge([
-            'agent_id'                => $agent->id,
-            'spend_limit_per_tx_usd'  => 100,
+            'agent_id' => $agent->id,
+            'spend_limit_per_tx_usd' => 100,
             'spend_limit_per_day_usd' => 1000,
-            'is_active'               => true,
-            'version'                 => 1,
+            'is_active' => true,
+            'version' => 1,
         ], $policyOverrides));
 
         return [$agent, $policy];
@@ -57,16 +57,16 @@ class QuotaManagerServiceTest extends TestCase
         string $agentId,
         string $windowType,
         string $windowKey,
-        float  $reservedUsd,
-        float  $confirmedUsd = 0.0
+        float $reservedUsd,
+        float $confirmedUsd = 0.0
     ): void {
         DB::table('quota_reservations')->insertOrIgnore([
-            'agent_id'      => $agentId,
-            'window_type'   => $windowType,
-            'window_key'    => $windowKey,
-            'reserved_usd'  => $reservedUsd,
+            'agent_id' => $agentId,
+            'window_type' => $windowType,
+            'window_key' => $windowKey,
+            'reserved_usd' => $reservedUsd,
             'confirmed_usd' => $confirmedUsd,
-            'updated_at'    => now(),
+            'updated_at' => now(),
         ]);
     }
 
@@ -78,7 +78,7 @@ class QuotaManagerServiceTest extends TestCase
     public function it_reports_quota_available_when_no_previous_usage(): void
     {
         [$agent, $policy] = $this->createAgentWithPolicy([
-            'spend_limit_per_day_usd'   => 500,
+            'spend_limit_per_day_usd' => 500,
             'spend_limit_per_month_usd' => 2000,
         ]);
 
@@ -112,7 +112,7 @@ class QuotaManagerServiceTest extends TestCase
     {
         [$agent] = $this->createAgentWithPolicy();
 
-        $dailyKey   = now()->format('Y-m-d');
+        $dailyKey = now()->format('Y-m-d');
         $monthlyKey = now()->format('Y-m');
 
         DB::transaction(fn () => $this->service()->reserve($agent->id, 25.0));
@@ -140,11 +140,11 @@ class QuotaManagerServiceTest extends TestCase
     {
         [$agent] = $this->createAgentWithPolicy();
 
-        $dailyKey   = now()->format('Y-m-d');
+        $dailyKey = now()->format('Y-m-d');
         $monthlyKey = now()->format('Y-m');
 
         // Seed only 5 USD reserved; release 20 — result must clamp to 0
-        $this->seedQuotaRow($agent->id, 'daily',   $dailyKey,   5.0);
+        $this->seedQuotaRow($agent->id, 'daily', $dailyKey, 5.0);
         $this->seedQuotaRow($agent->id, 'monthly', $monthlyKey, 5.0);
 
         $this->service()->release($agent->id, 20.0);
@@ -161,7 +161,7 @@ class QuotaManagerServiceTest extends TestCase
             ->where('window_key', $monthlyKey)
             ->value('reserved_usd');
 
-        $this->assertEqualsWithDelta(0.0, $dailyReserved,   0.001, 'Daily reserved_usd must not go below zero.');
+        $this->assertEqualsWithDelta(0.0, $dailyReserved, 0.001, 'Daily reserved_usd must not go below zero.');
         $this->assertEqualsWithDelta(0.0, $monthlyReserved, 0.001, 'Monthly reserved_usd must not go below zero.');
     }
 
@@ -170,10 +170,10 @@ class QuotaManagerServiceTest extends TestCase
     {
         [$agent, $policy] = $this->createAgentWithPolicy();
 
-        $dailyKey   = now()->format('Y-m-d');
+        $dailyKey = now()->format('Y-m-d');
         $monthlyKey = now()->format('Y-m');
 
-        $this->seedQuotaRow($agent->id, 'daily',   $dailyKey,   50.0, 0.0);
+        $this->seedQuotaRow($agent->id, 'daily', $dailyKey, 50.0, 0.0);
         $this->seedQuotaRow($agent->id, 'monthly', $monthlyKey, 50.0, 0.0);
 
         // Build a minimal TxIntent-like object with the fields confirm() needs
@@ -198,9 +198,9 @@ class QuotaManagerServiceTest extends TestCase
             ->first();
 
         // reserved should decrease; confirmed should increase
-        $this->assertEqualsWithDelta(35.0, (float) $daily->reserved_usd,   0.001, 'Daily reserved should decrease by 15.');
-        $this->assertEqualsWithDelta(15.0, (float) $daily->confirmed_usd,  0.001, 'Daily confirmed should increase by 15.');
+        $this->assertEqualsWithDelta(35.0, (float) $daily->reserved_usd, 0.001, 'Daily reserved should decrease by 15.');
+        $this->assertEqualsWithDelta(15.0, (float) $daily->confirmed_usd, 0.001, 'Daily confirmed should increase by 15.');
         $this->assertEqualsWithDelta(35.0, (float) $monthly->reserved_usd, 0.001, 'Monthly reserved should decrease by 15.');
-        $this->assertEqualsWithDelta(15.0, (float) $monthly->confirmed_usd,0.001, 'Monthly confirmed should increase by 15.');
+        $this->assertEqualsWithDelta(15.0, (float) $monthly->confirmed_usd, 0.001, 'Monthly confirmed should increase by 15.');
     }
 }

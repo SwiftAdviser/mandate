@@ -19,8 +19,9 @@ class PriceOracleService
             ->where('address', strtolower($tokenAddress))
             ->first();
 
-        if (!$token) {
+        if (! $token) {
             Log::warning("PriceOracle: unknown token {$tokenAddress} on chain {$chainId}");
+
             return null;
         }
 
@@ -30,7 +31,9 @@ class PriceOracleService
 
         $price = $this->fetchPrice($token->coingecko_id ?? $token->symbol);
 
-        if ($price === null) return null;
+        if ($price === null) {
+            return null;
+        }
 
         return $this->rawToFloat($rawAmount, $token->decimals) * $price;
     }
@@ -38,7 +41,7 @@ class PriceOracleService
     public function fetchPrice(string $coinId): ?float
     {
         $cacheKey = "mandate:price:{$coinId}";
-        $ttl      = config('mandate.price_oracle.cache_ttl', 60);
+        $ttl = config('mandate.price_oracle.cache_ttl', 60);
 
         return Cache::remember($cacheKey, $ttl, function () use ($coinId) {
             return $this->fetchFromAlchemy($coinId)
@@ -49,7 +52,9 @@ class PriceOracleService
     private function fetchFromAlchemy(string $coinId): ?float
     {
         $apiKey = config('mandate.alchemy_api_key');
-        if (!$apiKey) return null;
+        if (! $apiKey) {
+            return null;
+        }
 
         // Alchemy token price API — uses contract address or symbol
         // Map coingecko_id to chain-specific contract if needed
@@ -61,10 +66,11 @@ class PriceOracleService
 
             if ($response->successful()) {
                 $data = $response->json('data.0.prices.0.value');
+
                 return $data ? (float) $data : null;
             }
         } catch (\Throwable $e) {
-            Log::warning("Alchemy price fetch failed for {$coinId}: " . $e->getMessage());
+            Log::warning("Alchemy price fetch failed for {$coinId}: ".$e->getMessage());
         }
 
         return null;
@@ -73,13 +79,13 @@ class PriceOracleService
     private function fetchFromCoinGecko(string $coinId): ?float
     {
         $apiKey = config('mandate.coingecko_api_key');
-        $base   = $apiKey ? 'https://pro-api.coingecko.com/api/v3' : 'https://api.coingecko.com/api/v3';
+        $base = $apiKey ? 'https://pro-api.coingecko.com/api/v3' : 'https://api.coingecko.com/api/v3';
 
         try {
             $response = Http::timeout(5)
                 ->withHeaders($apiKey ? ['x-cg-pro-api-key' => $apiKey] : [])
                 ->get("{$base}/simple/price", [
-                    'ids'           => $coinId,
+                    'ids' => $coinId,
                     'vs_currencies' => 'usd',
                 ]);
 
@@ -87,7 +93,7 @@ class PriceOracleService
                 return $response->json("{$coinId}.usd") ?? null;
             }
         } catch (\Throwable $e) {
-            Log::warning("CoinGecko price fetch failed for {$coinId}: " . $e->getMessage());
+            Log::warning("CoinGecko price fetch failed for {$coinId}: ".$e->getMessage());
         }
 
         return null;
@@ -95,11 +101,13 @@ class PriceOracleService
 
     private function rawToFloat(string $rawAmount, int $decimals): float
     {
-        if ($rawAmount === '0') return 0.0;
+        if ($rawAmount === '0') {
+            return 0.0;
+        }
 
         // BCMath for precision
         $divisor = bcpow('10', (string) $decimals);
-        $result  = bcdiv($rawAmount, $divisor, 18);
+        $result = bcdiv($rawAmount, $divisor, 18);
 
         return (float) $result;
     }

@@ -25,7 +25,7 @@ class ReputationService
         }
 
         $subgraphUrl = $this->subgraphUrl($chainId);
-        if (!$subgraphUrl) {
+        if (! $subgraphUrl) {
             return $this->unregisteredResult();
         }
 
@@ -49,6 +49,7 @@ class ReputationService
         if (empty($agents)) {
             $result = $this->unregisteredResult();
             Cache::put($cacheKey, $result, $ttl);
+
             return $result;
         }
 
@@ -82,11 +83,11 @@ class ReputationService
         $score = $this->computeAverageScore($feedbacks);
 
         $result = [
-            'registered'     => true,
-            'agent_id'       => $agent['agentId'] ?? $agentId,
-            'score'          => $score,
+            'registered' => true,
+            'agent_id' => $agent['agentId'] ?? $agentId,
+            'score' => $score,
             'feedback_count' => count($feedbacks),
-            'degraded'       => false,
+            'degraded' => false,
         ];
 
         Cache::put($cacheKey, $result, $ttl);
@@ -97,6 +98,7 @@ class ReputationService
     private function subgraphUrl(int $chainId): ?string
     {
         $urls = config('mandate.reputation.subgraphs', []);
+
         return $urls[$chainId] ?? null;
     }
 
@@ -104,14 +106,15 @@ class ReputationService
     {
         try {
             $response = Http::timeout(5)->post($url, [
-                'query'     => $query,
+                'query' => $query,
                 'variables' => $variables,
             ]);
 
-            if (!$response->successful()) {
+            if (! $response->successful()) {
                 Log::warning('[ReputationService] Subgraph request failed', [
                     'status' => $response->status(),
                 ]);
+
                 return null;
             }
 
@@ -120,6 +123,7 @@ class ReputationService
             Log::warning('[ReputationService] Subgraph request exception', [
                 'error' => $e->getMessage(),
             ]);
+
             return null;
         }
     }
@@ -141,22 +145,22 @@ class ReputationService
     private function unregisteredResult(): array
     {
         return [
-            'registered'     => false,
-            'agent_id'       => null,
-            'score'          => null,
+            'registered' => false,
+            'agent_id' => null,
+            'score' => null,
             'feedback_count' => 0,
-            'degraded'       => false,
+            'degraded' => false,
         ];
     }
 
     private function degradedResult(): array
     {
         return [
-            'registered'     => false,
-            'agent_id'       => null,
-            'score'          => null,
+            'registered' => false,
+            'agent_id' => null,
+            'score' => null,
             'feedback_count' => 0,
-            'degraded'       => true,
+            'degraded' => true,
         ];
     }
 }

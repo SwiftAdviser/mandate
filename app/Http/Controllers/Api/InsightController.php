@@ -15,7 +15,7 @@ class InsightController extends Controller
 
     public function index(Request $request): JsonResponse
     {
-        $userId   = auth()->id();
+        $userId = auth()->id();
         $agentIds = Agent::where('user_id', $userId)->pluck('id');
 
         $insights = PolicyInsight::whereIn('agent_id', $agentIds)
@@ -55,7 +55,7 @@ class InsightController extends Controller
 
     private function findOwnedInsight(string $id): PolicyInsight
     {
-        $userId   = auth()->id();
+        $userId = auth()->id();
         $agentIds = Agent::where('user_id', $userId)->pluck('id');
 
         return PolicyInsight::whereIn('agent_id', $agentIds)->findOrFail($id);

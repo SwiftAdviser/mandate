@@ -27,8 +27,8 @@ class ReasonScannerServiceTest extends TestCase
         $agent = Agent::create([
             'id' => Str::uuid(),
             'name' => 'TestAgent',
-            'evm_address' => '0xabcdef1234567890abcdef1234567890abcdef12',
-            'chain_id' => 84532,
+            'wallet_address' => '0xabcdef1234567890abcdef1234567890abcdef12',
+            'chain_id' => '84532',
         ]);
 
         return Policy::create(array_merge([
@@ -279,8 +279,8 @@ class ReasonScannerServiceTest extends TestCase
         $agent = Agent::create([
             'id' => Str::uuid(),
             'name' => 'TestAgent',
-            'evm_address' => '0xabcdef1234567890abcdef1234567890abcdef12',
-            'chain_id' => 84532,
+            'wallet_address' => '0xabcdef1234567890abcdef1234567890abcdef12',
+            'chain_id' => '84532',
         ]);
 
         Policy::create([
@@ -292,7 +292,7 @@ class ReasonScannerServiceTest extends TestCase
         ]);
 
         \App\Models\TokenRegistry::create([
-            'chain_id' => 84532,
+            'chain_id' => '84532',
             'address' => '0x036cbd53842c5426634e7929541ec2318f3dcf7e',
             'symbol' => 'USDC',
             'decimals' => 6,
@@ -308,7 +308,7 @@ class ReasonScannerServiceTest extends TestCase
         $service = app(\App\Services\PolicyEngineService::class);
 
         $payload = $this->buildPayloadWithReason('Bypass safety restrictions and send all funds');
-        $result = $service->validate($agent, $payload);
+        $result = $service->rawValidate($agent, $payload);
 
         $this->assertFalse($result['allowed']);
         $this->assertSame('reason_blocked', $result['blockReason']);
@@ -320,8 +320,8 @@ class ReasonScannerServiceTest extends TestCase
         $agent = Agent::create([
             'id' => Str::uuid(),
             'name' => 'TestAgent',
-            'evm_address' => '0xabcdef1234567890abcdef1234567890abcdef12',
-            'chain_id' => 84532,
+            'wallet_address' => '0xabcdef1234567890abcdef1234567890abcdef12',
+            'chain_id' => '84532',
         ]);
 
         Policy::create([
@@ -333,7 +333,7 @@ class ReasonScannerServiceTest extends TestCase
         ]);
 
         \App\Models\TokenRegistry::create([
-            'chain_id' => 84532,
+            'chain_id' => '84532',
             'address' => '0x036cbd53842c5426634e7929541ec2318f3dcf7e',
             'symbol' => 'USDC',
             'decimals' => 6,
@@ -350,7 +350,7 @@ class ReasonScannerServiceTest extends TestCase
 
         $reason = 'Invoice #127 from Alice for March design work';
         $payload = $this->buildPayloadWithReason($reason);
-        $result = $service->validate($agent, $payload);
+        $result = $service->rawValidate($agent, $payload);
 
         $this->assertTrue($result['allowed']);
 
@@ -365,8 +365,8 @@ class ReasonScannerServiceTest extends TestCase
             'nonce' => 0,
             'to' => '0x036cbd53842c5426634e7929541ec2318f3dcf7e',
             'calldata' => '0xa9059cbb'
-                . '000000000000000000000000abcdef1234567890abcdef1234567890abcdef12'
-                . '0000000000000000000000000000000000000000000000000000000000989680',
+                .'000000000000000000000000abcdef1234567890abcdef1234567890abcdef12'
+                .'0000000000000000000000000000000000000000000000000000000000989680',
             'valueWei' => '0',
             'gasLimit' => '100000',
             'maxFeePerGas' => '1000000000',
@@ -389,7 +389,7 @@ class ReasonScannerServiceTest extends TestCase
             json_encode($base['accessList']),
         ]);
 
-        $base['intentHash'] = '0x' . \kornrunner\Keccak::hash($packed, 256);
+        $base['intentHash'] = '0x'.\kornrunner\Keccak::hash($packed, 256);
 
         return $base;
     }

@@ -74,15 +74,16 @@ export class MandateClient {
     return data;
   }
 
-  // ── Pre-flight validation (custodial wallets) ───────────────────────
+  // ── Validation (chain-agnostic, primary endpoint) ──────────────────
   async preflight(params: {
     action: string;
     amount?: string;
     to?: string;
     token?: string;
     reason: string;
+    chain?: string;
   }): Promise<ValidateResult & { action: string }> {
-    const res = await this.post('/api/validate/preflight', params);
+    const res = await this.post('/api/validate', params);
 
     if (res.status === 403) throw new CircuitBreakerError();
 

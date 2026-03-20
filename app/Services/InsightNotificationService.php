@@ -29,9 +29,9 @@ class InsightNotificationService
                 }
             } catch (\Throwable $e) {
                 Log::warning('Insight notification failed', [
-                    'type'       => $webhook['type'] ?? 'unknown',
+                    'type' => $webhook['type'] ?? 'unknown',
                     'insight_id' => $insight->id,
-                    'error'      => $e->getMessage(),
+                    'error' => $e->getMessage(),
                 ]);
             }
         }
@@ -45,16 +45,17 @@ class InsightNotificationService
 
         if (empty($chatId)) {
             Log::warning('Insight Telegram skipped: no chat_id', ['username' => $username]);
+
             return;
         }
 
-        $text    = $this->formatMessage($insight);
+        $text = $this->formatMessage($insight);
         $buttons = $this->buildButtons($insight);
 
         $payload = [
-            'chat_id'      => $chatId,
-            'text'         => $text,
-            'parse_mode'   => 'HTML',
+            'chat_id' => $chatId,
+            'text' => $text,
+            'parse_mode' => 'HTML',
             'reply_markup' => ['inline_keyboard' => $buttons],
         ];
 
@@ -66,28 +67,28 @@ class InsightNotificationService
         $isMandateRule = $insight->insight_type === PolicyInsight::TYPE_MANDATE_RULE;
 
         $confidenceBar = str_repeat("\u{2B1B}", (int) round($insight->confidence * 5))
-            . str_repeat("\u{2B1C}", 5 - (int) round($insight->confidence * 5));
+            .str_repeat("\u{2B1C}", 5 - (int) round($insight->confidence * 5));
 
         $lines = [];
 
         if ($isMandateRule) {
             $sectionLabels = [
-                'block'            => 'Block immediately',
+                'block' => 'Block immediately',
                 'require_approval' => 'Require human approval',
-                'allow'            => 'Allow',
+                'allow' => 'Allow',
             ];
             $section = $sectionLabels[$insight->target_section ?? 'block'] ?? $insight->target_section;
 
             $lines[] = "\u{1F4A1} <b>MANDATE.md Rule Suggestion</b>";
             $lines[] = '';
-            $lines[] = "Based on your recent decisions:";
+            $lines[] = 'Based on your recent decisions:';
             $lines[] = '';
             $lines[] = "\u{1F4DD} <b>{$section}:</b>";
-            $lines[] = "<code>" . htmlspecialchars($insight->suggestion['rule_text'] ?? $insight->title) . "</code>";
+            $lines[] = '<code>'.htmlspecialchars($insight->suggestion['rule_text'] ?? $insight->title).'</code>';
         } else {
             $lines[] = "\u{1F4A1} <b>Policy Insight</b>";
             $lines[] = '';
-            $lines[] = "\u{1F4CB} " . htmlspecialchars($insight->title);
+            $lines[] = "\u{1F4CB} ".htmlspecialchars($insight->title);
         }
 
         $lines[] = '';
@@ -102,7 +103,7 @@ class InsightNotificationService
     private function buildButtons(PolicyInsight $insight): array
     {
         $isMandateRule = $insight->insight_type === PolicyInsight::TYPE_MANDATE_RULE;
-        $acceptLabel   = $isMandateRule ? "\u{2705} Add Rule" : "\u{2705} Accept";
+        $acceptLabel = $isMandateRule ? "\u{2705} Add Rule" : "\u{2705} Accept";
 
         return [
             [
@@ -110,7 +111,7 @@ class InsightNotificationService
                 ['text' => "\u{274C} Dismiss", 'callback_data' => "dismiss_insight:{$insight->id}"],
             ],
             [
-                ['text' => 'Open Dashboard', 'url' => config('app.url', 'https://app.mandate.md') . '/insights'],
+                ['text' => 'Open Dashboard', 'url' => config('app.url', 'https://app.mandate.md').'/insights'],
             ],
         ];
     }

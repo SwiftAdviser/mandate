@@ -12,17 +12,17 @@ class RuntimeKeyAuth
     {
         $raw = $request->bearerToken();
 
-        if (!$raw || (!str_starts_with($raw, 'mndt_live_') && !str_starts_with($raw, 'mndt_test_'))) {
+        if (! $raw || (! str_starts_with($raw, 'mndt_live_') && ! str_starts_with($raw, 'mndt_test_'))) {
             return response()->json(['error' => 'Missing or invalid runtime key.'], 401);
         }
 
         $hash = hash('sha256', $raw);
-        $key  = AgentApiKey::with('agent')
+        $key = AgentApiKey::with('agent')
             ->where('key_hash', $hash)
             ->whereNull('revoked_at')
             ->first();
 
-        if (!$key) {
+        if (! $key) {
             return response()->json(['error' => 'Invalid runtime key.'], 401);
         }
 
@@ -30,7 +30,7 @@ class RuntimeKeyAuth
 
         if ($agent->circuit_breaker_active) {
             return response()->json([
-                'error'  => 'Circuit breaker active. All transactions blocked.',
+                'error' => 'Circuit breaker active. All transactions blocked.',
                 'reason' => $agent->circuit_breaker_reason,
             ], 403);
         }

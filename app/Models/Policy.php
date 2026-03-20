@@ -18,7 +18,9 @@ class Policy extends Model
         'allowed_addresses',
         'allowed_contracts',
         'blocked_selectors',
+        'blocked_actions',
         'require_approval_selectors',
+        'require_approval_actions',
         'require_approval_above_usd',
         'max_slippage_bps',
         'max_gas_limit',
@@ -31,17 +33,19 @@ class Policy extends Model
     ];
 
     protected $casts = [
-        'spend_limit_per_tx_usd'     => 'decimal:6',
-        'spend_limit_per_day_usd'    => 'decimal:6',
-        'spend_limit_per_month_usd'  => 'decimal:6',
+        'spend_limit_per_tx_usd' => 'decimal:6',
+        'spend_limit_per_day_usd' => 'decimal:6',
+        'spend_limit_per_month_usd' => 'decimal:6',
         'require_approval_above_usd' => 'decimal:6',
-        'allowed_addresses'          => 'array',
-        'allowed_contracts'          => 'array',
-        'blocked_selectors'          => 'array',
+        'allowed_addresses' => 'array',
+        'allowed_contracts' => 'array',
+        'blocked_selectors' => 'array',
+        'blocked_actions' => 'array',
         'require_approval_selectors' => 'array',
-        'schedule'                   => 'array',
-        'is_active'                  => 'boolean',
-        'risk_scan_enabled'          => 'boolean',
+        'require_approval_actions' => 'array',
+        'schedule' => 'array',
+        'is_active' => 'boolean',
+        'risk_scan_enabled' => 'boolean',
     ];
 
     public function agent(): BelongsTo

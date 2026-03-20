@@ -24,7 +24,7 @@ class AgentCreateTest extends TestCase
         $this->assertDatabaseHas('agents', [
             'name' => 'DashboardAgent',
             'user_id' => $user->id,
-            'evm_address' => null,
+            'wallet_address' => null,
             'chain_id' => null,
         ]);
 

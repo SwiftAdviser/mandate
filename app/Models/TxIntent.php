@@ -13,17 +13,25 @@ class TxIntent extends Model
     use HasUuids;
 
     // Status constants
-    const STATUS_RESERVED         = 'reserved';
+    const STATUS_RESERVED = 'reserved';
+
     const STATUS_APPROVAL_PENDING = 'approval_pending';
-    const STATUS_APPROVED         = 'approved';
-    const STATUS_BROADCASTED      = 'broadcasted';
-    const STATUS_CONFIRMED        = 'confirmed';
-    const STATUS_FAILED           = 'failed';
-    const STATUS_EXPIRED          = 'expired';
-    const STATUS_PREFLIGHT        = 'preflight';
+
+    const STATUS_APPROVED = 'approved';
+
+    const STATUS_BROADCASTED = 'broadcasted';
+
+    const STATUS_CONFIRMED = 'confirmed';
+
+    const STATUS_FAILED = 'failed';
+
+    const STATUS_EXPIRED = 'expired';
+
+    const STATUS_PREFLIGHT = 'preflight';
 
     const TERMINAL_STATUSES = [self::STATUS_CONFIRMED, self::STATUS_FAILED, self::STATUS_EXPIRED];
-    const ACTIVE_STATUSES   = [self::STATUS_RESERVED, self::STATUS_APPROVAL_PENDING, self::STATUS_APPROVED, self::STATUS_BROADCASTED];
+
+    const ACTIVE_STATUSES = [self::STATUS_RESERVED, self::STATUS_APPROVAL_PENDING, self::STATUS_APPROVED, self::STATUS_BROADCASTED];
 
     protected $fillable = [
         'agent_id', 'policy_id', 'intent_hash',
@@ -39,13 +47,13 @@ class TxIntent extends Model
     ];
 
     protected $casts = [
-        'access_list'         => 'array',
+        'access_list' => 'array',
         'amount_usd_computed' => 'decimal:6',
-        'risk_assessment'     => 'array',
-        'risk_degraded'       => 'boolean',
-        'expires_at'          => 'datetime',
-        'nonce'               => 'integer',
-        'chain_id'            => 'integer',
+        'risk_assessment' => 'array',
+        'risk_degraded' => 'boolean',
+        'expires_at' => 'datetime',
+        'nonce' => 'integer',
+        'chain_id' => 'string',
     ];
 
     public function agent(): BelongsTo

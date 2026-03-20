@@ -106,7 +106,7 @@ class TelegramWebhookController extends Controller
         }
 
         if ($approval->status !== ApprovalQueue::STATUS_PENDING) {
-            $this->answerCallback($callbackId, 'Already decided: ' . $approval->status);
+            $this->answerCallback($callbackId, 'Already decided: '.$approval->status);
             $this->editMessageButtons($chatId, $messageId, "Decision: {$approval->status}");
 
             return response()->json(['ok' => true]);
@@ -169,14 +169,16 @@ class TelegramWebhookController extends Controller
     {
         $insight = PolicyInsight::find($insightId);
 
-        if (!$insight) {
+        if (! $insight) {
             $this->answerCallback($callbackId, 'Insight not found');
+
             return response()->json(['ok' => true]);
         }
 
         if ($insight->status !== PolicyInsight::STATUS_ACTIVE) {
-            $this->answerCallback($callbackId, 'Already handled: ' . $insight->status);
+            $this->answerCallback($callbackId, 'Already handled: '.$insight->status);
             $this->editMessageButtons($chatId, $messageId, "Status: {$insight->status}");
+
             return response()->json(['ok' => true]);
         }
 
@@ -199,7 +201,7 @@ class TelegramWebhookController extends Controller
 
         Log::info('Telegram insight decision', [
             'insight_id' => $insightId,
-            'action'     => $action,
+            'action' => $action,
         ]);
 
         return response()->json(['ok' => true]);

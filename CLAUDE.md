@@ -25,13 +25,50 @@ php artisan migrate   # Run migrations
 
 Tests use SQLite in-memory; no database setup needed.
 
-### Browser Testing (local)
+### Browser E2E Testing (local, via cmux)
 
-Use `/dev-login` route to authenticate in headless browser (local env only):
+Prerequisites: `composer dev` running (Laravel + Vite), cmux available.
+
+```bash
+# 1. Open browser and authenticate
+cmux browser open http://localhost:8000/dev-login
+cmux browser surface:<ID> wait --load-state complete --timeout-ms 10000
+
+# 2. Navigate to page under test
+cmux browser surface:<ID> navigate http://localhost:8000/agents
+cmux browser surface:<ID> wait --load-state complete --timeout-ms 10000
+
+# 3. Verify DOM content (useful when viewport is narrow)
+cmux browser surface:<ID> eval "document.querySelector('h1')?.textContent"
+cmux browser surface:<ID> eval "document.querySelector('table tbody')?.innerText"
+
+# 4. Screenshot for visual verification
+cmux browser surface:<ID> screenshot --out /tmp/page.png
+
+# 5. Test API actions via browser fetch (has session + CSRF cookie)
+cmux browser surface:<ID> eval "
+  (async () => {
+    const cookie = document.cookie.match(/XSRF-TOKEN=([^;]+)/);
+    const token = cookie ? decodeURIComponent(cookie[1]) : '';
+    const res = await fetch('/api/agents/<agentId>', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json', 'X-XSRF-TOKEN': token },
+      body: JSON.stringify({ name: 'new-name' }),
+    });
+    return res.status + ' ' + await res.text();
+  })()
+"
+
+# 6. Check console for errors
+cmux browser surface:<ID> console list
+cmux browser surface:<ID> errors list
 ```
-goto http://localhost:8000/dev-login   # auto-login as first user
-goto http://localhost:8000/policies    # then navigate to any authenticated page
-```
+
+Notes:
+- `/dev-login` auto-logs in as `User::first()`. If DB is empty, create a user first via tinker.
+- `agent_activated` sidebar check requires at least one agent with `wallet_address` set. If sidebar hides nav items, content still renders, verify via `eval`.
+- React synthetic events don't fire from programmatic `value` changes. Use `eval` with `fetch()` to test API mutations instead of simulating form interactions.
+- For narrow cmux browser viewports, rely on DOM eval over screenshots.
 
 ### TypeScript Packages (bun)
 
@@ -117,7 +154,7 @@ bun run build
 
 ### Frontend Pages (`resources/js/pages/`)
 
-Inertia.js SPA: `Landing`, `Login`, `Dashboard`, `PolicyBuilder`, `Approvals`, `AuditLog`, `Claim`, `Integrations`
+Inertia.js SPA: `Landing`, `Login`, `Dashboard`, `Agents`, `PolicyBuilder`, `Approvals`, `AuditLog`, `Claim`, `Integrations`
 
 ## Development Process
 

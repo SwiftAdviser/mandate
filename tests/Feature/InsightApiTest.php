@@ -15,7 +15,9 @@ class InsightApiTest extends TestCase
     use RefreshDatabase;
 
     private User $user;
+
     private Agent $agent;
+
     private Policy $policy;
 
     protected function setUp(): void
@@ -26,31 +28,31 @@ class InsightApiTest extends TestCase
 
         $this->user = User::factory()->create();
         $this->agent = Agent::create([
-            'name'        => 'TestAgent',
-            'evm_address' => '0xabcdef1234567890abcdef1234567890abcdef12',
-            'chain_id'    => 84532,
-            'user_id'     => $this->user->id,
+            'name' => 'TestAgent',
+            'wallet_address' => '0xabcdef1234567890abcdef1234567890abcdef12',
+            'chain_id' => '84532',
+            'user_id' => $this->user->id,
         ]);
         $this->policy = Policy::create([
-            'agent_id'               => $this->agent->id,
+            'agent_id' => $this->agent->id,
             'spend_limit_per_tx_usd' => 100,
-            'is_active'              => true,
-            'version'                => 1,
+            'is_active' => true,
+            'version' => 1,
         ]);
     }
 
     private function createInsight(array $overrides = []): PolicyInsight
     {
         return PolicyInsight::create(array_merge([
-            'agent_id'       => $this->agent->id,
-            'insight_type'   => PolicyInsight::TYPE_ADD_TO_ALLOWLIST,
-            'status'         => PolicyInsight::STATUS_ACTIVE,
-            'confidence'     => 0.7,
+            'agent_id' => $this->agent->id,
+            'insight_type' => PolicyInsight::TYPE_ADD_TO_ALLOWLIST,
+            'status' => PolicyInsight::STATUS_ACTIVE,
+            'confidence' => 0.7,
             'evidence_count' => 3,
-            'evidence'       => [],
-            'suggestion'     => ['field' => 'allowed_addresses', 'action' => 'add', 'value' => '0xabc'],
-            'title'          => 'Add 0xabc to allowlist',
-            'description'    => 'You approved 3 transfers.',
+            'evidence' => [],
+            'suggestion' => ['field' => 'allowed_addresses', 'action' => 'add', 'value' => '0xabc'],
+            'title' => 'Add 0xabc to allowlist',
+            'description' => 'You approved 3 transfers.',
         ], $overrides));
     }
 
@@ -78,9 +80,9 @@ class InsightApiTest extends TestCase
     /** @test */
     public function list_insights_excludes_other_users_agents(): void
     {
-        $otherUser  = User::factory()->create();
+        $otherUser = User::factory()->create();
         $otherAgent = Agent::create([
-            'name' => 'Other', 'evm_address' => '0x1234', 'chain_id' => 1, 'user_id' => $otherUser->id,
+            'name' => 'Other', 'wallet_address' => '0x1234', 'chain_id' => 1, 'user_id' => $otherUser->id,
         ]);
         PolicyInsight::create([
             'agent_id' => $otherAgent->id, 'insight_type' => PolicyInsight::TYPE_ADD_TO_ALLOWLIST,

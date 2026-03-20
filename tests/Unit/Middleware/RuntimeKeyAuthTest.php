@@ -16,16 +16,16 @@ class RuntimeKeyAuthTest extends TestCase
 
     private function middleware(): RuntimeKeyAuth
     {
-        return new RuntimeKeyAuth();
+        return new RuntimeKeyAuth;
     }
 
     private function createAgentWithKey(array $agentOverrides = []): array
     {
         $agent = Agent::create(array_merge([
-            'id'          => Str::uuid(),
-            'name'        => 'TestAgent',
-            'evm_address' => '0xabcdef1234567890abcdef1234567890abcdef12',
-            'chain_id'    => 84532,
+            'id' => Str::uuid(),
+            'name' => 'TestAgent',
+            'wallet_address' => '0xabcdef1234567890abcdef1234567890abcdef12',
+            'chain_id' => '84532',
         ], $agentOverrides));
 
         [$rawKey, $keyModel] = AgentApiKey::generate($agent);
@@ -58,7 +58,7 @@ class RuntimeKeyAuthTest extends TestCase
     {
         [$agent, $rawKey] = $this->createAgentWithKey();
 
-        $request  = $this->makeRequest($rawKey);
+        $request = $this->makeRequest($rawKey);
         $response = $this->callMiddleware($request);
 
         $this->assertSame(200, $response->getStatusCode());
@@ -69,7 +69,7 @@ class RuntimeKeyAuthTest extends TestCase
     /** @test */
     public function it_rejects_missing_bearer_token(): void
     {
-        $request  = $this->makeRequest(null);
+        $request = $this->makeRequest(null);
         $response = $this->callMiddleware($request);
 
         $this->assertSame(401, $response->getStatusCode());
@@ -79,7 +79,7 @@ class RuntimeKeyAuthTest extends TestCase
     /** @test */
     public function it_rejects_invalid_prefix(): void
     {
-        $request  = $this->makeRequest('invalid_prefix_abc123');
+        $request = $this->makeRequest('invalid_prefix_abc123');
         $response = $this->callMiddleware($request);
 
         $this->assertSame(401, $response->getStatusCode());
@@ -88,7 +88,7 @@ class RuntimeKeyAuthTest extends TestCase
     /** @test */
     public function it_rejects_unknown_key_hash(): void
     {
-        $request  = $this->makeRequest('mndt_live_thiskeyisnotindatabase');
+        $request = $this->makeRequest('mndt_live_thiskeyisnotindatabase');
         $response = $this->callMiddleware($request);
 
         $this->assertSame(401, $response->getStatusCode());
@@ -101,7 +101,7 @@ class RuntimeKeyAuthTest extends TestCase
         [$agent, $rawKey, $keyModel] = $this->createAgentWithKey();
         $keyModel->update(['revoked_at' => now()]);
 
-        $request  = $this->makeRequest($rawKey);
+        $request = $this->makeRequest($rawKey);
         $response = $this->callMiddleware($request);
 
         $this->assertSame(401, $response->getStatusCode());
@@ -115,7 +115,7 @@ class RuntimeKeyAuthTest extends TestCase
             'circuit_breaker_reason' => 'security_violation',
         ]);
 
-        $request  = $this->makeRequest($rawKey);
+        $request = $this->makeRequest($rawKey);
         $response = $this->callMiddleware($request);
 
         $this->assertSame(403, $response->getStatusCode());
@@ -150,10 +150,10 @@ class RuntimeKeyAuthTest extends TestCase
     public function it_accepts_test_key_prefix(): void
     {
         // Base Sepolia (84532) generates mndt_test_ keys
-        [$agent, $rawKey] = $this->createAgentWithKey(['chain_id' => 84532]);
+        [$agent, $rawKey] = $this->createAgentWithKey(['chain_id' => '84532']);
         $this->assertTrue(str_starts_with($rawKey, 'mndt_test_'));
 
-        $request  = $this->makeRequest($rawKey);
+        $request = $this->makeRequest($rawKey);
         $response = $this->callMiddleware($request);
 
         $this->assertSame(200, $response->getStatusCode());

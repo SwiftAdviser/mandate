@@ -22,7 +22,7 @@ class UserFactory extends Factory
             'password' => static::$password ??= Hash::make('password'),
             'remember_token' => Str::random(10),
             'github_id' => fake()->unique()->numberBetween(100000, 99999999),
-            'avatar_url' => 'https://avatars.githubusercontent.com/u/' . fake()->numberBetween(1, 99999),
+            'avatar_url' => 'https://avatars.githubusercontent.com/u/'.fake()->numberBetween(1, 99999),
         ];
     }
 

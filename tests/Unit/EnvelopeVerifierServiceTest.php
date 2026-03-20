@@ -15,7 +15,8 @@ class EnvelopeVerifierServiceTest extends TestCase
 {
     use RefreshDatabase;
 
-    private const CHAIN_ID    = 84532;
+    private const CHAIN_ID = '84532';
+
     private const EVM_ADDRESS = '0xabcdef1234567890abcdef1234567890abcdef12';
 
     protected function setUp(): void
@@ -35,45 +36,45 @@ class EnvelopeVerifierServiceTest extends TestCase
     private function createIntentWithAgent(array $intentOverrides = []): TxIntent
     {
         $agent = Agent::create([
-            'id'          => Str::uuid(),
-            'name'        => 'TestAgent',
-            'evm_address' => self::EVM_ADDRESS,
-            'chain_id'    => self::CHAIN_ID,
+            'id' => Str::uuid(),
+            'name' => 'TestAgent',
+            'wallet_address' => self::EVM_ADDRESS,
+            'chain_id' => self::CHAIN_ID,
         ]);
 
         $policy = Policy::create([
-            'agent_id'               => $agent->id,
+            'agent_id' => $agent->id,
             'spend_limit_per_tx_usd' => 100,
-            'is_active'              => true,
-            'version'                => 1,
+            'is_active' => true,
+            'version' => 1,
         ]);
 
         return TxIntent::create(array_merge([
-            'id'                       => Str::uuid(),
-            'agent_id'                 => $agent->id,
-            'policy_id'                => $policy->id,
-            'chain_id'                 => self::CHAIN_ID,
-            'nonce'                    => 5,
-            'to_address'               => '0x036cbd53842c5426634e7929541ec2318f3dcf7e',
-            'calldata'                 => '0xa9059cbb0000000000000000000000001234',
-            'value_wei'                => '0',
-            'gas_limit'                => '100000',
-            'max_fee_per_gas'          => '1000000000',
+            'id' => Str::uuid(),
+            'agent_id' => $agent->id,
+            'policy_id' => $policy->id,
+            'chain_id' => self::CHAIN_ID,
+            'nonce' => 5,
+            'to_address' => '0x036cbd53842c5426634e7929541ec2318f3dcf7e',
+            'calldata' => '0xa9059cbb0000000000000000000000001234',
+            'value_wei' => '0',
+            'gas_limit' => '100000',
+            'max_fee_per_gas' => '1000000000',
             'max_priority_fee_per_gas' => '1000000000',
-            'status'                   => TxIntent::STATUS_BROADCASTED,
-            'intent_hash'              => '0x' . str_repeat('ab', 32),
+            'status' => TxIntent::STATUS_BROADCASTED,
+            'intent_hash' => '0x'.str_repeat('ab', 32),
         ], $intentOverrides));
     }
 
     private function rpcTxResponse(array $overrides = []): array
     {
         return array_merge([
-            'from'  => self::EVM_ADDRESS,
-            'to'    => '0x036cbd53842c5426634e7929541ec2318f3dcf7e',
+            'from' => self::EVM_ADDRESS,
+            'to' => '0x036cbd53842c5426634e7929541ec2318f3dcf7e',
             'nonce' => '0x5',
             'input' => '0xa9059cbb0000000000000000000000001234',
             'value' => '0x0',
-            'hash'  => '0x' . str_repeat('ff', 32),
+            'hash' => '0x'.str_repeat('ff', 32),
         ], $overrides);
     }
 
@@ -89,12 +90,12 @@ class EnvelopeVerifierServiceTest extends TestCase
         Http::fake([
             'https://rpc.test/*' => Http::response([
                 'jsonrpc' => '2.0',
-                'id'      => 1,
-                'result'  => $this->rpcTxResponse(),
+                'id' => 1,
+                'result' => $this->rpcTxResponse(),
             ]),
         ]);
 
-        $result = $this->service()->verify($intent, '0x' . str_repeat('ff', 32));
+        $result = $this->service()->verify($intent, '0x'.str_repeat('ff', 32));
 
         $this->assertSame('match', $result);
     }
@@ -107,8 +108,8 @@ class EnvelopeVerifierServiceTest extends TestCase
         Http::fake([
             'https://rpc.test/*' => Http::response([
                 'jsonrpc' => '2.0',
-                'id'      => 1,
-                'result'  => $this->rpcTxResponse([
+                'id' => 1,
+                'result' => $this->rpcTxResponse([
                     'to' => '0xdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef',
                 ]),
             ]),
@@ -127,8 +128,8 @@ class EnvelopeVerifierServiceTest extends TestCase
         Http::fake([
             'https://rpc.test/*' => Http::response([
                 'jsonrpc' => '2.0',
-                'id'      => 1,
-                'result'  => $this->rpcTxResponse([
+                'id' => 1,
+                'result' => $this->rpcTxResponse([
                     'from' => '0x0000000000000000000000000000000000000000',
                 ]),
             ]),
@@ -147,8 +148,8 @@ class EnvelopeVerifierServiceTest extends TestCase
         Http::fake([
             'https://rpc.test/*' => Http::response([
                 'jsonrpc' => '2.0',
-                'id'      => 1,
-                'result'  => $this->rpcTxResponse([
+                'id' => 1,
+                'result' => $this->rpcTxResponse([
                     'nonce' => '0xa', // 10, not 5
                 ]),
             ]),
@@ -167,8 +168,8 @@ class EnvelopeVerifierServiceTest extends TestCase
         Http::fake([
             'https://rpc.test/*' => Http::response([
                 'jsonrpc' => '2.0',
-                'id'      => 1,
-                'result'  => $this->rpcTxResponse([
+                'id' => 1,
+                'result' => $this->rpcTxResponse([
                     'input' => '0xdeadbeef',
                 ]),
             ]),
@@ -187,8 +188,8 @@ class EnvelopeVerifierServiceTest extends TestCase
         Http::fake([
             'https://rpc.test/*' => Http::response([
                 'jsonrpc' => '2.0',
-                'id'      => 1,
-                'result'  => $this->rpcTxResponse([
+                'id' => 1,
+                'result' => $this->rpcTxResponse([
                     'value' => '0x1000', // non-zero
                 ]),
             ]),
@@ -207,8 +208,8 @@ class EnvelopeVerifierServiceTest extends TestCase
         Http::fake([
             'https://rpc.test/*' => Http::response([
                 'jsonrpc' => '2.0',
-                'id'      => 1,
-                'result'  => null,
+                'id' => 1,
+                'result' => null,
             ]),
         ]);
 
@@ -267,8 +268,8 @@ class EnvelopeVerifierServiceTest extends TestCase
         Http::fake([
             'https://rpc.test/test-key-123' => Http::response([
                 'jsonrpc' => '2.0',
-                'id'      => 1,
-                'result'  => $this->rpcTxResponse(),
+                'id' => 1,
+                'result' => $this->rpcTxResponse(),
             ]),
         ]);
 
@@ -290,8 +291,8 @@ class EnvelopeVerifierServiceTest extends TestCase
         Http::fake([
             'https://rpc.test/*' => Http::response([
                 'jsonrpc' => '2.0',
-                'id'      => 1,
-                'result'  => '0xa', // 10 > 5
+                'id' => 1,
+                'result' => '0xa', // 10 > 5
             ]),
         ]);
 
@@ -306,8 +307,8 @@ class EnvelopeVerifierServiceTest extends TestCase
         Http::fake([
             'https://rpc.test/*' => Http::response([
                 'jsonrpc' => '2.0',
-                'id'      => 1,
-                'result'  => '0x5',
+                'id' => 1,
+                'result' => '0x5',
             ]),
         ]);
 

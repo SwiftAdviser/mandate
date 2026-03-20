@@ -19,9 +19,9 @@ class CircuitBreakerController extends Controller
         $agent->refresh();
 
         return response()->json([
-            'agentId'              => $agent->id,
+            'agentId' => $agent->id,
             'circuitBreakerActive' => $active,
-            'reason'               => $agent->circuit_breaker_reason,
+            'reason' => $agent->circuit_breaker_reason,
         ]);
     }
 
@@ -30,10 +30,10 @@ class CircuitBreakerController extends Controller
         $agent = Agent::where('id', $agentId)->where('user_id', auth()->id())->firstOrFail();
 
         return response()->json([
-            'agentId'              => $agent->id,
+            'agentId' => $agent->id,
             'circuitBreakerActive' => $agent->circuit_breaker_active,
-            'trippedAt'            => $agent->circuit_breaker_tripped_at,
-            'reason'               => $agent->circuit_breaker_reason,
+            'trippedAt' => $agent->circuit_breaker_tripped_at,
+            'reason' => $agent->circuit_breaker_reason,
         ]);
     }
 }

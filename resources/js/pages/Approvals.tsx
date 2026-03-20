@@ -1,3 +1,4 @@
+import ChainBadge from '@/components/ChainBadge';
 import DashboardLayout from '@/layouts/DashboardLayout';
 import { formatUsd, riskColor, shortAddr, timeAgo } from '@/lib/utils';
 import { router } from '@inertiajs/react';
@@ -6,7 +7,7 @@ import { useState } from 'react';
 interface Intent {
   id: string; decoded_action: string | null;
   to_address: string; amount_usd_computed: string | null;
-  calldata: string; chain_id: number; created_at: string;
+  calldata: string; chain_id: string; created_at: string;
   risk_level: string | null; risk_degraded: boolean;
   summary: string | null;
   reason: string | null;
@@ -87,7 +88,7 @@ function ApprovalCard({ approval, onDecide }: { approval: Approval; onDecide: ()
         </div>
         <div>
           <div style={{ fontSize: 10, color: 'var(--text-dim)', fontFamily: 'var(--font-mono)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 4 }}>Chain</div>
-          <div style={{ fontFamily: 'var(--font-mono)', fontSize: 12, color: 'var(--text-secondary)' }}>{intent.chain_id}</div>
+          <ChainBadge chainId={intent.chain_id} />
         </div>
       </div>
 

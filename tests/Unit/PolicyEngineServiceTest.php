@@ -62,7 +62,7 @@ class PolicyEngineServiceTest extends TestCase
         $agent = Agent::create([
             'id' => Str::uuid(),
             'name' => 'TestAgent',
-            'evm_address' => '0xabcdef1234567890abcdef1234567890abcdef12',
+            'wallet_address' => '0xabcdef1234567890abcdef1234567890abcdef12',
             'chain_id' => self::CHAIN_ID,
         ]);
 
@@ -136,7 +136,7 @@ class PolicyEngineServiceTest extends TestCase
     {
         [$agent] = $this->createAgentWithPolicy();
 
-        $result = $this->service()->validate($agent, $this->buildPayload());
+        $result = $this->service()->rawValidate($agent, $this->buildPayload());
 
         $this->assertTrue($result['allowed']);
         $this->assertNotNull($result['intentId']);
@@ -152,7 +152,7 @@ class PolicyEngineServiceTest extends TestCase
         // Flush cache so the service reads from DB
         \Illuminate\Support\Facades\Cache::flush();
 
-        $result = $this->service()->validate($agent, $this->buildPayload());
+        $result = $this->service()->rawValidate($agent, $this->buildPayload());
 
         $this->assertFalse($result['allowed']);
         $this->assertSame('circuit_breaker_active', $result['blockReason']);
@@ -165,7 +165,7 @@ class PolicyEngineServiceTest extends TestCase
 
         $policy->delete();
 
-        $result = $this->service()->validate($agent, $this->buildPayload());
+        $result = $this->service()->rawValidate($agent, $this->buildPayload());
 
         $this->assertFalse($result['allowed']);
         $this->assertSame('no_active_policy', $result['blockReason']);
@@ -181,7 +181,7 @@ class PolicyEngineServiceTest extends TestCase
         ]);
 
         // 10_000_000 raw = 10 USDC at 6 decimals; stable price = $1/unit → $10
-        $result = $this->service()->validate($agent, $this->buildPayload());
+        $result = $this->service()->rawValidate($agent, $this->buildPayload());
 
         $this->assertFalse($result['allowed']);
         $this->assertSame('per_tx_limit_exceeded', $result['blockReason']);
@@ -196,7 +196,7 @@ class PolicyEngineServiceTest extends TestCase
             'spend_limit_per_day_usd' => 5,
         ]);
 
-        $result = $this->service()->validate($agent, $this->buildPayload());
+        $result = $this->service()->rawValidate($agent, $this->buildPayload());
 
         $this->assertFalse($result['allowed']);
         $this->assertSame('daily_quota_exceeded', $result['blockReason']);
@@ -209,8 +209,8 @@ class PolicyEngineServiceTest extends TestCase
 
         $payload = $this->buildPayload();
 
-        $first = $this->service()->validate($agent, $payload);
-        $second = $this->service()->validate($agent, $payload);
+        $first = $this->service()->rawValidate($agent, $payload);
+        $second = $this->service()->rawValidate($agent, $payload);
 
         $this->assertTrue($first['allowed']);
         $this->assertTrue($second['allowed']);
@@ -227,7 +227,7 @@ class PolicyEngineServiceTest extends TestCase
             'require_approval_above_usd' => 5.0,
         ]);
 
-        $result = $this->service()->validate($agent, $this->buildPayload());
+        $result = $this->service()->rawValidate($agent, $this->buildPayload());
 
         // allowed=true but requiresApproval=true
         $this->assertTrue($result['allowed']);
@@ -269,7 +269,7 @@ class PolicyEngineServiceTest extends TestCase
             'allowed_addresses' => ['0xdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef'],
         ]);
 
-        $result = $this->service()->validate($agent, $this->buildPayload());
+        $result = $this->service()->rawValidate($agent, $this->buildPayload());
 
         $this->assertFalse($result['allowed']);
         $this->assertSame('address_not_allowed', $result['blockReason']);
@@ -310,7 +310,7 @@ class PolicyEngineServiceTest extends TestCase
         ]);
 
         [$agent] = $this->createAgentWithPolicy(['risk_scan_enabled' => true]);
-        $result = $this->service()->validate($agent, $this->buildPayload());
+        $result = $this->service()->rawValidate($agent, $this->buildPayload());
 
         $this->assertFalse($result['allowed']);
         $this->assertSame('aegis_critical_risk', $result['blockReason']);
@@ -324,7 +324,7 @@ class PolicyEngineServiceTest extends TestCase
         ]);
 
         [$agent] = $this->createAgentWithPolicy(['risk_scan_enabled' => true]);
-        $result = $this->service()->validate($agent, $this->buildPayload());
+        $result = $this->service()->rawValidate($agent, $this->buildPayload());
 
         $this->assertTrue($result['allowed']);
         $this->assertTrue($result['requiresApproval']);
@@ -339,7 +339,7 @@ class PolicyEngineServiceTest extends TestCase
         ]);
 
         [$agent] = $this->createAgentWithPolicy(['risk_scan_enabled' => true]);
-        $result = $this->service()->validate($agent, $this->buildPayload());
+        $result = $this->service()->rawValidate($agent, $this->buildPayload());
 
         $this->assertTrue($result['allowed']);
 
@@ -360,7 +360,7 @@ class PolicyEngineServiceTest extends TestCase
         ]);
 
         [$agent] = $this->createAgentWithPolicy(['risk_scan_enabled' => true]);
-        $result = $this->service()->validate($agent, $this->buildPayload());
+        $result = $this->service()->rawValidate($agent, $this->buildPayload());
 
         $this->assertTrue($result['allowed']);
         $this->assertTrue($result['riskDegraded']);
@@ -373,7 +373,7 @@ class PolicyEngineServiceTest extends TestCase
         config(['mandate.aegis.enabled' => true]);
 
         [$agent] = $this->createAgentWithPolicy(['risk_scan_enabled' => false]);
-        $result = $this->service()->validate($agent, $this->buildPayload());
+        $result = $this->service()->rawValidate($agent, $this->buildPayload());
 
         $this->assertTrue($result['allowed']);
         $this->assertNull($result['riskLevel'] ?? null);
@@ -413,7 +413,7 @@ class PolicyEngineServiceTest extends TestCase
         ]);
 
         [$agent] = $this->createAgentWithPolicy();
-        $result = $this->service()->validate($agent, $this->buildPayload());
+        $result = $this->service()->rawValidate($agent, $this->buildPayload());
 
         $this->assertTrue($result['allowed']);
         $this->assertTrue($result['requiresApproval']);
@@ -434,7 +434,7 @@ class PolicyEngineServiceTest extends TestCase
         ]);
 
         [$agent] = $this->createAgentWithPolicy();
-        $result = $this->service()->validate($agent, $this->buildPayload());
+        $result = $this->service()->rawValidate($agent, $this->buildPayload());
 
         $this->assertTrue($result['allowed']);
         $this->assertTrue($result['requiresApproval']); // score 15 < threshold 30
@@ -445,7 +445,7 @@ class PolicyEngineServiceTest extends TestCase
     {
         // reputation.enabled is false from setUp
         [$agent] = $this->createAgentWithPolicy();
-        $result = $this->service()->validate($agent, $this->buildPayload());
+        $result = $this->service()->rawValidate($agent, $this->buildPayload());
 
         $this->assertTrue($result['allowed']);
         $this->assertFalse($result['requiresApproval']);
@@ -459,7 +459,7 @@ class PolicyEngineServiceTest extends TestCase
         ]);
 
         [$agent] = $this->createAgentWithPolicy();
-        $result = $this->service()->validate($agent, $this->buildPayload());
+        $result = $this->service()->rawValidate($agent, $this->buildPayload());
 
         // degraded=true → no forced approval, validation continues normally
         $this->assertTrue($result['allowed']);
@@ -478,7 +478,7 @@ class PolicyEngineServiceTest extends TestCase
             'spend_limit_per_day_usd' => 10000,
         ]);
 
-        $result = $this->service()->validate($agent, $this->buildPayload());
+        $result = $this->service()->rawValidate($agent, $this->buildPayload());
 
         $this->assertFalse($result['allowed']);
         $this->assertSame('per_tx_limit_exceeded', $result['blockReason']);
@@ -493,7 +493,7 @@ class PolicyEngineServiceTest extends TestCase
             'allowed_addresses' => ['0xdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef'],
         ]);
 
-        $result = $this->service()->validate($agent, $this->buildPayload());
+        $result = $this->service()->rawValidate($agent, $this->buildPayload());
 
         $this->assertFalse($result['allowed']);
         $this->assertSame('address_not_allowed', $result['blockReason']);
@@ -506,7 +506,7 @@ class PolicyEngineServiceTest extends TestCase
         [$agent, $policy] = $this->createAgentWithPolicy();
         $policy->delete();
 
-        $result = $this->service()->validate($agent, $this->buildPayload());
+        $result = $this->service()->rawValidate($agent, $this->buildPayload());
 
         $this->assertFalse($result['allowed']);
         $this->assertNotEmpty($result['blockDetail']);
@@ -519,7 +519,7 @@ class PolicyEngineServiceTest extends TestCase
         $agent->update(['circuit_breaker_active' => true]);
         \Illuminate\Support\Facades\Cache::flush();
 
-        $result = $this->service()->validate($agent, $this->buildPayload());
+        $result = $this->service()->rawValidate($agent, $this->buildPayload());
 
         $this->assertFalse($result['allowed']);
         $this->assertSame('circuit_breaker_active', $result['blockReason']);
@@ -535,7 +535,7 @@ class PolicyEngineServiceTest extends TestCase
             'spend_limit_per_day_usd' => 5,
         ]);
 
-        $result = $this->service()->validate($agent, $this->buildPayload());
+        $result = $this->service()->rawValidate($agent, $this->buildPayload());
 
         $this->assertFalse($result['allowed']);
         $this->assertSame('daily_quota_exceeded', $result['blockReason']);
@@ -555,7 +555,7 @@ class PolicyEngineServiceTest extends TestCase
             'spend_limit_per_day_usd' => 10000,
         ]);
 
-        $result = $this->service()->validate($agent, $this->buildPayload());
+        $result = $this->service()->rawValidate($agent, $this->buildPayload());
 
         $this->assertFalse($result['allowed']);
         $this->assertSame('per_tx_limit_exceeded', $result['blockReason']);
@@ -571,7 +571,7 @@ class PolicyEngineServiceTest extends TestCase
         $agent->update(['circuit_breaker_active' => true]);
         \Illuminate\Support\Facades\Cache::flush();
 
-        $result = $this->service()->validate($agent, $this->buildPayload());
+        $result = $this->service()->rawValidate($agent, $this->buildPayload());
 
         $this->assertFalse($result['allowed']);
         $this->assertSame('circuit_breaker_active', $result['blockReason']);
@@ -590,7 +590,7 @@ class PolicyEngineServiceTest extends TestCase
         ]);
 
         [$agent] = $this->createAgentWithPolicy(['risk_scan_enabled' => true]);
-        $result = $this->service()->validate($agent, $this->buildPayload());
+        $result = $this->service()->rawValidate($agent, $this->buildPayload());
 
         $this->assertFalse($result['allowed']);
         $this->assertSame('aegis_critical_risk', $result['blockReason']);
@@ -607,7 +607,7 @@ class PolicyEngineServiceTest extends TestCase
             'spend_limit_per_day_usd' => 5,
         ]);
 
-        $result = $this->service()->validate($agent, $this->buildPayload());
+        $result = $this->service()->rawValidate($agent, $this->buildPayload());
 
         $this->assertFalse($result['allowed']);
         $this->assertSame('daily_quota_exceeded', $result['blockReason']);
@@ -623,7 +623,7 @@ class PolicyEngineServiceTest extends TestCase
             'allowed_addresses' => ['0xdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef'],
         ]);
 
-        $result = $this->service()->validate($agent, $this->buildPayload());
+        $result = $this->service()->rawValidate($agent, $this->buildPayload());
 
         $this->assertFalse($result['allowed']);
         $this->assertSame('address_not_allowed', $result['blockReason']);
@@ -644,7 +644,7 @@ class PolicyEngineServiceTest extends TestCase
             'require_approval_above_usd' => 5.0,
         ]);
 
-        $result = $this->service()->validate($agent, $this->buildPayload());
+        $result = $this->service()->rawValidate($agent, $this->buildPayload());
 
         $this->assertTrue($result['allowed']);
         $this->assertTrue($result['requiresApproval']);
@@ -663,7 +663,7 @@ class PolicyEngineServiceTest extends TestCase
         ]);
 
         [$agent] = $this->createAgentWithPolicy();
-        $result = $this->service()->validate($agent, $this->buildPayload());
+        $result = $this->service()->rawValidate($agent, $this->buildPayload());
 
         $this->assertTrue($result['allowed']);
         $this->assertTrue($result['requiresApproval']);
@@ -675,7 +675,7 @@ class PolicyEngineServiceTest extends TestCase
     public function it_returns_null_approval_reason_when_no_approval_needed(): void
     {
         [$agent] = $this->createAgentWithPolicy();
-        $result = $this->service()->validate($agent, $this->buildPayload());
+        $result = $this->service()->rawValidate($agent, $this->buildPayload());
 
         $this->assertTrue($result['allowed']);
         $this->assertFalse($result['requiresApproval']);
@@ -692,7 +692,7 @@ class PolicyEngineServiceTest extends TestCase
         ]);
 
         [$agent] = $this->createAgentWithPolicy(['risk_scan_enabled' => true]);
-        $result = $this->service()->validate($agent, $this->buildPayload());
+        $result = $this->service()->rawValidate($agent, $this->buildPayload());
 
         $this->assertFalse($result['allowed']);
         $this->assertSame('aegis_critical_risk', $result['blockReason']);

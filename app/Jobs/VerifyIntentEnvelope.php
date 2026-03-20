@@ -17,7 +17,8 @@ class VerifyIntentEnvelope implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
-    public int $tries   = 5;
+    public int $tries = 5;
+
     public int $backoff = 10; // seconds between retries
 
     public function __construct(
@@ -26,13 +27,13 @@ class VerifyIntentEnvelope implements ShouldQueue
     ) {}
 
     public function handle(
-        EnvelopeVerifierService   $verifier,
+        EnvelopeVerifierService $verifier,
         IntentStateMachineService $stateMachine,
-        CircuitBreakerService     $circuitBreaker,
+        CircuitBreakerService $circuitBreaker,
     ): void {
         $intent = TxIntent::with('agent')->find($this->intentId);
 
-        if (!$intent || $intent->status !== TxIntent::STATUS_BROADCASTED) {
+        if (! $intent || $intent->status !== TxIntent::STATUS_BROADCASTED) {
             return;
         }
 
@@ -41,23 +42,25 @@ class VerifyIntentEnvelope implements ShouldQueue
         if ($result === 'propagation_delay') {
             // Re-queue; scheduler will also confirm via receipt
             $this->release(15);
+
             return;
         }
 
         if ($result === 'mismatch') {
             Log::critical('SECURITY VIOLATION: envelope mismatch', [
                 'intent_id' => $intent->id,
-                'tx_hash'   => $this->txHash,
-                'agent_id'  => $intent->agent_id,
+                'tx_hash' => $this->txHash,
+                'agent_id' => $intent->agent_id,
             ]);
 
             $circuitBreaker->trip($intent->agent, 'security_violation: envelope mismatch');
 
             $stateMachine->transition($intent, TxIntent::STATUS_FAILED, 'system', 'system', [
-                'block_reason'     => 'security_violation',
-                'event_type'       => 'security_violation',
+                'block_reason' => 'security_violation',
+                'event_type' => 'security_violation',
                 'tx_hash_received' => $this->txHash,
             ]);
+
             return;
         }
 
@@ -69,7 +72,7 @@ class VerifyIntentEnvelope implements ShouldQueue
     {
         Log::error('VerifyIntentEnvelope job failed permanently', [
             'intent_id' => $this->intentId,
-            'error'     => $exception->getMessage(),
+            'error' => $exception->getMessage(),
         ]);
     }
 }

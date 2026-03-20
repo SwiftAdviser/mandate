@@ -13,8 +13,10 @@ class PriceOracleServiceTest extends TestCase
 {
     use RefreshDatabase;
 
-    private const CHAIN_ID     = 84532;
+    private const CHAIN_ID = 84532;
+
     private const USDC_ADDRESS = '0x036cbd53842c5426634e7929541ec2318f3dcf7e';
+
     private const WETH_ADDRESS = '0x4200000000000000000000000000000000000006';
 
     protected function setUp(): void
@@ -30,20 +32,20 @@ class PriceOracleServiceTest extends TestCase
         config(['mandate.price_oracle.stable_usd' => 1.0]);
 
         TokenRegistry::create([
-            'chain_id'  => self::CHAIN_ID,
-            'address'   => self::USDC_ADDRESS,
-            'symbol'    => 'USDC',
-            'decimals'  => 6,
+            'chain_id' => self::CHAIN_ID,
+            'address' => self::USDC_ADDRESS,
+            'symbol' => 'USDC',
+            'decimals' => 6,
             'is_stable' => true,
         ]);
 
         TokenRegistry::create([
-            'chain_id'      => self::CHAIN_ID,
-            'address'       => self::WETH_ADDRESS,
-            'symbol'        => 'WETH',
-            'decimals'      => 18,
-            'is_stable'     => false,
-            'coingecko_id'  => 'ethereum',
+            'chain_id' => self::CHAIN_ID,
+            'address' => self::WETH_ADDRESS,
+            'symbol' => 'WETH',
+            'decimals' => 18,
+            'is_stable' => false,
+            'coingecko_id' => 'ethereum',
         ]);
     }
 
@@ -113,7 +115,7 @@ class PriceOracleServiceTest extends TestCase
     {
         Http::fake([
             'https://api.g.alchemy.com/*' => Http::response([], 500),
-            'https://api.coingecko.com/*'  => Http::response([
+            'https://api.coingecko.com/*' => Http::response([
                 'ethereum' => ['usd' => 3200.00],
             ]),
         ]);
@@ -128,7 +130,7 @@ class PriceOracleServiceTest extends TestCase
     {
         Http::fake([
             'https://api.g.alchemy.com/*' => Http::response([], 500),
-            'https://api.coingecko.com/*'  => Http::response([], 500),
+            'https://api.coingecko.com/*' => Http::response([], 500),
         ]);
 
         $result = $this->service()->toUsd(self::CHAIN_ID, self::WETH_ADDRESS, '1000000000000000000');
@@ -159,7 +161,7 @@ class PriceOracleServiceTest extends TestCase
             ]),
         ]);
 
-        $first  = $this->service()->fetchPrice('WETH');
+        $first = $this->service()->fetchPrice('WETH');
         $second = $this->service()->fetchPrice('WETH');
 
         $this->assertSame($first, $second);
@@ -177,8 +179,8 @@ class PriceOracleServiceTest extends TestCase
         config(['mandate.coingecko_api_key' => 'cg-pro-key']);
 
         Http::fake([
-            'https://api.g.alchemy.com/*'     => Http::response([], 500),
-            'https://pro-api.coingecko.com/*'  => Http::response([
+            'https://api.g.alchemy.com/*' => Http::response([], 500),
+            'https://pro-api.coingecko.com/*' => Http::response([
                 'ethereum' => ['usd' => 3100.00],
             ]),
         ]);
@@ -195,8 +197,8 @@ class PriceOracleServiceTest extends TestCase
         config(['mandate.coingecko_api_key' => null]);
 
         Http::fake([
-            'https://api.g.alchemy.com/*'   => Http::response([], 500),
-            'https://api.coingecko.com/*'    => Http::response([
+            'https://api.g.alchemy.com/*' => Http::response([], 500),
+            'https://api.coingecko.com/*' => Http::response([
                 'ethereum' => ['usd' => 3000.00],
             ]),
         ]);
@@ -233,7 +235,7 @@ class PriceOracleServiceTest extends TestCase
             'https://api.g.alchemy.com/*' => Http::response([
                 'data' => [['prices' => [['value' => null]]]],
             ]),
-            'https://api.coingecko.com/*'  => Http::response([
+            'https://api.coingecko.com/*' => Http::response([
                 'ethereum' => ['usd' => 2900.00],
             ]),
         ]);

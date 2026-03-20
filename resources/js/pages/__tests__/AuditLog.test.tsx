@@ -13,7 +13,7 @@ function makeIntent(overrides = {}) {
     to_address: '0xabcdef1234567890abcdef1234567890abcdef12',
     created_at: new Date().toISOString(),
     tx_hash: '0xabc123def456abc123def456abc123def456abc123def456abc123def456abc1',
-    chain_id: 84532,
+    chain_id: '84532',
     intent_hash: '0x' + 'ab'.repeat(32),
     risk_level: null,
     summary: null,

@@ -26,10 +26,10 @@ class AuthTest extends TestCase
                 'access_token' => 'gho_test_token_123',
             ]),
             'api.github.com/user' => Http::response([
-                'id'         => 12345678,
-                'login'      => 'testdev',
-                'name'       => 'Test Developer',
-                'email'      => 'test@example.com',
+                'id' => 12345678,
+                'login' => 'testdev',
+                'name' => 'Test Developer',
+                'email' => 'test@example.com',
                 'avatar_url' => 'https://avatars.githubusercontent.com/u/12345678',
             ]),
         ]);
@@ -42,8 +42,8 @@ class AuthTest extends TestCase
 
         $this->assertDatabaseHas('users', [
             'github_id' => 12345678,
-            'name'      => 'Test Developer',
-            'email'     => 'test@example.com',
+            'name' => 'Test Developer',
+            'email' => 'test@example.com',
         ]);
 
         $this->assertAuthenticated();

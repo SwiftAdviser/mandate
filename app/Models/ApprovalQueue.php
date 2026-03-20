@@ -10,10 +10,13 @@ class ApprovalQueue extends Model
 {
     use HasUuids;
 
-    const STATUS_PENDING  = 'pending';
+    const STATUS_PENDING = 'pending';
+
     const STATUS_APPROVED = 'approved';
+
     const STATUS_REJECTED = 'rejected';
-    const STATUS_EXPIRED  = 'expired';
+
+    const STATUS_EXPIRED = 'expired';
 
     protected $fillable = [
         'intent_id', 'agent_id',

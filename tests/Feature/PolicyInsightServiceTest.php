@@ -11,7 +11,6 @@ use App\Models\User;
 use App\Services\PolicyInsightService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Http;
-use Illuminate\Support\Str;
 use Tests\TestCase;
 
 class PolicyInsightServiceTest extends TestCase
@@ -19,8 +18,11 @@ class PolicyInsightServiceTest extends TestCase
     use RefreshDatabase;
 
     private User $user;
+
     private Agent $agent;
+
     private Policy $policy;
+
     private PolicyInsightService $service;
 
     protected function setUp(): void
@@ -31,17 +33,17 @@ class PolicyInsightServiceTest extends TestCase
 
         $this->user = User::factory()->create();
         $this->agent = Agent::create([
-            'name'        => 'TestAgent',
-            'evm_address' => '0xabcdef1234567890abcdef1234567890abcdef12',
-            'chain_id'    => 84532,
-            'user_id'     => $this->user->id,
+            'name' => 'TestAgent',
+            'wallet_address' => '0xabcdef1234567890abcdef1234567890abcdef12',
+            'chain_id' => '84532',
+            'user_id' => $this->user->id,
         ]);
         $this->policy = Policy::create([
-            'agent_id'                    => $this->agent->id,
-            'spend_limit_per_tx_usd'      => 100,
-            'require_approval_above_usd'  => 50,
-            'is_active'                   => true,
-            'version'                     => 1,
+            'agent_id' => $this->agent->id,
+            'spend_limit_per_tx_usd' => 100,
+            'require_approval_above_usd' => 50,
+            'is_active' => true,
+            'version' => 1,
         ]);
 
         $this->service = app(PolicyInsightService::class);
@@ -50,20 +52,20 @@ class PolicyInsightServiceTest extends TestCase
     private function createIntent(array $overrides = []): TxIntent
     {
         return TxIntent::create(array_merge([
-            'agent_id'           => $this->agent->id,
-            'policy_id'          => $this->policy->id,
-            'intent_hash'        => '0x' . bin2hex(random_bytes(32)),
-            'chain_id'           => 84532,
-            'nonce'              => rand(1, 9999),
-            'to_address'         => '0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48',
-            'calldata'               => '0x',
-            'gas_limit'              => '21000',
-            'max_fee_per_gas'        => '1000000000',
+            'agent_id' => $this->agent->id,
+            'policy_id' => $this->policy->id,
+            'intent_hash' => '0x'.bin2hex(random_bytes(32)),
+            'chain_id' => '84532',
+            'nonce' => rand(1, 9999),
+            'to_address' => '0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48',
+            'calldata' => '0x',
+            'gas_limit' => '21000',
+            'max_fee_per_gas' => '1000000000',
             'max_priority_fee_per_gas' => '100000000',
-            'status'                 => TxIntent::STATUS_CONFIRMED,
-            'decoded_action'     => 'erc20_transfer',
+            'status' => TxIntent::STATUS_CONFIRMED,
+            'decoded_action' => 'erc20_transfer',
             'amount_usd_computed' => 25.00,
-            'reason'             => 'Payment for service rendered',
+            'reason' => 'Payment for service rendered',
         ], $overrides));
     }
 
@@ -73,16 +75,16 @@ class PolicyInsightServiceTest extends TestCase
         unset($overrides['intent']);
 
         return DecisionSignal::create(array_merge([
-            'agent_id'       => $this->agent->id,
-            'intent_id'      => $intent->id,
-            'signal_type'    => $type,
-            'to_address'     => strtolower($intent->to_address),
+            'agent_id' => $this->agent->id,
+            'intent_id' => $intent->id,
+            'signal_type' => $type,
+            'to_address' => strtolower($intent->to_address),
             'decoded_action' => $intent->decoded_action,
-            'amount_usd'     => $intent->amount_usd_computed,
-            'chain_id'       => $intent->chain_id,
-            'reason'         => $intent->reason,
-            'day_of_week'    => now()->format('l'),
-            'hour_of_day'    => now()->hour,
+            'amount_usd' => $intent->amount_usd_computed,
+            'chain_id' => $intent->chain_id,
+            'reason' => $intent->reason,
+            'day_of_week' => now()->format('l'),
+            'hour_of_day' => now()->hour,
         ], $overrides));
     }
 
@@ -96,12 +98,12 @@ class PolicyInsightServiceTest extends TestCase
         $this->service->recordSignal($intent, 'approved', 'looks good');
 
         $this->assertDatabaseHas('decision_signals', [
-            'agent_id'       => $this->agent->id,
-            'intent_id'      => $intent->id,
-            'signal_type'    => 'approved',
-            'to_address'     => strtolower($intent->to_address),
+            'agent_id' => $this->agent->id,
+            'intent_id' => $intent->id,
+            'signal_type' => 'approved',
+            'to_address' => strtolower($intent->to_address),
             'decoded_action' => 'erc20_transfer',
-            'decision_note'  => 'looks good',
+            'decision_note' => 'looks good',
         ]);
     }
 
@@ -109,18 +111,18 @@ class PolicyInsightServiceTest extends TestCase
     public function record_signal_handles_null_fields_gracefully(): void
     {
         $intent = $this->createIntent([
-            'decoded_action'   => null,
+            'decoded_action' => null,
             'amount_usd_computed' => null,
-            'reason'           => null,
+            'reason' => null,
         ]);
 
         $this->service->recordSignal($intent, 'approved');
 
         $this->assertDatabaseHas('decision_signals', [
-            'intent_id'      => $intent->id,
+            'intent_id' => $intent->id,
             'decoded_action' => null,
-            'amount_usd'     => null,
-            'reason'         => null,
+            'amount_usd' => null,
+            'reason' => null,
         ]);
     }
 
@@ -151,7 +153,7 @@ class PolicyInsightServiceTest extends TestCase
         for ($i = 0; $i < 3; $i++) {
             $this->createSignal('approved', [
                 'to_address' => $addr,
-                'intent'     => ['to_address' => $addr],
+                'intent' => ['to_address' => $addr],
             ]);
         }
 
@@ -175,7 +177,7 @@ class PolicyInsightServiceTest extends TestCase
 
         $this->createSignal('approved', [
             'to_address' => $addr,
-            'intent'     => ['to_address' => $addr],
+            'intent' => ['to_address' => $addr],
         ]);
 
         $this->service->analyzeAgent($this->agent->id);
@@ -194,11 +196,11 @@ class PolicyInsightServiceTest extends TestCase
 
         $this->createSignal('approved', [
             'to_address' => $addr,
-            'intent'     => ['to_address' => $addr],
+            'intent' => ['to_address' => $addr],
         ]);
         $this->createSignal('rejected', [
             'to_address' => $addr,
-            'intent'     => ['to_address' => $addr],
+            'intent' => ['to_address' => $addr],
         ]);
 
         $this->service->analyzeAgent($this->agent->id);
@@ -217,7 +219,7 @@ class PolicyInsightServiceTest extends TestCase
     {
         $this->createSignal('approved', [
             'amount_usd' => 75.00,
-            'intent'     => ['amount_usd_computed' => 75.00],
+            'intent' => ['amount_usd_computed' => 75.00],
         ]);
 
         $this->service->analyzeAgent($this->agent->id);
@@ -238,7 +240,7 @@ class PolicyInsightServiceTest extends TestCase
 
         $this->createSignal('approved', [
             'amount_usd' => 75.00,
-            'intent'     => ['amount_usd_computed' => 75.00],
+            'intent' => ['amount_usd_computed' => 75.00],
         ]);
 
         $this->service->analyzeAgent($this->agent->id);
@@ -258,9 +260,9 @@ class PolicyInsightServiceTest extends TestCase
         $contract = '0x7a250d5630b4cf539739df2c5dacb4c659f2488d';
 
         $this->createSignal('approved', [
-            'to_address'     => $contract,
+            'to_address' => $contract,
             'decoded_action' => 'swap',
-            'intent'         => ['to_address' => $contract, 'decoded_action' => 'swap'],
+            'intent' => ['to_address' => $contract, 'decoded_action' => 'swap'],
         ]);
 
         $this->service->analyzeAgent($this->agent->id);
@@ -316,15 +318,15 @@ class PolicyInsightServiceTest extends TestCase
         $addr = '0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48';
 
         $insight = PolicyInsight::create([
-            'agent_id'       => $this->agent->id,
-            'insight_type'   => PolicyInsight::TYPE_ADD_TO_ALLOWLIST,
-            'status'         => PolicyInsight::STATUS_ACTIVE,
-            'confidence'     => 0.7,
+            'agent_id' => $this->agent->id,
+            'insight_type' => PolicyInsight::TYPE_ADD_TO_ALLOWLIST,
+            'status' => PolicyInsight::STATUS_ACTIVE,
+            'confidence' => 0.7,
             'evidence_count' => 3,
-            'evidence'       => [],
-            'suggestion'     => ['field' => 'allowed_addresses', 'action' => 'add', 'value' => $addr],
-            'title'          => 'Add to allowlist',
-            'description'    => 'test',
+            'evidence' => [],
+            'suggestion' => ['field' => 'allowed_addresses', 'action' => 'add', 'value' => $addr],
+            'title' => 'Add to allowlist',
+            'description' => 'test',
         ]);
 
         $this->service->applyInsight($insight);
@@ -344,15 +346,15 @@ class PolicyInsightServiceTest extends TestCase
     public function apply_threshold_insight_raises_threshold(): void
     {
         $insight = PolicyInsight::create([
-            'agent_id'       => $this->agent->id,
-            'insight_type'   => PolicyInsight::TYPE_RAISE_THRESHOLD,
-            'status'         => PolicyInsight::STATUS_ACTIVE,
-            'confidence'     => 0.7,
+            'agent_id' => $this->agent->id,
+            'insight_type' => PolicyInsight::TYPE_RAISE_THRESHOLD,
+            'status' => PolicyInsight::STATUS_ACTIVE,
+            'confidence' => 0.7,
             'evidence_count' => 3,
-            'evidence'       => [],
-            'suggestion'     => ['field' => 'require_approval_above_usd', 'action' => 'set', 'value' => 100],
-            'title'          => 'Raise threshold',
-            'description'    => 'test',
+            'evidence' => [],
+            'suggestion' => ['field' => 'require_approval_above_usd', 'action' => 'set', 'value' => 100],
+            'title' => 'Raise threshold',
+            'description' => 'test',
         ]);
 
         $this->service->applyInsight($insight);
@@ -367,16 +369,16 @@ class PolicyInsightServiceTest extends TestCase
         $this->policy->update(['guard_rules' => "## Block immediately\n- Never send to sanctioned addresses"]);
 
         $insight = PolicyInsight::create([
-            'agent_id'       => $this->agent->id,
-            'insight_type'   => PolicyInsight::TYPE_MANDATE_RULE,
+            'agent_id' => $this->agent->id,
+            'insight_type' => PolicyInsight::TYPE_MANDATE_RULE,
             'target_section' => 'block',
-            'status'         => PolicyInsight::STATUS_ACTIVE,
-            'confidence'     => 0.7,
+            'status' => PolicyInsight::STATUS_ACTIVE,
+            'confidence' => 0.7,
             'evidence_count' => 3,
-            'evidence'       => [],
-            'suggestion'     => ['section' => 'block', 'rule_text' => '- Reject transactions with reasons under 20 characters'],
-            'title'          => 'Add block rule',
-            'description'    => 'test',
+            'evidence' => [],
+            'suggestion' => ['section' => 'block', 'rule_text' => '- Reject transactions with reasons under 20 characters'],
+            'title' => 'Add block rule',
+            'description' => 'test',
         ]);
 
         $this->service->applyInsight($insight);
@@ -392,16 +394,16 @@ class PolicyInsightServiceTest extends TestCase
         $this->policy->update(['guard_rules' => "## Allow\n- Allow transfers under $10"]);
 
         $insight = PolicyInsight::create([
-            'agent_id'       => $this->agent->id,
-            'insight_type'   => PolicyInsight::TYPE_MANDATE_RULE,
+            'agent_id' => $this->agent->id,
+            'insight_type' => PolicyInsight::TYPE_MANDATE_RULE,
             'target_section' => 'block',
-            'status'         => PolicyInsight::STATUS_ACTIVE,
-            'confidence'     => 0.7,
+            'status' => PolicyInsight::STATUS_ACTIVE,
+            'confidence' => 0.7,
             'evidence_count' => 3,
-            'evidence'       => [],
-            'suggestion'     => ['section' => 'block', 'rule_text' => '- Block vague reasons'],
-            'title'          => 'Add block rule',
-            'description'    => 'test',
+            'evidence' => [],
+            'suggestion' => ['section' => 'block', 'rule_text' => '- Block vague reasons'],
+            'title' => 'Add block rule',
+            'description' => 'test',
         ]);
 
         $this->service->applyInsight($insight);
@@ -417,15 +419,15 @@ class PolicyInsightServiceTest extends TestCase
     public function dismiss_insight_marks_dismissed(): void
     {
         $insight = PolicyInsight::create([
-            'agent_id'       => $this->agent->id,
-            'insight_type'   => PolicyInsight::TYPE_ADD_TO_ALLOWLIST,
-            'status'         => PolicyInsight::STATUS_ACTIVE,
-            'confidence'     => 0.7,
+            'agent_id' => $this->agent->id,
+            'insight_type' => PolicyInsight::TYPE_ADD_TO_ALLOWLIST,
+            'status' => PolicyInsight::STATUS_ACTIVE,
+            'confidence' => 0.7,
             'evidence_count' => 3,
-            'evidence'       => [],
-            'suggestion'     => ['field' => 'allowed_addresses', 'action' => 'add', 'value' => '0xabc'],
-            'title'          => 'test',
-            'description'    => 'test',
+            'evidence' => [],
+            'suggestion' => ['field' => 'allowed_addresses', 'action' => 'add', 'value' => '0xabc'],
+            'title' => 'test',
+            'description' => 'test',
         ]);
 
         $this->service->dismissInsight($insight);
@@ -469,7 +471,7 @@ class PolicyInsightServiceTest extends TestCase
         // First analysis: 1 signal
         $this->createSignal('approved', [
             'to_address' => $addr,
-            'intent'     => ['to_address' => $addr],
+            'intent' => ['to_address' => $addr],
         ]);
         $this->service->analyzeAgent($this->agent->id);
 
@@ -479,7 +481,7 @@ class PolicyInsightServiceTest extends TestCase
         // Second analysis: add more signals
         $this->createSignal('approved', [
             'to_address' => $addr,
-            'intent'     => ['to_address' => $addr],
+            'intent' => ['to_address' => $addr],
         ]);
         $this->service->analyzeAgent($this->agent->id);
 
@@ -500,7 +502,7 @@ class PolicyInsightServiceTest extends TestCase
 
         $this->createSignal('approved', [
             'to_address' => $addr,
-            'intent'     => ['to_address' => $addr],
+            'intent' => ['to_address' => $addr],
         ]);
 
         $this->service->analyzeAgent($this->agent->id);
@@ -512,7 +514,7 @@ class PolicyInsightServiceTest extends TestCase
         // Add more signals and re-analyze
         $this->createSignal('approved', [
             'to_address' => $addr,
-            'intent'     => ['to_address' => $addr],
+            'intent' => ['to_address' => $addr],
         ]);
         $this->service->analyzeAgent($this->agent->id);
 

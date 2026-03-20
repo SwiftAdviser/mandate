@@ -18,7 +18,7 @@ class CircuitBreakerServiceTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        $this->cb = new CircuitBreakerService();
+        $this->cb = new CircuitBreakerService;
     }
 
     // -------------------------------------------------------------------------
@@ -28,9 +28,9 @@ class CircuitBreakerServiceTest extends TestCase
     private function makeAgent(bool $circuitBreakerActive = false): Agent
     {
         return Agent::create([
-            'name'                   => 'TestAgent-' . Str::random(4),
-            'evm_address'            => '0x1234567890123456789012345678901234567890',
-            'chain_id'               => 84532,
+            'name' => 'TestAgent-'.Str::random(4),
+            'wallet_address' => '0x1234567890123456789012345678901234567890',
+            'chain_id' => '84532',
             'circuit_breaker_active' => $circuitBreakerActive,
         ]);
     }
@@ -67,7 +67,7 @@ class CircuitBreakerServiceTest extends TestCase
         $this->cb->trip($agent, 'Test reason');
 
         $this->assertDatabaseHas('agents', [
-            'id'                     => $agent->id,
+            'id' => $agent->id,
             'circuit_breaker_active' => true,
             'circuit_breaker_reason' => 'Test reason',
         ]);
@@ -76,8 +76,8 @@ class CircuitBreakerServiceTest extends TestCase
     /** @test */
     public function it_clears_cache_after_trip(): void
     {
-        $agent    = $this->makeAgent(false);
-        $cacheKey = 'mandate:cb:' . $agent->id;
+        $agent = $this->makeAgent(false);
+        $cacheKey = 'mandate:cb:'.$agent->id;
 
         // Seed a stale false value into cache
         Cache::put($cacheKey, false, 30);
@@ -99,7 +99,7 @@ class CircuitBreakerServiceTest extends TestCase
         $this->cb->reset($agent);
 
         $this->assertDatabaseHas('agents', [
-            'id'                     => $agent->id,
+            'id' => $agent->id,
             'circuit_breaker_active' => false,
         ]);
     }
@@ -117,7 +117,7 @@ class CircuitBreakerServiceTest extends TestCase
 
         $this->assertFalse($result);
         $this->assertDatabaseHas('agents', [
-            'id'                     => $agent->id,
+            'id' => $agent->id,
             'circuit_breaker_active' => false,
         ]);
     }
@@ -131,7 +131,7 @@ class CircuitBreakerServiceTest extends TestCase
 
         $this->assertTrue($result);
         $this->assertDatabaseHas('agents', [
-            'id'                     => $agent->id,
+            'id' => $agent->id,
             'circuit_breaker_active' => true,
         ]);
     }
@@ -143,8 +143,8 @@ class CircuitBreakerServiceTest extends TestCase
     /** @test */
     public function it_reads_from_cache_on_subsequent_is_active_calls_after_trip(): void
     {
-        $agent    = $this->makeAgent(false);
-        $cacheKey = 'mandate:cb:' . $agent->id;
+        $agent = $this->makeAgent(false);
+        $cacheKey = 'mandate:cb:'.$agent->id;
 
         // Cache must be empty before the first isActive() call
         Cache::forget($cacheKey);

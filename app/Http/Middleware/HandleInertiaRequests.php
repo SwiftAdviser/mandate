@@ -26,7 +26,7 @@ class HandleInertiaRequests extends Middleware
                 ->count();
 
             $agentActivated = Agent::where('user_id', $user->id)
-                ->whereNotNull('evm_address')
+                ->whereNotNull('wallet_address')
                 ->exists();
 
             $activeInsightsCount = PolicyInsight::whereIn('agent_id', $agentIds)

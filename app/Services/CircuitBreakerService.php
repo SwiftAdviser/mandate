@@ -16,7 +16,7 @@ class CircuitBreakerService
     public function isActive(string $agentId): bool
     {
         return Cache::remember(
-            self::CACHE_PREFIX . $agentId,
+            self::CACHE_PREFIX.$agentId,
             config('mandate.circuit_breaker_cache_ttl', 30),
             fn () => Agent::where('id', $agentId)->value('circuit_breaker_active') ?? false
         );
@@ -30,12 +30,12 @@ class CircuitBreakerService
         DB::table('agents')
             ->where('id', $agent->id)
             ->update([
-                'circuit_breaker_active'     => true,
+                'circuit_breaker_active' => true,
                 'circuit_breaker_tripped_at' => now(),
-                'circuit_breaker_reason'     => $reason,
+                'circuit_breaker_reason' => $reason,
             ]);
 
-        Cache::forget(self::CACHE_PREFIX . $agent->id);
+        Cache::forget(self::CACHE_PREFIX.$agent->id);
     }
 
     /**
@@ -46,12 +46,12 @@ class CircuitBreakerService
         DB::table('agents')
             ->where('id', $agent->id)
             ->update([
-                'circuit_breaker_active'     => false,
+                'circuit_breaker_active' => false,
                 'circuit_breaker_tripped_at' => null,
-                'circuit_breaker_reason'     => null,
+                'circuit_breaker_reason' => null,
             ]);
 
-        Cache::forget(self::CACHE_PREFIX . $agent->id);
+        Cache::forget(self::CACHE_PREFIX.$agent->id);
     }
 
     /**
@@ -61,9 +61,11 @@ class CircuitBreakerService
     {
         if ($agent->circuit_breaker_active) {
             $this->reset($agent);
+
             return false;
         } else {
             $this->trip($agent, 'Manual toggle via dashboard');
+
             return true;
         }
     }

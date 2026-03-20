@@ -6,7 +6,7 @@ import { useState } from 'react';
 interface Intent {
   id: string; decoded_action: string | null; amount_usd_computed: string | null;
   status: string; to_address: string; created_at: string; tx_hash: string | null;
-  chain_id: number; intent_hash: string; risk_level: string | null; summary: string | null;
+  chain_id: string; intent_hash: string; risk_level: string | null; summary: string | null;
   reason: string | null; block_reason: string | null;
 }
 interface Props {
@@ -86,8 +86,19 @@ export default function AuditLog({ intents, filters }: Props) {
           <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
             <thead>
               <tr style={{ borderBottom: '1px solid var(--border-dim)', background: 'var(--bg-raised)' }}>
-                {['Status', 'Risk', 'Action', 'Amount', 'Reason', 'Recipient', 'Time'].map(h => (
-                  <th key={h} style={{ padding: '11px 16px', textAlign: 'left', color: 'var(--text-dim)', fontWeight: 400, fontFamily: 'var(--font-mono)', fontSize: 10, textTransform: 'uppercase', letterSpacing: '0.06em', whiteSpace: 'nowrap' }}>{h}</th>
+                {([
+                  ['Status', 'Current state of this intent (confirmed, failed, blocked, etc.)'],
+                  ['Risk', 'Risk level assigned by Mandate security checks'],
+                  ['Action', 'Transaction type: transfer, approve, swap, etc.'],
+                  ['Amount', 'USD value of this transaction'],
+                  ['Reason', 'Why the agent initiated this transaction'],
+                  ['Recipient', 'Destination wallet address'],
+                  ['Time', 'When this intent was created'],
+                ] as const).map(([h, tip]) => (
+                  <th key={h} style={{ padding: '11px 16px', textAlign: 'left', color: 'var(--text-dim)', fontWeight: 400, fontFamily: 'var(--font-mono)', fontSize: 10, textTransform: 'uppercase', letterSpacing: '0.06em', whiteSpace: 'nowrap' }}>
+                    {h}
+                    <span title={tip} style={{ marginLeft: 4, fontSize: 10, opacity: 0.5, cursor: 'help' }}>&#9432;</span>
+                  </th>
                 ))}
               </tr>
             </thead>
@@ -140,11 +151,11 @@ export default function AuditLog({ intents, filters }: Props) {
                     <td style={{ padding: '12px 16px', fontFamily: 'var(--font-mono)', fontWeight: 500, color: 'var(--text-primary)', fontSize: 12, whiteSpace: 'nowrap' }}>
                       {intent.amount_usd_computed ? formatUsd(parseFloat(intent.amount_usd_computed)) : '-'}
                     </td>
-                    <td style={{ padding: '12px 16px', minWidth: 200, fontSize: 11 }}>
+                    <td style={{ padding: '12px 16px', minWidth: 200, fontSize: 12 }}>
                       {intent.reason ? (
                         <div
                           style={{
-                            color: 'var(--text-dim)',
+                            color: 'var(--text-secondary)',
                             lineHeight: 1.5,
                             whiteSpace: 'normal',
                             wordBreak: 'break-word',
@@ -165,6 +176,19 @@ export default function AuditLog({ intents, filters }: Props) {
                         </div>
                       ) : (
                         <span style={{ color: 'var(--text-dim)' }}>-</span>
+                      )}
+                      {ds === 'blocked' && intent.block_reason && (
+                        <div style={{ marginTop: intent.reason ? 6 : 0, display: 'flex', alignItems: 'flex-start', gap: 5 }}>
+                          <span
+                            title="Reason provided by Mandate AI based on security checks and your MANDATE.md rules"
+                            style={{ color: '#f97316', fontSize: 12, lineHeight: 1, flexShrink: 0, cursor: 'help' }}
+                          >
+                            &#9432;
+                          </span>
+                          <span style={{ color: '#f97316', fontSize: 11, lineHeight: 1.4 }}>
+                            {intent.block_reason}
+                          </span>
+                        </div>
                       )}
                     </td>
                     <td style={{ padding: '12px 16px', fontFamily: 'var(--font-mono)', color: 'var(--text-dim)', fontSize: 11 }}>

@@ -17,7 +17,7 @@ class ActivateController extends Controller
         $agent = $request->attributes->get('agent');
 
         $agent->update([
-            'evm_address' => strtolower($data['evmAddress']),
+            'wallet_address' => strtolower($data['evmAddress']),
         ]);
 
         $dashboardUrl = config('app.url').'/dashboard?onboarding=1';
@@ -25,7 +25,7 @@ class ActivateController extends Controller
         return response()->json([
             'activated' => true,
             'agentId' => $agent->id,
-            'evmAddress' => $agent->evm_address,
+            'evmAddress' => $agent->wallet_address,
             'onboardingUrl' => $dashboardUrl,
             'message' => 'Agent activated. Tell your human to visit: '.$dashboardUrl,
         ]);

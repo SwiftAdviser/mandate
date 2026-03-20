@@ -12,13 +12,14 @@ use Illuminate\Support\Facades\Log;
 
 class ReconcileIntents extends Command
 {
-    protected $signature   = 'mandate:reconcile-intents';
+    protected $signature = 'mandate:reconcile-intents';
+
     protected $description = 'Confirm broadcasted intents, expire stale reserved/approved intents';
 
     public function __construct(
         private IntentStateMachineService $stateMachine,
-        private EnvelopeVerifierService   $verifier,
-        private CircuitBreakerService     $circuitBreaker,
+        private EnvelopeVerifierService $verifier,
+        private CircuitBreakerService $circuitBreaker,
     ) {
         parent::__construct();
     }
@@ -48,6 +49,7 @@ class ReconcileIntents extends Command
                             ['block_reason' => 'nonce_replaced_tx_dropped']
                         );
                     }
+
                     continue;
                 }
 
@@ -59,28 +61,29 @@ class ReconcileIntents extends Command
                     $this->stateMachine->transition($intent, TxIntent::STATUS_FAILED, 'system', 'system', [
                         'block_reason' => 'security_violation',
                     ]);
+
                     continue;
                 }
 
-                $txStatus  = $receipt['status'] ?? null;
-                $success   = $txStatus === '0x1';
-                $gasUsed   = $receipt['gasUsed'] ?? null;
-                $blockNum  = $receipt['blockNumber'] ?? null;
+                $txStatus = $receipt['status'] ?? null;
+                $success = $txStatus === '0x1';
+                $gasUsed = $receipt['gasUsed'] ?? null;
+                $blockNum = $receipt['blockNumber'] ?? null;
 
                 $newStatus = $success ? TxIntent::STATUS_CONFIRMED : TxIntent::STATUS_FAILED;
 
                 $intent->update([
-                    'gas_used'     => $gasUsed ? (string) hexdec($gasUsed) : null,
+                    'gas_used' => $gasUsed ? (string) hexdec($gasUsed) : null,
                     'block_number' => $blockNum ? (string) hexdec($blockNum) : null,
                 ]);
 
                 $this->stateMachine->transition($intent, $newStatus, 'system', 'system', [
                     'receipt_status' => $txStatus,
-                    'gas_used'       => $gasUsed,
+                    'gas_used' => $gasUsed,
                 ]);
 
             } catch (\Throwable $e) {
-                Log::warning("ReconcileIntents: error processing intent {$intent->id}: " . $e->getMessage());
+                Log::warning("ReconcileIntents: error processing intent {$intent->id}: ".$e->getMessage());
             }
         }
     }
@@ -88,18 +91,20 @@ class ReconcileIntents extends Command
     private function fetchReceipt(TxIntent $intent): ?array
     {
         $rpcBase = config("mandate.rpc.{$intent->chain_id}");
-        $apiKey  = config('mandate.alchemy_api_key');
+        $apiKey = config('mandate.alchemy_api_key');
 
-        if (!$rpcBase) return null;
+        if (! $rpcBase) {
+            return null;
+        }
 
-        $rpcUrl  = $apiKey ? $rpcBase . $apiKey : $rpcBase;
+        $rpcUrl = $apiKey ? $rpcBase.$apiKey : $rpcBase;
 
         try {
             $response = Http::timeout(8)->post($rpcUrl, [
                 'jsonrpc' => '2.0',
-                'id'      => 1,
-                'method'  => 'eth_getTransactionReceipt',
-                'params'  => [$intent->tx_hash],
+                'id' => 1,
+                'method' => 'eth_getTransactionReceipt',
+                'params' => [$intent->tx_hash],
             ]);
 
             return $response->json('result') ?: null;

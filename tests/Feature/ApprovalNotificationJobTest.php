@@ -18,7 +18,8 @@ class ApprovalNotificationJobTest extends TestCase
     use RefreshDatabase;
 
     private const USDC_ADDRESS = '0x036cbd53842c5426634e7929541ec2318f3dcf7e';
-    private const CHAIN_ID     = 84532;
+
+    private const CHAIN_ID = '84532';
 
     protected function setUp(): void
     {
@@ -32,10 +33,10 @@ class ApprovalNotificationJobTest extends TestCase
         config(['mandate.reputation.enabled' => false]);
 
         TokenRegistry::create([
-            'chain_id'  => self::CHAIN_ID,
-            'address'   => self::USDC_ADDRESS,
-            'symbol'    => 'USDC',
-            'decimals'  => 6,
+            'chain_id' => self::CHAIN_ID,
+            'address' => self::USDC_ADDRESS,
+            'symbol' => 'USDC',
+            'decimals' => 6,
             'is_stable' => true,
         ]);
     }
@@ -43,19 +44,19 @@ class ApprovalNotificationJobTest extends TestCase
     private function buildPayload(array $overrides = []): array
     {
         $base = [
-            'chainId'              => self::CHAIN_ID,
-            'nonce'                => 0,
-            'to'                   => self::USDC_ADDRESS,
-            'calldata'             => '0xa9059cbb'
-                . '000000000000000000000000abcdef1234567890abcdef1234567890abcdef12'
-                . '0000000000000000000000000000000000000000000000000000000000989680',
-            'valueWei'             => '0',
-            'gasLimit'             => '100000',
-            'maxFeePerGas'         => '1000000000',
+            'chainId' => self::CHAIN_ID,
+            'nonce' => 0,
+            'to' => self::USDC_ADDRESS,
+            'calldata' => '0xa9059cbb'
+                .'000000000000000000000000abcdef1234567890abcdef1234567890abcdef12'
+                .'0000000000000000000000000000000000000000000000000000000000989680',
+            'valueWei' => '0',
+            'gasLimit' => '100000',
+            'maxFeePerGas' => '1000000000',
             'maxPriorityFeePerGas' => '1000000000',
-            'txType'               => 2,
-            'accessList'           => [],
-            'reason'               => 'Test payment for notification test',
+            'txType' => 2,
+            'accessList' => [],
+            'reason' => 'Test payment for notification test',
         ];
 
         $merged = array_merge($base, $overrides);
@@ -73,7 +74,7 @@ class ApprovalNotificationJobTest extends TestCase
             json_encode($merged['accessList'] ?? []),
         ]);
 
-        $merged['intentHash'] = '0x' . \kornrunner\Keccak::hash($packed, 256);
+        $merged['intentHash'] = '0x'.\kornrunner\Keccak::hash($packed, 256);
 
         return $merged;
     }
@@ -84,26 +85,26 @@ class ApprovalNotificationJobTest extends TestCase
         Queue::fake();
 
         $agent = Agent::create([
-            'id'          => Str::uuid(),
-            'name'        => 'TestAgent',
-            'evm_address' => '0xabcdef1234567890abcdef1234567890abcdef12',
-            'chain_id'    => self::CHAIN_ID,
+            'id' => Str::uuid(),
+            'name' => 'TestAgent',
+            'wallet_address' => '0xabcdef1234567890abcdef1234567890abcdef12',
+            'chain_id' => self::CHAIN_ID,
             'notification_webhooks' => [
                 ['type' => 'slack', 'url' => 'https://hooks.slack.com/services/T00/B00/xxx'],
             ],
         ]);
 
         Policy::create([
-            'agent_id'                  => $agent->id,
-            'spend_limit_per_tx_usd'    => 1000,
-            'spend_limit_per_day_usd'   => 10000,
-            'require_approval_above_usd'=> 5.0,
-            'is_active'                 => true,
-            'version'                   => 1,
+            'agent_id' => $agent->id,
+            'spend_limit_per_tx_usd' => 1000,
+            'spend_limit_per_day_usd' => 10000,
+            'require_approval_above_usd' => 5.0,
+            'is_active' => true,
+            'version' => 1,
         ]);
 
         $service = app(PolicyEngineService::class);
-        $result  = $service->validate($agent, $this->buildPayload());
+        $result = $service->rawValidate($agent, $this->buildPayload());
 
         $this->assertTrue($result['requiresApproval']);
         $this->assertNotNull($result['approvalId']);
@@ -120,22 +121,22 @@ class ApprovalNotificationJobTest extends TestCase
         Queue::fake();
 
         $agent = Agent::create([
-            'id'          => Str::uuid(),
-            'name'        => 'TestAgent',
-            'evm_address' => '0xabcdef1234567890abcdef1234567890abcdef12',
-            'chain_id'    => self::CHAIN_ID,
+            'id' => Str::uuid(),
+            'name' => 'TestAgent',
+            'wallet_address' => '0xabcdef1234567890abcdef1234567890abcdef12',
+            'chain_id' => self::CHAIN_ID,
         ]);
 
         Policy::create([
-            'agent_id'               => $agent->id,
+            'agent_id' => $agent->id,
             'spend_limit_per_tx_usd' => 1000,
-            'spend_limit_per_day_usd'=> 10000,
-            'is_active'              => true,
-            'version'                => 1,
+            'spend_limit_per_day_usd' => 10000,
+            'is_active' => true,
+            'version' => 1,
         ]);
 
         $service = app(PolicyEngineService::class);
-        $result  = $service->validate($agent, $this->buildPayload());
+        $result = $service->rawValidate($agent, $this->buildPayload());
 
         $this->assertTrue($result['allowed']);
         $this->assertFalse($result['requiresApproval']);
@@ -154,26 +155,26 @@ class ApprovalNotificationJobTest extends TestCase
         ]);
 
         $agent = Agent::create([
-            'id'          => Str::uuid(),
-            'name'        => 'TestAgent',
-            'evm_address' => '0xabcdef1234567890abcdef1234567890abcdef12',
-            'chain_id'    => self::CHAIN_ID,
+            'id' => Str::uuid(),
+            'name' => 'TestAgent',
+            'wallet_address' => '0xabcdef1234567890abcdef1234567890abcdef12',
+            'chain_id' => self::CHAIN_ID,
             'notification_webhooks' => [
                 ['type' => 'slack', 'url' => 'https://hooks.slack.com/services/T00/B00/xxx'],
             ],
         ]);
 
         Policy::create([
-            'agent_id'                  => $agent->id,
-            'spend_limit_per_tx_usd'    => 1000,
-            'spend_limit_per_day_usd'   => 10000,
-            'require_approval_above_usd'=> 5.0,
-            'is_active'                 => true,
-            'version'                   => 1,
+            'agent_id' => $agent->id,
+            'spend_limit_per_tx_usd' => 1000,
+            'spend_limit_per_day_usd' => 10000,
+            'require_approval_above_usd' => 5.0,
+            'is_active' => true,
+            'version' => 1,
         ]);
 
         $service = app(PolicyEngineService::class);
-        $result  = $service->validate($agent, $this->buildPayload());
+        $result = $service->rawValidate($agent, $this->buildPayload());
 
         // Manually run the job (sync) — should not throw
         $job = new SendApprovalNotification(

@@ -7,7 +7,7 @@ import { useState, useEffect, useRef } from 'react';
 interface Agent {
   id: string;
   name: string;
-  evm_address: string | null;
+  wallet_address: string | null;
 }
 
 interface Props {
@@ -266,9 +266,9 @@ export default function OnboardingWizard({ agent, onComplete }: Props) {
           marginBottom: 16,
         }}>
           <div style={{ fontSize: 16, fontWeight: 500, color: 'var(--text-primary)' }}>{agent.name}</div>
-          {agent.evm_address && (
+          {agent.wallet_address && (
             <div style={{ fontSize: 11, color: 'var(--text-dim)', fontFamily: 'var(--font-mono)', marginTop: 4 }}>
-              {agent.evm_address}
+              {agent.wallet_address}
             </div>
           )}
         </div>

@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 class QuotaReservation extends Model
 {
     public $timestamps = false;
+
     public $incrementing = false;
 
     protected $primaryKey = null;
@@ -18,7 +19,7 @@ class QuotaReservation extends Model
     ];
 
     protected $casts = [
-        'reserved_usd'  => 'decimal:6',
+        'reserved_usd' => 'decimal:6',
         'confirmed_usd' => 'decimal:6',
     ];
 

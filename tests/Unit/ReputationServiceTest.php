@@ -10,6 +10,7 @@ use Tests\TestCase;
 class ReputationServiceTest extends TestCase
 {
     private const WALLET = '0xabcdef1234567890abcdef1234567890abcdef12';
+
     private const CHAIN_ID = 84532; // Base Sepolia
 
     protected function setUp(): void
@@ -23,7 +24,7 @@ class ReputationServiceTest extends TestCase
         config(['mandate.reputation.cache_ttl' => 300]);
         config(['mandate.reputation.subgraphs' => [
             84532 => 'https://gateway.thegraph.com/api/test/subgraphs/id/base-sepolia',
-            8453  => 'https://gateway.thegraph.com/api/test/subgraphs/id/base-mainnet',
+            8453 => 'https://gateway.thegraph.com/api/test/subgraphs/id/base-mainnet',
         ]]);
     }
 

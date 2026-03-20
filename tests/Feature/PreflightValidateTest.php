@@ -48,7 +48,7 @@ class PreflightValidateTest extends TestCase
         $this->agent = Agent::create([
             'id' => Str::uuid(),
             'name' => 'PreflightAgent',
-            'evm_address' => '0xabcdef1234567890abcdef1234567890abcdef12',
+            'wallet_address' => '0xabcdef1234567890abcdef1234567890abcdef12',
             'chain_id' => 84532,
             'user_id' => $this->user->id,
         ]);

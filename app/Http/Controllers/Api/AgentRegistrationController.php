@@ -27,7 +27,7 @@ class AgentRegistrationController extends Controller
 
         $agent = Agent::create([
             'name' => $data['name'],
-            'evm_address' => strtolower($data['evmAddress']),
+            'wallet_address' => strtolower($data['evmAddress']),
             'chain_id' => $data['chainId'] ?? null,
             'claim_code' => $claimCode,
         ]);
@@ -54,7 +54,7 @@ class AgentRegistrationController extends Controller
             'agentId' => $agent->id,
             'runtimeKey' => $rawKey,
             'claimUrl' => $claimUrl,
-            'evmAddress' => $agent->evm_address,
+            'evmAddress' => $agent->wallet_address,
             'chainId' => $agent->chain_id,
             'defaultPolicy' => $defaultPolicy,
         ], 201);
@@ -124,6 +124,25 @@ class AgentRegistrationController extends Controller
         return response()->json([
             'runtimeKey' => $rawKey,
         ]);
+    }
+
+    public function update(Request $request, string $agentId): JsonResponse
+    {
+        $data = $request->validate([
+            'name' => ['required', 'string', 'max:100'],
+        ]);
+
+        $agent = Agent::where('id', $agentId)
+            ->where('user_id', auth()->id())
+            ->first();
+
+        if (! $agent) {
+            return response()->json(['error' => 'Agent not found.'], 404);
+        }
+
+        $agent->update(['name' => $data['name']]);
+
+        return response()->json(['updated' => true, 'name' => $agent->name]);
     }
 
     public function create(Request $request): JsonResponse

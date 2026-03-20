@@ -2,7 +2,6 @@
 
 namespace App\Jobs;
 
-use App\Models\PolicyInsight;
 use App\Models\TxIntent;
 use App\Services\PolicyInsightService;
 use Illuminate\Bus\Queueable;
@@ -16,7 +15,8 @@ class RecordDecisionSignal implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
-    public int $tries   = 3;
+    public int $tries = 3;
+
     public int $backoff = 5;
 
     public function __construct(
@@ -28,8 +28,9 @@ class RecordDecisionSignal implements ShouldQueue
     public function handle(PolicyInsightService $service): void
     {
         $intent = TxIntent::find($this->intentId);
-        if (!$intent) {
+        if (! $intent) {
             Log::warning('RecordDecisionSignal: missing intent', ['intent_id' => $this->intentId]);
+
             return;
         }
 
@@ -47,7 +48,7 @@ class RecordDecisionSignal implements ShouldQueue
     {
         Log::error('RecordDecisionSignal failed', [
             'intent_id' => $this->intentId,
-            'error'     => $e->getMessage(),
+            'error' => $e->getMessage(),
         ]);
     }
 }

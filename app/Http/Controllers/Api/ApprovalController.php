@@ -4,7 +4,6 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Jobs\RecordDecisionSignal;
-use App\Models\Agent;
 use App\Models\ApprovalQueue;
 use App\Models\TxIntent;
 use App\Services\IntentStateMachineService;
@@ -33,7 +32,7 @@ class ApprovalController extends Controller
     {
         $data = $request->validate([
             'decision' => ['required', 'in:approved,rejected'],
-            'note'     => ['sometimes', 'string', 'max:500'],
+            'note' => ['sometimes', 'string', 'max:500'],
         ]);
 
         $approval = ApprovalQueue::with('intent')->findOrFail($approvalId);
@@ -50,10 +49,10 @@ class ApprovalController extends Controller
         $intent = $approval->intent;
 
         $approval->update([
-            'status'              => $data['decision'],
-            'decided_by_user_id'  => $userId,
-            'decision_note'       => $data['note'] ?? null,
-            'decided_at'          => now(),
+            'status' => $data['decision'],
+            'decided_by_user_id' => $userId,
+            'decision_note' => $data['note'] ?? null,
+            'decided_at' => now(),
         ]);
 
         $newIntentStatus = $data['decision'] === 'approved'
@@ -62,16 +61,16 @@ class ApprovalController extends Controller
 
         $this->stateMachine->transition($intent, $newIntentStatus, $userId, 'user', [
             'approval_id' => $approvalId,
-            'decision'    => $data['decision'],
-            'note'        => $data['note'] ?? null,
+            'decision' => $data['decision'],
+            'note' => $data['note'] ?? null,
         ]);
 
         RecordDecisionSignal::dispatch($intent->id, $data['decision'], $data['note'] ?? null);
 
         return response()->json([
             'approvalId' => $approvalId,
-            'intentId'   => $intent->id,
-            'decision'   => $data['decision'],
+            'intentId' => $intent->id,
+            'decision' => $data['decision'],
             'intentStatus' => $newIntentStatus,
         ]);
     }

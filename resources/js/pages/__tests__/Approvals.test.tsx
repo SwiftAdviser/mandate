@@ -15,7 +15,7 @@ function makeApproval(overrides = {}) {
       to_address: '0xabcdef1234567890abcdef1234567890abcdef12',
       amount_usd_computed: '150.50',
       calldata: '0xa9059cbb',
-      chain_id: 84532,
+      chain_id: '84532',
       created_at: new Date().toISOString(),
       risk_level: null,
       risk_degraded: false,

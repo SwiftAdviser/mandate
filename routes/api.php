@@ -8,9 +8,9 @@ use App\Http\Controllers\Api\CircuitBreakerController;
 use App\Http\Controllers\Api\DemoIntentController;
 use App\Http\Controllers\Api\InsightController;
 use App\Http\Controllers\Api\IntentController;
-use App\Http\Controllers\Api\TelegramLinkController;
 use App\Http\Controllers\Api\PolicyController;
 use App\Http\Controllers\Api\RiskCheckController;
+use App\Http\Controllers\Api\TelegramLinkController;
 use App\Http\Controllers\Api\TelegramWebhookController;
 use App\Http\Controllers\Api\ValidateController;
 use App\Http\Middleware\RuntimeKeyAuth;
@@ -27,8 +27,13 @@ Route::post('/telegram/webhook/{secret}', TelegramWebhookController::class);
 // ── Runtime key (agent → validate/events/status) ───────────────────────────
 Route::middleware([RuntimeKeyAuth::class])->group(function () {
     Route::post('/activate', [ActivateController::class, 'activate']);
+
+    // Primary validation (chain-agnostic)
     Route::post('/validate', [ValidateController::class, 'validate']);
-    Route::post('/validate/preflight', [ValidateController::class, 'preflight']);
+    Route::post('/validate/preflight', [ValidateController::class, 'validate']); // alias
+
+    // Legacy raw EVM validation (deprecated)
+    Route::post('/validate/raw', [ValidateController::class, 'rawValidate']);
 
     Route::prefix('intents/{intentId}')->group(function () {
         Route::post('/events', [IntentController::class, 'postEvent']);
@@ -45,6 +50,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
 
     // Dashboard-first agent creation + deletion
     Route::post('/agents/create', [AgentRegistrationController::class, 'create']);
+    Route::put('/agents/{agentId}', [AgentRegistrationController::class, 'update']);
     Route::delete('/agents/{agentId}', [AgentRegistrationController::class, 'destroy']);
     Route::post('/agents/{agentId}/regenerate-key', [AgentRegistrationController::class, 'regenerateKey']);
 

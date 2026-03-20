@@ -24,11 +24,11 @@ class PolicyControllerTest extends TestCase
     private function createAgent(): Agent
     {
         return Agent::create([
-            'id'          => Str::uuid(),
-            'name'        => 'TestAgent',
-            'evm_address' => '0xabcdef1234567890abcdef1234567890abcdef12',
-            'chain_id'    => 84532,
-            'user_id'     => $this->user->id,
+            'id' => Str::uuid(),
+            'name' => 'TestAgent',
+            'wallet_address' => '0xabcdef1234567890abcdef1234567890abcdef12',
+            'chain_id' => '84532',
+            'user_id' => $this->user->id,
         ]);
     }
 
@@ -59,7 +59,7 @@ class PolicyControllerTest extends TestCase
     /** @test */
     public function index_returns_404_for_unknown_agent(): void
     {
-        $response = $this->actingAs($this->user)->getJson('/api/agents/' . Str::uuid() . '/policies');
+        $response = $this->actingAs($this->user)->getJson('/api/agents/'.Str::uuid().'/policies');
 
         $response->assertNotFound();
     }
@@ -74,10 +74,10 @@ class PolicyControllerTest extends TestCase
         $agent = $this->createAgent();
 
         $response = $this->actingAs($this->user)->postJson("/api/agents/{$agent->id}/policies", [
-            'spendLimitPerTxUsd'    => 50.0,
-            'spendLimitPerDayUsd'   => 500.0,
+            'spendLimitPerTxUsd' => 50.0,
+            'spendLimitPerDayUsd' => 500.0,
             'spendLimitPerMonthUsd' => 5000.0,
-            'allowedAddresses'      => ['0xdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef'],
+            'allowedAddresses' => ['0xdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef'],
         ]);
 
         $response->assertCreated();
@@ -86,7 +86,7 @@ class PolicyControllerTest extends TestCase
         $response->assertJsonFragment(['version' => 1]);
 
         $this->assertDatabaseHas('policies', [
-            'agent_id'  => $agent->id,
+            'agent_id' => $agent->id,
             'is_active' => true,
         ]);
     }
@@ -153,8 +153,8 @@ class PolicyControllerTest extends TestCase
 
         $response = $this->actingAs($this->user)->postJson("/api/agents/{$agent->id}/policies", [
             'spendLimitPerTxUsd' => null,
-            'allowedAddresses'   => null,
-            'schedule'           => null,
+            'allowedAddresses' => null,
+            'schedule' => null,
         ]);
 
         $response->assertCreated();
@@ -168,7 +168,7 @@ class PolicyControllerTest extends TestCase
 
         $response = $this->actingAs($this->user)->postJson("/api/agents/{$agent->id}/policies", [
             'schedule' => [
-                'days'  => ['monday', 'wednesday', 'friday'],
+                'days' => ['monday', 'wednesday', 'friday'],
                 'hours' => [9, 10, 11, 12, 13, 14, 15, 16, 17],
             ],
         ]);
@@ -183,18 +183,18 @@ class PolicyControllerTest extends TestCase
         $agent = $this->createAgent();
 
         $response = $this->actingAs($this->user)->postJson("/api/agents/{$agent->id}/policies", [
-            'spendLimitPerTxUsd'       => 100,
-            'spendLimitPerDayUsd'      => 1000,
-            'spendLimitPerMonthUsd'    => 10000,
-            'allowedAddresses'         => ['0xabc'],
-            'allowedContracts'         => ['0xdef'],
-            'blockedSelectors'         => ['0xa9059cbb'],
+            'spendLimitPerTxUsd' => 100,
+            'spendLimitPerDayUsd' => 1000,
+            'spendLimitPerMonthUsd' => 10000,
+            'allowedAddresses' => ['0xabc'],
+            'allowedContracts' => ['0xdef'],
+            'blockedSelectors' => ['0xa9059cbb'],
             'requireApprovalSelectors' => ['0x095ea7b3'],
-            'requireApprovalAboveUsd'  => 500,
-            'maxSlippageBps'           => 50,
-            'maxGasLimit'              => '500000',
-            'maxValueWei'              => '1000000000000000000',
-            'schedule'                 => ['days' => ['monday'], 'hours' => [9]],
+            'requireApprovalAboveUsd' => 500,
+            'maxSlippageBps' => 50,
+            'maxGasLimit' => '500000',
+            'maxValueWei' => '1000000000000000000',
+            'schedule' => ['days' => ['monday'], 'hours' => [9]],
         ]);
 
         $response->assertCreated();
@@ -207,10 +207,10 @@ class PolicyControllerTest extends TestCase
 
         // Create initial policy with spend limits
         $this->actingAs($this->user)->postJson("/api/agents/{$agent->id}/policies", [
-            'spendLimitPerTxUsd'    => 100,
-            'spendLimitPerDayUsd'   => 1000,
+            'spendLimitPerTxUsd' => 100,
+            'spendLimitPerDayUsd' => 1000,
             'spendLimitPerMonthUsd' => 10000,
-            'allowedAddresses'      => ['0xabc'],
+            'allowedAddresses' => ['0xabc'],
         ])->assertCreated();
 
         // Update only guardRules (simulates onboarding step 2)
@@ -268,8 +268,8 @@ class PolicyControllerTest extends TestCase
     /** @test */
     public function show_returns_404_for_wrong_agent(): void
     {
-        $agent  = $this->createAgent();
-        $other  = $this->createAgent();
+        $agent = $this->createAgent();
+        $other = $this->createAgent();
 
         $policy = Policy::create([
             'agent_id' => $agent->id, 'spend_limit_per_tx_usd' => 100,
@@ -287,7 +287,7 @@ class PolicyControllerTest extends TestCase
     {
         $agent = $this->createAgent();
 
-        $response = $this->actingAs($this->user)->getJson("/api/agents/{$agent->id}/policies/" . Str::uuid());
+        $response = $this->actingAs($this->user)->getJson("/api/agents/{$agent->id}/policies/".Str::uuid());
 
         $response->assertNotFound();
     }

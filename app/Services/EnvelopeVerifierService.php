@@ -15,20 +15,21 @@ class EnvelopeVerifierService
     public function verify(TxIntent $intent, string $txHash): string
     {
         $rpcUrl = $this->getRpcUrl($intent->chain_id);
-        if (!$rpcUrl) {
+        if (! $rpcUrl) {
             Log::error("EnvelopeVerifier: no RPC for chain {$intent->chain_id}");
+
             return 'not_found';
         }
 
         try {
             $response = Http::timeout(10)->post($rpcUrl, [
                 'jsonrpc' => '2.0',
-                'id'      => 1,
-                'method'  => 'eth_getTransactionByHash',
-                'params'  => [$txHash],
+                'id' => 1,
+                'method' => 'eth_getTransactionByHash',
+                'params' => [$txHash],
             ]);
 
-            if (!$response->successful()) {
+            if (! $response->successful()) {
                 return 'propagation_delay';
             }
 
@@ -39,7 +40,8 @@ class EnvelopeVerifierService
             }
 
         } catch (\Throwable $e) {
-            Log::warning("EnvelopeVerifier RPC error: " . $e->getMessage());
+            Log::warning('EnvelopeVerifier RPC error: '.$e->getMessage());
+
             return 'propagation_delay';
         }
 
@@ -52,16 +54,19 @@ class EnvelopeVerifierService
     public function isNonceReplaced(TxIntent $intent): bool
     {
         $rpcUrl = $this->getRpcUrl($intent->chain_id);
-        if (!$rpcUrl) return false;
+        if (! $rpcUrl) {
+            return false;
+        }
 
         try {
             $response = Http::timeout(5)->post($rpcUrl, [
                 'jsonrpc' => '2.0', 'id' => 1,
-                'method'  => 'eth_getTransactionCount',
-                'params'  => [$intent->agent->evm_address, 'latest'],
+                'method' => 'eth_getTransactionCount',
+                'params' => [$intent->agent->wallet_address, 'latest'],
             ]);
 
             $onchainNonce = hexdec($response->json('result', '0x0'));
+
             return $onchainNonce > $intent->nonce;
 
         } catch (\Throwable) {
@@ -74,46 +79,57 @@ class EnvelopeVerifierService
         $mismatch = false;
 
         // from address
-        if (strtolower($tx['from'] ?? '') !== strtolower($intent->agent->evm_address)) {
-            Log::warning("EnvelopeVerifier: from address mismatch", [
+        if (strtolower($tx['from'] ?? '') !== strtolower($intent->agent->wallet_address)) {
+            Log::warning('EnvelopeVerifier: from address mismatch', [
                 'intent' => $intent->id,
-                'expected' => $intent->agent->evm_address,
+                'expected' => $intent->agent->wallet_address,
                 'got' => $tx['from'] ?? '',
             ]);
             $mismatch = true;
         }
 
         // to address
-        if (strtolower($tx['to'] ?? '') !== strtolower($intent->to_address)) $mismatch = true;
+        if (strtolower($tx['to'] ?? '') !== strtolower($intent->to_address)) {
+            $mismatch = true;
+        }
 
         // nonce
-        if (hexdec($tx['nonce'] ?? '0x0') !== (int) $intent->nonce) $mismatch = true;
+        if (hexdec($tx['nonce'] ?? '0x0') !== (int) $intent->nonce) {
+            $mismatch = true;
+        }
 
         // calldata (input)
-        if (strtolower($tx['input'] ?? '0x') !== strtolower($intent->calldata)) $mismatch = true;
+        if (strtolower($tx['input'] ?? '0x') !== strtolower($intent->calldata)) {
+            $mismatch = true;
+        }
 
         // value
         $txValue = hexdec($tx['value'] ?? '0x0');
-        if ((string) $txValue !== $intent->value_wei) $mismatch = true;
+        if ((string) $txValue !== $intent->value_wei) {
+            $mismatch = true;
+        }
 
         if ($mismatch) {
-            Log::critical("EnvelopeVerifier: ENVELOPE MISMATCH — security violation", [
+            Log::critical('EnvelopeVerifier: ENVELOPE MISMATCH — security violation', [
                 'intent_id' => $intent->id,
-                'tx_hash'   => $tx['hash'] ?? '',
+                'tx_hash' => $tx['hash'] ?? '',
             ]);
+
             return 'mismatch';
         }
 
         return 'match';
     }
 
-    private function getRpcUrl(int $chainId): ?string
+    private function getRpcUrl(string|int $chainId): ?string
     {
-        $base   = config("mandate.rpc.{$chainId}");
+        $base = config("mandate.rpc.{$chainId}");
         $apiKey = config('mandate.alchemy_api_key');
 
-        if (!$base) return null;
+        if (! $base) {
+            return null;
+        }
 
-        return $apiKey ? $base . $apiKey : $base;
+        return $apiKey ? $base.$apiKey : $base;
     }
 }

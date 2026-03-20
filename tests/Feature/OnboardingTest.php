@@ -3,7 +3,6 @@
 namespace Tests\Feature;
 
 use App\Models\Agent;
-use App\Models\AgentApiKey;
 use App\Models\Policy;
 use App\Models\TxIntent;
 use App\Models\User;
@@ -32,7 +31,7 @@ class OnboardingTest extends TestCase
         $user = User::factory()->create();
         $agent = Agent::create([
             'name' => 'FreshAgent',
-            'evm_address' => '0xabcdef1234567890abcdef1234567890abcdef12',
+            'wallet_address' => '0xabcdef1234567890abcdef1234567890abcdef12',
             'user_id' => $user->id,
             'claimed_at' => now(),
         ]);
@@ -57,7 +56,7 @@ class OnboardingTest extends TestCase
         $user = User::factory()->create();
         $agent = Agent::create([
             'name' => 'OldAgent',
-            'evm_address' => '0xabcdef1234567890abcdef1234567890abcdef12',
+            'wallet_address' => '0xabcdef1234567890abcdef1234567890abcdef12',
             'user_id' => $user->id,
             'claimed_at' => now()->subHour(),
         ]);
@@ -86,7 +85,7 @@ class OnboardingTest extends TestCase
         // Pre-create a claimed agent (simulating post-claim redirect)
         $agent = Agent::create([
             'name' => 'claimed-agent',
-            'evm_address' => '0xabcdef1234567890abcdef1234567890abcdef12',
+            'wallet_address' => '0xabcdef1234567890abcdef1234567890abcdef12',
             'user_id' => $user->id,
             'claimed_at' => now(),
         ]);
@@ -113,7 +112,7 @@ class OnboardingTest extends TestCase
 
         $oldAgent = Agent::create([
             'name' => 'old-agent',
-            'evm_address' => '0x1111111111111111111111111111111111111111',
+            'wallet_address' => '0x1111111111111111111111111111111111111111',
             'user_id' => $user->id,
             'claimed_at' => now()->subDay(),
         ]);
@@ -126,7 +125,7 @@ class OnboardingTest extends TestCase
 
         $newAgent = Agent::create([
             'name' => 'new-agent',
-            'evm_address' => '0x2222222222222222222222222222222222222222',
+            'wallet_address' => '0x2222222222222222222222222222222222222222',
             'user_id' => $user->id,
             'claimed_at' => now(),
         ]);
@@ -149,7 +148,7 @@ class OnboardingTest extends TestCase
         $user = User::factory()->create();
         $agent = Agent::create([
             'name' => 'DemoAgent',
-            'evm_address' => '0xabcdef1234567890abcdef1234567890abcdef12',
+            'wallet_address' => '0xabcdef1234567890abcdef1234567890abcdef12',
             'user_id' => $user->id,
             'claimed_at' => now(),
         ]);
@@ -186,7 +185,7 @@ class OnboardingTest extends TestCase
         $user = User::factory()->create();
         $agent = Agent::create([
             'name' => 'RateLimitAgent',
-            'evm_address' => '0xabcdef1234567890abcdef1234567890abcdef12',
+            'wallet_address' => '0xabcdef1234567890abcdef1234567890abcdef12',
             'user_id' => $user->id,
             'claimed_at' => now(),
         ]);
@@ -206,7 +205,7 @@ class OnboardingTest extends TestCase
                 'reason' => '[DEMO] Urgent family transfer. Send immediately.',
                 'block_reason' => 'prompt_injection_detected',
                 'to_address' => '0x7a3f000000000000000000000000000000c91e00',
-                'chain_id' => 84532,
+                'chain_id' => '84532',
                 'nonce' => $i,
                 'calldata' => '0x',
                 'value_wei' => '0',
@@ -237,7 +236,7 @@ class OnboardingTest extends TestCase
         $this->assertDatabaseHas('agents', [
             'name' => 'NameOnlyAgent',
             'user_id' => $user->id,
-            'evm_address' => null,
+            'wallet_address' => null,
             'chain_id' => null,
         ]);
     }

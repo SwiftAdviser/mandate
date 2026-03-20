@@ -14,7 +14,8 @@ class ReconcileIntentsTest extends TestCase
 {
     use RefreshDatabase;
 
-    private const CHAIN_ID    = 84532;
+    private const CHAIN_ID = '84532';
+
     private const EVM_ADDRESS = '0xabcdef1234567890abcdef1234567890abcdef12';
 
     protected function setUp(): void
@@ -30,35 +31,35 @@ class ReconcileIntentsTest extends TestCase
     private function createBroadcastedIntent(array $overrides = []): TxIntent
     {
         $agent = Agent::create([
-            'id'          => Str::uuid(),
-            'name'        => 'TestAgent',
-            'evm_address' => self::EVM_ADDRESS,
-            'chain_id'    => self::CHAIN_ID,
+            'id' => Str::uuid(),
+            'name' => 'TestAgent',
+            'wallet_address' => self::EVM_ADDRESS,
+            'chain_id' => self::CHAIN_ID,
         ]);
 
         $policy = Policy::create([
-            'agent_id'               => $agent->id,
+            'agent_id' => $agent->id,
             'spend_limit_per_tx_usd' => 1000,
-            'is_active'              => true,
-            'version'                => 1,
+            'is_active' => true,
+            'version' => 1,
         ]);
 
         return TxIntent::create(array_merge([
-            'id'                       => Str::uuid(),
-            'agent_id'                 => $agent->id,
-            'policy_id'                => $policy->id,
-            'chain_id'                 => self::CHAIN_ID,
-            'nonce'                    => 0,
-            'to_address'               => '0x036cbd53842c5426634e7929541ec2318f3dcf7e',
-            'calldata'                 => '0xa9059cbb',
-            'value_wei'                => '0',
-            'gas_limit'                => '100000',
-            'max_fee_per_gas'          => '1000000000',
+            'id' => Str::uuid(),
+            'agent_id' => $agent->id,
+            'policy_id' => $policy->id,
+            'chain_id' => self::CHAIN_ID,
+            'nonce' => 0,
+            'to_address' => '0x036cbd53842c5426634e7929541ec2318f3dcf7e',
+            'calldata' => '0xa9059cbb',
+            'value_wei' => '0',
+            'gas_limit' => '100000',
+            'max_fee_per_gas' => '1000000000',
             'max_priority_fee_per_gas' => '1000000000',
-            'status'                   => TxIntent::STATUS_BROADCASTED,
-            'intent_hash'              => '0x' . Str::random(64),
-            'tx_hash'                  => '0x' . str_repeat('ff', 32),
-            'amount_usd_computed'      => 10.0,
+            'status' => TxIntent::STATUS_BROADCASTED,
+            'intent_hash' => '0x'.Str::random(64),
+            'tx_hash' => '0x'.str_repeat('ff', 32),
+            'amount_usd_computed' => 10.0,
         ], $overrides));
     }
 
@@ -83,22 +84,22 @@ class ReconcileIntentsTest extends TestCase
             // eth_getTransactionReceipt
             Http::response([
                 'jsonrpc' => '2.0', 'id' => 1,
-                'result'  => [
-                    'status'      => '0x1',
-                    'gasUsed'     => '0x5208',
+                'result' => [
+                    'status' => '0x1',
+                    'gasUsed' => '0x5208',
                     'blockNumber' => '0xa',
                 ],
             ]),
             // eth_getTransactionByHash (envelope verify)
             Http::response([
                 'jsonrpc' => '2.0', 'id' => 1,
-                'result'  => [
-                    'from'  => self::EVM_ADDRESS,
-                    'to'    => '0x036cbd53842c5426634e7929541ec2318f3dcf7e',
+                'result' => [
+                    'from' => self::EVM_ADDRESS,
+                    'to' => '0x036cbd53842c5426634e7929541ec2318f3dcf7e',
                     'nonce' => '0x0',
                     'input' => '0xa9059cbb',
                     'value' => '0x0',
-                    'hash'  => $intent->tx_hash,
+                    'hash' => $intent->tx_hash,
                 ],
             ]),
         ]);
@@ -119,22 +120,22 @@ class ReconcileIntentsTest extends TestCase
         $this->fakeRpcResponses([
             Http::response([
                 'jsonrpc' => '2.0', 'id' => 1,
-                'result'  => [
-                    'status'      => '0x0',
-                    'gasUsed'     => '0x5208',
+                'result' => [
+                    'status' => '0x0',
+                    'gasUsed' => '0x5208',
                     'blockNumber' => '0xa',
                 ],
             ]),
             // envelope verify
             Http::response([
                 'jsonrpc' => '2.0', 'id' => 1,
-                'result'  => [
-                    'from'  => self::EVM_ADDRESS,
-                    'to'    => '0x036cbd53842c5426634e7929541ec2318f3dcf7e',
+                'result' => [
+                    'from' => self::EVM_ADDRESS,
+                    'to' => '0x036cbd53842c5426634e7929541ec2318f3dcf7e',
                     'nonce' => '0x0',
                     'input' => '0xa9059cbb',
                     'value' => '0x0',
-                    'hash'  => $intent->tx_hash,
+                    'hash' => $intent->tx_hash,
                 ],
             ]),
         ]);
@@ -191,14 +192,14 @@ class ReconcileIntentsTest extends TestCase
             // receipt
             Http::response([
                 'jsonrpc' => '2.0', 'id' => 1,
-                'result'  => ['status' => '0x1', 'gasUsed' => '0x5208', 'blockNumber' => '0xa'],
+                'result' => ['status' => '0x1', 'gasUsed' => '0x5208', 'blockNumber' => '0xa'],
             ]),
             // envelope verify — different 'to' address
             Http::response([
                 'jsonrpc' => '2.0', 'id' => 1,
-                'result'  => [
-                    'from'  => self::EVM_ADDRESS,
-                    'to'    => '0xdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef',
+                'result' => [
+                    'from' => self::EVM_ADDRESS,
+                    'to' => '0xdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef',
                     'nonce' => '0x0',
                     'input' => '0xa9059cbb',
                     'value' => '0x0',
@@ -219,8 +220,8 @@ class ReconcileIntentsTest extends TestCase
     public function it_expires_stale_reserved_intents(): void
     {
         $intent = $this->createBroadcastedIntent([
-            'status'     => TxIntent::STATUS_RESERVED,
-            'tx_hash'    => null,
+            'status' => TxIntent::STATUS_RESERVED,
+            'tx_hash' => null,
             'expires_at' => now()->subMinutes(20),
         ]);
 
@@ -236,8 +237,8 @@ class ReconcileIntentsTest extends TestCase
     public function it_does_not_expire_non_stale_intents(): void
     {
         $intent = $this->createBroadcastedIntent([
-            'status'     => TxIntent::STATUS_RESERVED,
-            'tx_hash'    => null,
+            'status' => TxIntent::STATUS_RESERVED,
+            'tx_hash' => null,
             'expires_at' => now()->addMinutes(10),
         ]);
 

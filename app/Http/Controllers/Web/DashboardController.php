@@ -4,9 +4,7 @@ namespace App\Http\Controllers\Web;
 
 use App\Http\Controllers\Controller;
 use App\Models\Agent;
-use App\Models\AgentApiKey;
 use App\Models\ApprovalQueue;
-use App\Models\Policy;
 use App\Models\PolicyInsight;
 use App\Models\TxIntent;
 use App\Services\IntentSummaryService;
@@ -35,13 +33,13 @@ class DashboardController extends Controller
             $selectedAgent = $agents->first();
         }
 
-        // Show activation block until agent makes its first API call (evm_address gets filled)
-        if (!$needsOnboarding && $selectedAgent && $selectedAgent->evm_address === null && $request->session()->has('first_agent_key')) {
+        // Show activation block until agent makes its first API call (wallet_address gets filled)
+        if (! $needsOnboarding && $selectedAgent && $selectedAgent->wallet_address === null && $request->session()->has('first_agent_key')) {
             $firstVisitKey = $request->session()->get('first_agent_key');
         }
 
         // Agent activated: clear session key
-        if ($selectedAgent && $selectedAgent->evm_address !== null) {
+        if ($selectedAgent && $selectedAgent->wallet_address !== null) {
             $request->session()->forget('first_agent_key');
         }
 
@@ -102,6 +100,16 @@ class DashboardController extends Controller
             'first_visit_key' => $firstVisitKey,
             'top_insight' => $topInsight,
         ]);
+    }
+
+    public function agents(Request $request): Response
+    {
+        $agents = Agent::where('user_id', auth()->id())
+            ->with('activeApiKey')
+            ->orderByDesc('created_at')
+            ->get();
+
+        return Inertia::render('Agents', ['agents' => $agents]);
     }
 
     public function audit(Request $request): Response
@@ -198,7 +206,7 @@ class DashboardController extends Controller
 
     public function insights(Request $request): Response
     {
-        $userId   = auth()->id();
+        $userId = auth()->id();
         $agentIds = Agent::where('user_id', $userId)->pluck('id');
 
         $insights = PolicyInsight::whereIn('agent_id', $agentIds)
@@ -220,7 +228,7 @@ class DashboardController extends Controller
         return Inertia::render('Claim', [
             'claim_code' => $code,
             'agent_name' => $agent?->name ?? 'Unknown Agent',
-            'evm_address' => $agent?->evm_address ?? '',
+            'wallet_address' => $agent?->wallet_address ?? '',
             'chain_id' => $agent?->chain_id ?? 0,
             'already_claimed' => $agent?->isClaimed() ?? false,
         ]);

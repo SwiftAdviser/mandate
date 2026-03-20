@@ -13,7 +13,6 @@ use App\Models\TokenRegistry;
 use App\Models\TxIntent;
 use App\Models\User;
 use App\Services\IntentStateMachineService;
-use App\Services\QuotaManagerService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\DB;
@@ -26,14 +25,15 @@ class UserJourneyTest extends TestCase
 {
     use RefreshDatabase;
 
-    private const USDC  = '0x036cbd53842c5426634e7929541ec2318f3dcf7e';
+    private const USDC = '0x036cbd53842c5426634e7929541ec2318f3dcf7e';
+
     private const CHAIN = 84532;
 
     // ERC20 transfer(0xabcdef...ef12, 10_000_000) → $10.00 (stable, 6 dec)
     private const TRANSFER_CALLDATA = '0xa9059cbb000000000000000000000000abcdef1234567890abcdef1234567890abcdef120000000000000000000000000000000000000000000000000000000000989680';
 
     // ERC20 approve(...) — NOT spend-bearing
-    private const APPROVE_CALLDATA  = '0x095ea7b3000000000000000000000000abcdef1234567890abcdef1234567890abcdef120000000000000000000000000000000000000000000000000000000000989680';
+    private const APPROVE_CALLDATA = '0x095ea7b3000000000000000000000000abcdef1234567890abcdef1234567890abcdef120000000000000000000000000000000000000000000000000000000000989680';
 
     // ── Helpers ───────────────────────────────────────────────────────────────
 
@@ -51,38 +51,41 @@ class UserJourneyTest extends TestCase
             $p['txType'] ?? 2,
             json_encode($p['accessList'] ?? []),
         ]);
-        return '0x' . \kornrunner\Keccak::hash($packed, 256);
+
+        return '0x'.\kornrunner\Keccak::hash($packed, 256);
     }
 
     /** Build a valid payload with correct intentHash. */
     private function payload(array $overrides = []): array
     {
         $base = [
-            'chainId'              => self::CHAIN,
-            'nonce'                => 0,
-            'to'                   => self::USDC,
-            'calldata'             => self::APPROVE_CALLDATA,
-            'valueWei'             => '0',
-            'gasLimit'             => '100000',
-            'maxFeePerGas'         => '1000000000',
+            'chainId' => self::CHAIN,
+            'nonce' => 0,
+            'to' => self::USDC,
+            'calldata' => self::APPROVE_CALLDATA,
+            'valueWei' => '0',
+            'gasLimit' => '100000',
+            'maxFeePerGas' => '1000000000',
             'maxPriorityFeePerGas' => '1000000000',
-            'txType'               => 2,
-            'accessList'           => [],
-            'reason'               => 'Test payment for integration test',
+            'txType' => 2,
+            'accessList' => [],
+            'reason' => 'Test payment for integration test',
         ];
         $merged = array_merge($base, $overrides);
         $merged['intentHash'] = $this->intentHash($merged);
+
         return $merged;
     }
 
     private function register(array $extra = []): array
     {
         $resp = $this->postJson('/api/agents/register', array_merge([
-            'name'       => 'TestAgent',
-            'evmAddress' => '0x' . bin2hex(random_bytes(20)),
-            'chainId'    => self::CHAIN,
+            'name' => 'TestAgent',
+            'evmAddress' => '0x'.bin2hex(random_bytes(20)),
+            'chainId' => self::CHAIN,
         ], $extra));
         $resp->assertStatus(201);
+
         return $resp->json();
     }
 
@@ -105,10 +108,10 @@ class UserJourneyTest extends TestCase
         config(['mandate.reputation.enabled' => false]);
 
         TokenRegistry::create([
-            'chain_id'  => self::CHAIN,
-            'address'   => self::USDC,
-            'symbol'    => 'USDC',
-            'decimals'  => 6,
+            'chain_id' => self::CHAIN,
+            'address' => self::USDC,
+            'symbol' => 'USDC',
+            'decimals' => 6,
             'is_stable' => true,
         ]);
     }
@@ -125,7 +128,7 @@ class UserJourneyTest extends TestCase
         $h = $this->authHeader($runtimeKey);
 
         // Step 2: Validate (approve calldata)
-        $validateResp = $this->withHeaders($h)->postJson('/api/validate', $this->payload());
+        $validateResp = $this->withHeaders($h)->postJson('/api/validate/raw', $this->payload());
         $validateResp->assertStatus(200)->assertJsonPath('allowed', true);
         $intentId = $validateResp->json('intentId');
         $this->assertNotNull($intentId);
@@ -135,7 +138,7 @@ class UserJourneyTest extends TestCase
             ->assertStatus(200)->assertJsonPath('status', 'reserved');
 
         // Step 4: Post txHash → broadcasted
-        $txHash = '0x' . str_repeat('ff', 32);
+        $txHash = '0x'.str_repeat('ff', 32);
         $this->withHeaders($h)->postJson("/api/intents/$intentId/events", ['txHash' => $txHash])
             ->assertStatus(200)->assertJsonPath('status', 'broadcasted');
 
@@ -145,9 +148,9 @@ class UserJourneyTest extends TestCase
 
         // Step 6: Simulate on-chain confirmation
         TxIntent::where('id', $intentId)->update([
-            'status'       => TxIntent::STATUS_CONFIRMED,
+            'status' => TxIntent::STATUS_CONFIRMED,
             'block_number' => '1000',
-            'gas_used'     => '21000',
+            'gas_used' => '21000',
         ]);
 
         $this->withHeaders($h)->getJson("/api/intents/$intentId/status")
@@ -162,21 +165,21 @@ class UserJourneyTest extends TestCase
 
         // Agent with $15/day — one $10 transfer passes, second blocked
         $reg = $this->register(['defaultPolicy' => [
-            'spendLimitPerTxUsd'  => 100,
+            'spendLimitPerTxUsd' => 100,
             'spendLimitPerDayUsd' => 15,
         ]]);
-        $agentId    = $reg['agentId'];
+        $agentId = $reg['agentId'];
         $runtimeKey = $reg['runtimeKey'];
         $h = $this->authHeader($runtimeKey);
 
         // First $10 intent — should pass
         $p1 = $this->payload(['calldata' => self::TRANSFER_CALLDATA, 'nonce' => 0]);
-        $this->withHeaders($h)->postJson('/api/validate', $p1)
+        $this->withHeaders($h)->postJson('/api/validate/raw', $p1)
             ->assertStatus(200)->assertJsonPath('allowed', true);
 
         // Second $10 intent — daily limit exceeded
         $p2 = $this->payload(['calldata' => self::TRANSFER_CALLDATA, 'nonce' => 1]);
-        $resp = $this->withHeaders($h)->postJson('/api/validate', $p2);
+        $resp = $this->withHeaders($h)->postJson('/api/validate/raw', $p2);
         $resp->assertStatus(422);
         $this->assertStringContainsString('daily', $resp->json('blockReason'));
 
@@ -188,7 +191,7 @@ class UserJourneyTest extends TestCase
 
         // Now $10 intent should pass again
         $p3 = $this->payload(['calldata' => self::TRANSFER_CALLDATA, 'nonce' => 2]);
-        $this->withHeaders($h)->postJson('/api/validate', $p3)
+        $this->withHeaders($h)->postJson('/api/validate/raw', $p3)
             ->assertStatus(200)->assertJsonPath('allowed', true);
     }
 
@@ -199,7 +202,7 @@ class UserJourneyTest extends TestCase
         Queue::fake();
 
         $reg = $this->register();
-        $agentId    = $reg['agentId'];
+        $agentId = $reg['agentId'];
         $runtimeKey = $reg['runtimeKey'];
         $h = $this->authHeader($runtimeKey);
 
@@ -211,11 +214,11 @@ class UserJourneyTest extends TestCase
         Policy::where('agent_id', $agentId)->update(['require_approval_above_usd' => 5.00]);
 
         // Validate transfer → requiresApproval=true
-        $resp = $this->withHeaders($h)->postJson('/api/validate', $this->payload([
+        $resp = $this->withHeaders($h)->postJson('/api/validate/raw', $this->payload([
             'calldata' => self::TRANSFER_CALLDATA,
         ]));
         $resp->assertStatus(200)->assertJsonPath('requiresApproval', true);
-        $intentId  = $resp->json('intentId');
+        $intentId = $resp->json('intentId');
         $approvalId = $resp->json('approvalId');
         $this->assertNotNull($approvalId);
 
@@ -242,7 +245,7 @@ class UserJourneyTest extends TestCase
         Queue::fake();
 
         $reg = $this->register();
-        $agentId    = $reg['agentId'];
+        $agentId = $reg['agentId'];
         $runtimeKey = $reg['runtimeKey'];
         $h = $this->authHeader($runtimeKey);
 
@@ -251,7 +254,7 @@ class UserJourneyTest extends TestCase
         Agent::where('id', $agentId)->update(['user_id' => $user->id]);
 
         // Validate passes initially
-        $this->withHeaders($h)->postJson('/api/validate', $this->payload(['nonce' => 0]))
+        $this->withHeaders($h)->postJson('/api/validate/raw', $this->payload(['nonce' => 0]))
             ->assertStatus(200)->assertJsonPath('allowed', true);
 
         // Trip circuit breaker (toggle: false → true)
@@ -260,7 +263,7 @@ class UserJourneyTest extends TestCase
             ->assertStatus(200)->assertJsonPath('circuitBreakerActive', true);
 
         // Validate blocked (403)
-        $this->withHeaders($h)->postJson('/api/validate', $this->payload(['nonce' => 1]))
+        $this->withHeaders($h)->postJson('/api/validate/raw', $this->payload(['nonce' => 1]))
             ->assertStatus(403);
 
         // Reset circuit breaker (toggle: true → false)
@@ -269,7 +272,7 @@ class UserJourneyTest extends TestCase
             ->assertStatus(200)->assertJsonPath('circuitBreakerActive', false);
 
         // Validate passes again
-        $this->withHeaders($h)->postJson('/api/validate', $this->payload(['nonce' => 1]))
+        $this->withHeaders($h)->postJson('/api/validate/raw', $this->payload(['nonce' => 1]))
             ->assertStatus(200)->assertJsonPath('allowed', true);
     }
 
@@ -280,12 +283,12 @@ class UserJourneyTest extends TestCase
         Queue::fake();
 
         $reg = $this->register();
-        $agentId    = $reg['agentId'];
+        $agentId = $reg['agentId'];
         $runtimeKey = $reg['runtimeKey'];
         $h = $this->authHeader($runtimeKey);
 
         // Validate → reserved intent
-        $resp = $this->withHeaders($h)->postJson('/api/validate', $this->payload());
+        $resp = $this->withHeaders($h)->postJson('/api/validate/raw', $this->payload());
         $resp->assertStatus(200);
         $intentId = $resp->json('intentId');
 
@@ -311,8 +314,8 @@ class UserJourneyTest extends TestCase
     {
         $fakeId = Str::uuid()->toString();
         $endpoints = [
-            ['POST', '/api/validate',                       ['chainId' => 1]],
-            ['POST', "/api/intents/$fakeId/events",        ['txHash' => '0x' . str_repeat('aa', 32)]],
+            ['POST', '/api/validate/raw',                       ['chainId' => 1]],
+            ['POST', "/api/intents/$fakeId/events",        ['txHash' => '0x'.str_repeat('aa', 32)]],
             ['GET',  "/api/intents/$fakeId/status",        null],
         ];
 
@@ -332,8 +335,8 @@ class UserJourneyTest extends TestCase
         $h = $this->authHeader($reg['runtimeKey']);
         $p = $this->payload();
 
-        $r1 = $this->withHeaders($h)->postJson('/api/validate', $p)->assertStatus(200);
-        $r2 = $this->withHeaders($h)->postJson('/api/validate', $p)->assertStatus(200);
+        $r1 = $this->withHeaders($h)->postJson('/api/validate/raw', $p)->assertStatus(200);
+        $r2 = $this->withHeaders($h)->postJson('/api/validate/raw', $p)->assertStatus(200);
 
         $this->assertSame($r1->json('intentId'), $r2->json('intentId'));
     }
@@ -343,9 +346,9 @@ class UserJourneyTest extends TestCase
     public function test_claim_code_is_generated_and_stored_on_registration(): void
     {
         $resp = $this->postJson('/api/agents/register', [
-            'name'       => 'ClaimAgent',
-            'evmAddress' => '0x' . bin2hex(random_bytes(20)),
-            'chainId'    => self::CHAIN,
+            'name' => 'ClaimAgent',
+            'evmAddress' => '0x'.bin2hex(random_bytes(20)),
+            'chainId' => self::CHAIN,
         ])->assertStatus(201);
 
         // claimUrl is returned and contains a valid code

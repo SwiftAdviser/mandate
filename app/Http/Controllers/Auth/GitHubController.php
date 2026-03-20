@@ -18,10 +18,10 @@ class GitHubController extends Controller
         $request->session()->put('github_oauth_state', $state);
 
         $query = http_build_query([
-            'client_id'    => config('services.github.client_id'),
+            'client_id' => config('services.github.client_id'),
             'redirect_uri' => url(config('services.github.redirect')),
-            'scope'        => 'read:user user:email',
-            'state'        => $state,
+            'scope' => 'read:user user:email',
+            'state' => $state,
         ]);
 
         return redirect("https://github.com/login/oauth/authorize?{$query}");
@@ -34,10 +34,10 @@ class GitHubController extends Controller
         }
 
         $tokenResponse = Http::acceptJson()->post('https://github.com/login/oauth/access_token', [
-            'client_id'     => config('services.github.client_id'),
+            'client_id' => config('services.github.client_id'),
             'client_secret' => config('services.github.client_secret'),
-            'code'          => $request->code,
-            'redirect_uri'  => url(config('services.github.redirect')),
+            'code' => $request->code,
+            'redirect_uri' => url(config('services.github.redirect')),
         ]);
 
         $accessToken = $tokenResponse->json('access_token');
@@ -51,8 +51,8 @@ class GitHubController extends Controller
         $user = User::updateOrCreate(
             ['github_id' => $githubUser['id']],
             [
-                'name'       => $githubUser['name'] ?? $githubUser['login'],
-                'email'      => $githubUser['email'],
+                'name' => $githubUser['name'] ?? $githubUser['login'],
+                'email' => $githubUser['email'],
                 'avatar_url' => $githubUser['avatar_url'] ?? null,
             ]
         );

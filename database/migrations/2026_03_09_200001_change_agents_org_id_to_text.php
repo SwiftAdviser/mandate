@@ -1,9 +1,7 @@
 <?php
 
 use Illuminate\Database\Migrations\Migration;
-use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Schema;
 
 // org_id was defined as foreignUuid but Privy DIDs are "did:privy:xxx" strings — not UUIDs.
 return new class extends Migration

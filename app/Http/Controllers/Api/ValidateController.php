@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Rules\BlockchainAddress;
 use App\Services\PolicyEngineService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -12,23 +13,24 @@ class ValidateController extends Controller
     public function __construct(private PolicyEngineService $engine) {}
 
     /**
-     * Lightweight pre-flight check for custodial wallets (Locus, Bankr, Sponge).
-     * No intentHash, no tx details. Checks: circuit breaker, schedule, allowlist,
-     * quotas, reason scanner. Creates an audit trail intent with action field.
+     * Primary chain-agnostic validation endpoint.
+     * Checks: circuit breaker, schedule, allowlist, blocked actions, quotas,
+     * address risk, reputation, reason scanner, approval gates.
      */
-    public function preflight(Request $request): JsonResponse
+    public function validate(Request $request): JsonResponse
     {
         $data = $request->validate([
             'action' => ['required', 'string', 'max:100'],
             'amount' => ['sometimes', 'string'],
-            'to' => ['sometimes', 'string', 'regex:/^0x[a-fA-F0-9]{40}$/'],
+            'to' => ['sometimes', 'string', new BlockchainAddress],
             'token' => ['sometimes', 'string', 'max:20'],
             'reason' => ['required', 'string', 'max:1000'],
+            'chain' => ['sometimes', 'string', 'max:32'],
         ]);
 
         $agent = $request->attributes->get('agent');
 
-        $result = $this->engine->preflight($agent, $data);
+        $result = $this->engine->validate($agent, $data);
 
         if (! $result['allowed']) {
             return response()->json([
@@ -49,7 +51,11 @@ class ValidateController extends Controller
         ]);
     }
 
-    public function validate(Request $request): JsonResponse
+    /**
+     * Legacy raw EVM validation (deprecated).
+     * Full tx params + intentHash verification.
+     */
+    public function rawValidate(Request $request): JsonResponse
     {
         $data = $request->validate([
             'chainId' => ['required', 'integer'],
@@ -69,14 +75,14 @@ class ValidateController extends Controller
         $agent = $request->attributes->get('agent');
 
         // Auto-fill agent address/chain on first validate call
-        if ($agent->evm_address === null && isset($data['to'])) {
-            $agent->update(['evm_address' => strtolower($data['to'])]);
+        if ($agent->wallet_address === null && isset($data['to'])) {
+            $agent->update(['wallet_address' => strtolower($data['to'])]);
         }
         if ($agent->chain_id === null && isset($data['chainId'])) {
-            $agent->update(['chain_id' => $data['chainId']]);
+            $agent->update(['chain_id' => (string) $data['chainId']]);
         }
 
-        $result = $this->engine->validate($agent, $data);
+        $result = $this->engine->rawValidate($agent, $data);
 
         if (! $result['allowed'] && $result['intentId'] === null) {
             return response()->json([

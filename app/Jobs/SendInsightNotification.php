@@ -16,7 +16,8 @@ class SendInsightNotification implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
-    public int $tries   = 3;
+    public int $tries = 3;
+
     public int $backoff = 5;
 
     public function __construct(
@@ -27,13 +28,14 @@ class SendInsightNotification implements ShouldQueue
     public function handle(InsightNotificationService $service): void
     {
         $insight = PolicyInsight::find($this->insightId);
-        $agent   = Agent::find($this->agentId);
+        $agent = Agent::find($this->agentId);
 
-        if (!$insight || !$agent) {
+        if (! $insight || ! $agent) {
             Log::warning('SendInsightNotification: missing insight or agent', [
                 'insight_id' => $this->insightId,
-                'agent_id'   => $this->agentId,
+                'agent_id' => $this->agentId,
             ]);
+
             return;
         }
 
@@ -44,8 +46,8 @@ class SendInsightNotification implements ShouldQueue
     {
         Log::error('SendInsightNotification failed', [
             'insight_id' => $this->insightId,
-            'agent_id'   => $this->agentId,
-            'error'      => $e->getMessage(),
+            'agent_id' => $this->agentId,
+            'error' => $e->getMessage(),
         ]);
     }
 }

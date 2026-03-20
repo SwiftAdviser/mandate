@@ -25,12 +25,13 @@ class PolicyEngineService
     ) {}
 
     /**
-     * Lightweight pre-flight validation for custodial wallets.
-     * No intentHash, no tx params. Checks policy constraints and logs to audit trail.
+     * Primary chain-agnostic validation (formerly preflight).
+     * Checks: circuit breaker, policy, schedule, allowlist, blocked actions,
+     * per-tx limit, quotas, address risk, reputation, reason scanner, approval gates.
      */
-    public function preflight(Agent $agent, array $data): array
+    public function validate(Agent $agent, array $data): array
     {
-        // 1. Circuit breaker (also checked in middleware, but double-check)
+        // 1. Circuit breaker
         if ($this->circuitBreaker->isActive($agent->id)) {
             return $this->block('circuit_breaker_active', 'Agent circuit breaker is tripped');
         }
@@ -52,16 +53,39 @@ class PolicyEngineService
 
         // 4. Address allowlist (if 'to' provided)
         if (! empty($data['to']) && $policy->allowed_addresses && ! empty($policy->allowed_addresses)) {
-            $to = strtolower($data['to']);
-            if (! in_array($to, array_map('strtolower', $policy->allowed_addresses), true)) {
+            $to = $data['to'];
+            $isEvm = str_starts_with($to, '0x');
+            $matches = false;
+
+            foreach ($policy->allowed_addresses as $allowed) {
+                if ($isEvm) {
+                    // EVM: case-insensitive
+                    if (strtolower($to) === strtolower($allowed)) {
+                        $matches = true;
+                        break;
+                    }
+                } else {
+                    // Solana/TON: case-sensitive
+                    if ($to === $allowed) {
+                        $matches = true;
+                        break;
+                    }
+                }
+            }
+
+            if (! $matches) {
                 return $this->block('address_not_allowed', "{$to} not in allowlist");
             }
         }
 
-        // 5. Per-tx spend limit (if amount + token provided)
+        // 5. Blocked actions check
+        if (! empty($policy->blocked_actions) && in_array($data['action'], $policy->blocked_actions, true)) {
+            return $this->block('action_blocked', "Action '{$data['action']}' is blocked by policy");
+        }
+
+        // 6. Per-tx spend limit (if amount provided)
         $amountUsd = null;
         if (! empty($data['amount']) && is_numeric($data['amount'])) {
-            // For preflight: treat amount as USD directly (stablecoins) or use token hint
             $amountUsd = (float) $data['amount'];
         }
 
@@ -71,7 +95,7 @@ class PolicyEngineService
             }
         }
 
-        // 6. Daily/monthly quota check
+        // 7. Daily/monthly quota check
         if ($amountUsd !== null && $amountUsd > 0) {
             $quotaCheck = $this->quota->check($agent->id, $policy, $amountUsd);
             if (! $quotaCheck['daily_ok']) {
@@ -82,7 +106,34 @@ class PolicyEngineService
             }
         }
 
-        // 7. Reason scanner
+        // 8. Address risk screening (if 'to' provided and aegis enabled)
+        if (! empty($data['to']) && $policy->risk_scan_enabled && config('mandate.aegis.enabled')) {
+            $riskResult = $this->aegisService->screenAddress($data['to']);
+            if ($riskResult && ($riskResult['risk_level'] ?? null) === 'CRITICAL') {
+                return $this->block('aegis_critical_risk', 'Destination address flagged as CRITICAL risk by security scanner');
+            }
+        }
+
+        // 9. Reputation check (EVM agents only, conditional)
+        $approvalReasons = [];
+        if (config('mandate.reputation.enabled') && $agent->wallet_address && str_starts_with($agent->wallet_address, '0x')) {
+            $chainId = $agent->chain_id;
+            if ($chainId && is_numeric($chainId)) {
+                $reputationResult = $this->reputationService->check($agent->wallet_address, (int) $chainId);
+                if (! ($reputationResult['degraded'] ?? false)) {
+                    if (! ($reputationResult['registered'] ?? false)) {
+                        if (config('mandate.reputation.thresholds.unknown_requires_approval', true)) {
+                            $approvalReasons[] = 'unknown_agent';
+                        }
+                    } elseif (($reputationResult['score'] ?? null) !== null
+                              && $reputationResult['score'] < config('mandate.reputation.thresholds.low_score', 30)) {
+                        $approvalReasons[] = 'low_reputation';
+                    }
+                }
+            }
+        }
+
+        // 10. Reason scanner
         $reason = $data['reason'] ?? null;
         $reasonScan = null;
         if ($reason) {
@@ -92,18 +143,26 @@ class PolicyEngineService
             if ($reasonScan['action'] === 'block') {
                 return $this->block('reason_blocked', $reasonScan['explanation']);
             }
+            if ($reasonScan['action'] === 'require_approval') {
+                $approvalReasons[] = 'reason_flagged';
+            }
         }
 
-        // 8. Approval check
-        $approvalReasons = [];
+        // 11. Approval threshold check
         if ($policy->require_approval_above_usd && $amountUsd !== null) {
             if ($amountUsd > (float) $policy->require_approval_above_usd) {
                 $approvalReasons[] = 'amount_above_threshold';
             }
         }
+
+        // 12. Approval by action
+        if (! empty($policy->require_approval_actions) && in_array($data['action'], $policy->require_approval_actions, true)) {
+            $approvalReasons[] = 'action_requires_approval';
+        }
+
         $needsApproval = ! empty($approvalReasons);
 
-        // Derive risk level for preflight
+        // Derive risk level
         $riskLevel = 'SAFE';
         if ($reasonScan && $reasonScan['action'] === 'approval') {
             $riskLevel = 'MEDIUM';
@@ -112,16 +171,18 @@ class PolicyEngineService
             $riskLevel = 'MEDIUM';
         }
 
-        // 9. Create audit trail intent (preflight type)
+        // Create audit trail intent
         $intentId = Str::uuid()->toString();
+        $chainId = $data['chain'] ?? $agent->chain_id ?? '8453';
+
         DB::table('tx_intents')->insert([
             'id' => $intentId,
             'agent_id' => $agent->id,
             'policy_id' => $policy->id,
-            'intent_hash' => '0x'.hash('sha256', 'preflight:'.$intentId), // unique per preflight
-            'chain_id' => $agent->chain_id ?? 8453,
+            'intent_hash' => '0x'.hash('sha256', 'preflight:'.$intentId),
+            'chain_id' => $chainId,
             'nonce' => 0,
-            'to_address' => strtolower($data['to'] ?? '0x0000000000000000000000000000000000000000'),
+            'to_address' => $data['to'] ?? '0x0000000000000000000000000000000000000000',
             'calldata' => '0x',
             'value_wei' => '0',
             'gas_limit' => '0',
@@ -141,12 +202,12 @@ class PolicyEngineService
             'updated_at' => now(),
         ]);
 
-        // 10. Audit event
+        // Audit event
         DB::table('tx_events')->insert([
             'id' => Str::uuid(),
             'intent_id' => $intentId,
             'agent_id' => $agent->id,
-            'event_type' => 'preflight_validated',
+            'event_type' => 'validated',
             'actor_id' => $agent->id,
             'actor_role' => 'agent',
             'metadata' => json_encode([
@@ -155,6 +216,7 @@ class PolicyEngineService
                 'amount_usd' => $amountUsd,
                 'token' => $data['token'] ?? null,
                 'to' => $data['to'] ?? null,
+                'chain' => $data['chain'] ?? null,
                 'reason' => $reason,
                 'needs_approval' => $needsApproval,
             ]),
@@ -176,21 +238,14 @@ class PolicyEngineService
     }
 
     /**
-     * Validate an intent against policy. Returns result array.
-     *
-     * Result: {
-     *   allowed: bool,
-     *   intentId: string|null,
-     *   requiresApproval: bool,
-     *   approvalId: string|null,
-     *   blockReason: string|null,
-     * }
+     * Legacy raw EVM validation (formerly validate).
+     * Full tx params, intentHash verification, calldata decoding.
      */
-    public function validate(Agent $agent, array $payload): array
+    public function rawValidate(Agent $agent, array $payload): array
     {
         // ----- Phase 1: reads only -----
 
-        // 1. Circuit breaker (from middleware — but double-check here)
+        // 1. Circuit breaker
         if ($this->circuitBreaker->isActive($agent->id)) {
             return $this->block('circuit_breaker_active', 'Agent circuit breaker is tripped. Reset via dashboard or POST /api/agents/{id}/circuit-break');
         }
@@ -281,7 +336,7 @@ class PolicyEngineService
         $reputationResult = null;
         if (config('mandate.reputation.enabled')) {
             $reputationResult = $this->reputationService->check(
-                $agent->evm_address, $payload['chainId']
+                $agent->wallet_address, $payload['chainId']
             );
 
             if (! $reputationResult['degraded']) {
@@ -342,14 +397,14 @@ class PolicyEngineService
             $agent, $policy, $payload, $serverHash,
             $decoded, $action, $amountUsd, $needsApproval, $approvalReasons, $riskAssessment, $reputationResult, $reason, $reasonScan, &$result
         ) {
-            // 13. INSERT intent — ON CONFLICT DO NOTHING
+            // 13. INSERT intent
             $intentId = Str::uuid()->toString();
             $inserted = DB::table('tx_intents')->insertOrIgnore([
                 'id' => $intentId,
                 'agent_id' => $agent->id,
                 'policy_id' => $policy->id,
                 'intent_hash' => $serverHash,
-                'chain_id' => $payload['chainId'],
+                'chain_id' => (string) $payload['chainId'],
                 'nonce' => $payload['nonce'],
                 'to_address' => strtolower($payload['to']),
                 'calldata' => $payload['calldata'] ?? '0x',
@@ -378,7 +433,7 @@ class PolicyEngineService
                 'updated_at' => now(),
             ]);
 
-            // Duplicate intent — return existing
+            // Duplicate intent: return existing
             if (! $inserted) {
                 $existing = TxIntent::where('agent_id', $agent->id)
                     ->where('intent_hash', $serverHash)
@@ -486,8 +541,6 @@ class PolicyEngineService
 
     private function computeIntentHash(array $payload): string
     {
-        // Recompute keccak256 of canonical fields
-        // keccak256(chainId || nonce || to || calldata || valueWei || gasLimit || maxFeePerGas || maxPriorityFeePerGas || txType || accessList)
         $packed = implode('|', [
             $payload['chainId'],
             $payload['nonce'],
@@ -532,6 +585,7 @@ class PolicyEngineService
         $messages = array_map(fn (string $r) => match ($r) {
             'amount_above_threshold' => 'Transaction amount exceeds the approval threshold set by the wallet owner.',
             'selector_requires_approval' => 'This contract function requires manual approval per policy.',
+            'action_requires_approval' => 'This action requires manual approval per policy.',
             'high_risk' => 'Security scan flagged this transaction as HIGH risk. The wallet owner must review before proceeding.',
             'unknown_agent' => 'This agent is not registered on-chain (EIP-8004). The wallet owner must verify your identity before approving.',
             'low_reputation' => 'This agent has a low on-chain reputation score. The wallet owner must review before approving.',
@@ -541,13 +595,13 @@ class PolicyEngineService
 
         $combined = implode(' ', $messages);
 
-        return "{$combined} Please wait — the wallet owner has been notified and will review shortly.";
+        return "{$combined} Please wait: the wallet owner has been notified and will review shortly.";
     }
 
     private function checkSchedule(array $schedule): bool
     {
         $now = now();
-        $day = strtolower($now->format('l')); // 'monday', 'tuesday', etc.
+        $day = strtolower($now->format('l'));
         $hour = (int) $now->format('G');
 
         $allowedDays = array_map('strtolower', $schedule['days'] ?? []);
@@ -599,6 +653,7 @@ class PolicyEngineService
             'address_not_allowed' => "The destination address is not on the approved allowlist. {$detail} The wallet owner must add this address to the policy before you can send to it.",
             'outside_schedule' => "Transactions are only allowed during scheduled hours. {$detail} Wait for the next allowed window.",
             'selector_blocked' => "This contract function is blocked by policy. {$detail} Only approved function calls are allowed.",
+            'action_blocked' => "This action is blocked by policy. {$detail}",
             'gas_limit_exceeded' => "Gas limit exceeds policy maximum. {$detail}",
             'value_wei_exceeded' => "Native value exceeds policy maximum. {$detail}",
             default => "Transaction blocked: {$detail}",

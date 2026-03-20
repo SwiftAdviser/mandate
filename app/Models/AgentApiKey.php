@@ -22,9 +22,9 @@ class AgentApiKey extends Model
     ];
 
     protected $casts = [
-        'is_test'      => 'boolean',
+        'is_test' => 'boolean',
         'last_used_at' => 'datetime',
-        'revoked_at'   => 'datetime',
+        'revoked_at' => 'datetime',
     ];
 
     public function agent(): BelongsTo
@@ -42,19 +42,20 @@ class AgentApiKey extends Model
      */
     public static function generate(Agent $agent): array
     {
-        $isTest   = in_array($agent->chain_id, [84532, 11155111], true);
-        $prefix   = $isTest ? 'mndt_test_' : 'mndt_live_';
-        $random   = Str::random(32);
-        $rawKey   = $prefix . $random;
-        $keyHash  = hash('sha256', $rawKey);
-        $keyPrefix = $prefix . substr($random, 0, 6);
+        $testChains = ['84532', '11155111'];
+        $isTest = in_array((string) $agent->chain_id, $testChains, true);
+        $prefix = $isTest ? 'mndt_test_' : 'mndt_live_';
+        $random = Str::random(32);
+        $rawKey = $prefix.$random;
+        $keyHash = hash('sha256', $rawKey);
+        $keyPrefix = $prefix.substr($random, 0, 6);
 
         $model = self::create([
-            'agent_id'   => $agent->id,
+            'agent_id' => $agent->id,
             'key_prefix' => $keyPrefix,
-            'key_hash'   => $keyHash,
-            'scope'      => 'runtime',
-            'is_test'    => $isTest,
+            'key_hash' => $keyHash,
+            'scope' => 'runtime',
+            'is_test' => $isTest,
         ]);
 
         return [$rawKey, $model];

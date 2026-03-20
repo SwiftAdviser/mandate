@@ -14,19 +14,19 @@ class AlchemyTransferSearchService
         $intent->loadMissing('agent');
         $agent = $intent->agent;
 
-        if (!$agent->evm_address) {
+        if (! $agent->wallet_address) {
             return null;
         }
 
         $chainId = $intent->chain_id;
         $rpcBase = config("mandate.rpc.{$chainId}");
 
-        if (!$rpcBase) {
+        if (! $rpcBase) {
             return null;
         }
 
         $apiKey = config('mandate.alchemy_api_key');
-        $rpcUrl = $apiKey ? $rpcBase . $apiKey : $rpcBase;
+        $rpcUrl = $apiKey ? $rpcBase.$apiKey : $rpcBase;
 
         // Get current block number
         $currentBlock = $this->rpcCall($rpcUrl, 'eth_blockNumber');
@@ -44,12 +44,12 @@ class AlchemyTransferSearchService
 
         // Build transfer search params
         $params = [
-            'fromAddress'  => $agent->evm_address,
-            'toAddress'    => $intent->decoded_recipient,
-            'fromBlock'    => '0x' . dechex($fromBlock),
-            'toBlock'      => 'latest',
-            'order'        => 'desc',
-            'maxCount'     => '0x5',
+            'fromAddress' => $agent->wallet_address,
+            'toAddress' => $intent->decoded_recipient,
+            'fromBlock' => '0x'.dechex($fromBlock),
+            'toBlock' => 'latest',
+            'order' => 'desc',
+            'maxCount' => '0x5',
             'withMetadata' => true,
         ];
 
@@ -85,13 +85,13 @@ class AlchemyTransferSearchService
 
         foreach ($transferList as $transfer) {
             $hash = $transfer['hash'] ?? null;
-            if (!$hash || isset($usedHashes[$hash])) {
+            if (! $hash || isset($usedHashes[$hash])) {
                 continue;
             }
 
             // Filter by timestamp: must be after intent creation
             $blockTimestamp = $transfer['metadata']['blockTimestamp'] ?? null;
-            if (!$blockTimestamp) {
+            if (! $blockTimestamp) {
                 continue;
             }
 
@@ -111,7 +111,7 @@ class AlchemyTransferSearchService
 
             // Track time distance from intent creation for "closest" pick
             $candidates[] = [
-                'transfer'     => $transfer,
+                'transfer' => $transfer,
                 'time_distance' => abs($txTime->diffInSeconds($intentCreatedAt)),
             ];
         }
@@ -121,14 +121,14 @@ class AlchemyTransferSearchService
         }
 
         // Pick closest in time to intent creation
-        usort($candidates, fn($a, $b) => $a['time_distance'] <=> $b['time_distance']);
+        usort($candidates, fn ($a, $b) => $a['time_distance'] <=> $b['time_distance']);
 
         $best = $candidates[0]['transfer'];
 
         return [
-            'hash'     => $best['hash'],
+            'hash' => $best['hash'],
             'blockNum' => $best['blockNum'],
-            'value'    => $best['value'],
+            'value' => $best['value'],
         ];
     }
 
@@ -137,9 +137,9 @@ class AlchemyTransferSearchService
         try {
             $response = Http::timeout(8)->post($url, [
                 'jsonrpc' => '2.0',
-                'id'      => 1,
-                'method'  => $method,
-                'params'  => $params ?: [],
+                'id' => 1,
+                'method' => $method,
+                'params' => $params ?: [],
             ]);
 
             return $response->json('result');

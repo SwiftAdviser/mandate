@@ -4,12 +4,12 @@ import { useState } from 'react';
 interface Props {
   claim_code: string;
   agent_name: string;
-  evm_address: string;
-  chain_id: number;
+  wallet_address: string;
+  chain_id: string;
   already_claimed: boolean;
 }
 
-export default function Claim({ claim_code, agent_name, evm_address, chain_id, already_claimed }: Props) {
+export default function Claim({ claim_code, agent_name, wallet_address, chain_id, already_claimed }: Props) {
   const { auth } = usePage<{ auth: { user: any } }>().props;
   const [loading, setLoading] = useState(false);
   const [done, setDone] = useState(false);
@@ -137,7 +137,7 @@ export default function Claim({ claim_code, agent_name, evm_address, chain_id, a
                 {/* Agent details */}
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
                   {[
-                    ...(evm_address ? [{ label: 'EVM Address', value: evm_address }] : []),
+                    ...(wallet_address ? [{ label: 'EVM Address', value: wallet_address }] : []),
                     ...(chain_id ? [{ label: 'Chain ID', value: String(chain_id) }] : []),
                     { label: 'Claim Code',  value: claim_code },
                   ].map(row => (
