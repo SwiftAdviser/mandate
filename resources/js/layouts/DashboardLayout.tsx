@@ -151,34 +151,6 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
           flexDirection: 'column',
           gap: 8,
         }}>
-          {user && (
-            <div style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: 8,
-              padding: '6px 8px',
-              overflow: 'hidden',
-            }}>
-              {user.avatar_url ? (
-                <img src={user.avatar_url} alt="" style={{ width: 24, height: 24, borderRadius: '50%', flexShrink: 0 }} />
-              ) : (
-                <div style={{ width: 24, height: 24, borderRadius: '50%', background: 'var(--accent)', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 700, color: '#000' }}>
-                  {user.name?.[0]?.toUpperCase() ?? '?'}
-                </div>
-              )}
-              {!collapsed && (
-                <div style={{ overflow: 'hidden' }}>
-                  <div style={{ fontSize: 12, color: 'var(--text-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{user.name}</div>
-                  <form method="POST" action="/logout" style={{ margin: 0 }}>
-                    <input type="hidden" name="_token" value={document.querySelector<HTMLMetaElement>('meta[name="csrf-token"]')?.content ?? ''} />
-                    <button type="submit" style={{ background: 'none', border: 'none', padding: 0, color: 'var(--text-dim)', fontSize: 10, fontFamily: 'var(--font-mono)', cursor: 'pointer' }}>
-                      sign out
-                    </button>
-                  </form>
-                </div>
-              )}
-            </div>
-          )}
           <a
             href="https://t.me/mandate_md_chat"
             target="_blank"
@@ -211,6 +183,34 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
             <TelegramIcon size={collapsed ? 18 : 16} />
             {!collapsed && 'Join community'}
           </a>
+          {user && (
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 8,
+              padding: '6px 8px',
+              overflow: 'hidden',
+            }}>
+              {user.avatar_url ? (
+                <img src={user.avatar_url} alt="" style={{ width: 24, height: 24, borderRadius: '50%', flexShrink: 0 }} />
+              ) : (
+                <div style={{ width: 24, height: 24, borderRadius: '50%', background: 'var(--accent)', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 700, color: '#000' }}>
+                  {user.name?.[0]?.toUpperCase() ?? '?'}
+                </div>
+              )}
+              {!collapsed && (
+                <div style={{ overflow: 'hidden' }}>
+                  <div style={{ fontSize: 12, color: 'var(--text-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{user.name}</div>
+                  <form method="POST" action="/logout" style={{ margin: 0 }}>
+                    <input type="hidden" name="_token" value={document.querySelector<HTMLMetaElement>('meta[name="csrf-token"]')?.content ?? ''} />
+                    <button type="submit" style={{ background: 'none', border: 'none', padding: 0, color: 'var(--text-dim)', fontSize: 10, fontFamily: 'var(--font-mono)', cursor: 'pointer' }}>
+                      sign out
+                    </button>
+                  </form>
+                </div>
+              )}
+            </div>
+          )}
           <button
             onClick={() => setCollapsed(!collapsed)}
             style={{
