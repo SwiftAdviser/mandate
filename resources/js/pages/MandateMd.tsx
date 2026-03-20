@@ -20,6 +20,13 @@ export default function MandateMd({ agent_id, guard_rules }: Props) {
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState('');
+  const [activePreset, setActivePreset] = useState<MandateTemplateKey | null>(() => {
+    // Detect if current rules match a preset
+    for (const key of Object.keys(MANDATE_TEMPLATES) as MandateTemplateKey[]) {
+      if (guard_rules && guard_rules.trim() === MANDATE_TEMPLATES[key].content.trim()) return key;
+    }
+    return null;
+  });
 
   async function save() {
     if (!agent_id) { setError('No agent found. Create an agent first.'); return; }
@@ -71,7 +78,7 @@ export default function MandateMd({ agent_id, guard_rules }: Props) {
                 Your rules
               </div>
               <button
-                onClick={() => setRules(MANDATE_PREFILL)}
+                onClick={() => { setRules(MANDATE_PREFILL); setActivePreset(null); }}
                 style={{
                   padding: '6px 12px',
                   fontSize: 11,
@@ -87,29 +94,33 @@ export default function MandateMd({ agent_id, guard_rules }: Props) {
               </button>
             </div>
             <div style={{ display: 'flex', gap: 8, marginBottom: 14 }}>
-              {(Object.keys(MANDATE_TEMPLATES) as MandateTemplateKey[]).map(key => (
-                <button
-                  key={key}
-                  onClick={() => setRules(MANDATE_TEMPLATES[key].content)}
-                  style={{
-                    padding: '6px 14px',
-                    fontSize: 11,
-                    fontFamily: 'var(--font-mono)',
-                    borderRadius: 6,
-                    border: '1px solid var(--border)',
-                    background: 'var(--bg-base)',
-                    color: 'var(--text-secondary)',
-                    cursor: 'pointer',
-                    transition: 'all 0.12s',
-                  }}
-                >
-                  {MANDATE_TEMPLATES[key].label}
-                </button>
-              ))}
+              {(Object.keys(MANDATE_TEMPLATES) as MandateTemplateKey[]).map(key => {
+                const isActive = activePreset === key;
+                return (
+                  <button
+                    key={key}
+                    onClick={() => { setRules(MANDATE_TEMPLATES[key].content); setActivePreset(key); }}
+                    style={{
+                      padding: '6px 14px',
+                      fontSize: 11,
+                      fontFamily: 'var(--font-mono)',
+                      borderRadius: 6,
+                      border: `1px solid ${isActive ? 'var(--accent)' : 'var(--border)'}`,
+                      background: isActive ? 'var(--accent-glow)' : 'var(--bg-base)',
+                      color: isActive ? 'var(--accent)' : 'var(--text-secondary)',
+                      cursor: 'pointer',
+                      transition: 'all 0.12s',
+                      fontWeight: isActive ? 600 : 400,
+                    }}
+                  >
+                    {MANDATE_TEMPLATES[key].label}
+                  </button>
+                );
+              })}
             </div>
             <MarkdownEditor
               value={rules}
-              onChange={setRules}
+              onChange={v => { setRules(v); setActivePreset(null); }}
               placeholder={'# MANDATE.md\n\n## Block immediately\n- Agent\'s reasoning contains urgency pressure\n- ...\n\n## Require human approval\n- Recipient is new\n- ...\n\n## Allow\n- Reason references a specific invoice\n- ...'}
             />
           </div>

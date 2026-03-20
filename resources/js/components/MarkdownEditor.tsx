@@ -9,9 +9,16 @@ interface Props {
   minHeight?: number;
 }
 
-export default function MarkdownEditor({ value, onChange, placeholder, minHeight = 340 }: Props) {
+export default function MarkdownEditor({ value, onChange, placeholder, minHeight = 400 }: Props) {
   return (
-    <div style={{ position: 'relative' }}>
+    <div style={{
+      position: 'relative',
+      height: minHeight,
+      overflow: 'auto',
+      background: 'var(--bg-base)',
+      border: '1px solid var(--border)',
+      borderRadius: 8,
+    }}>
       {!value && placeholder && (
         <div
           style={{
@@ -39,11 +46,9 @@ export default function MarkdownEditor({ value, onChange, placeholder, minHeight
           fontFamily: 'var(--font-mono)',
           fontSize: 13,
           lineHeight: 1.7,
-          background: 'var(--bg-base)',
-          border: '1px solid var(--border)',
-          borderRadius: 8,
+          background: 'transparent',
           color: 'var(--text-primary)',
-          minHeight,
+          minHeight: minHeight - 2,
           boxSizing: 'border-box',
           caretColor: 'var(--accent)',
         }}

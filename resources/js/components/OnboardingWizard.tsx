@@ -56,6 +56,7 @@ export default function OnboardingWizard({ agent, onComplete }: Props) {
   // Step 2: MANDATE.md
   const [guardRules, setGuardRules] = useState(MANDATE_PREFILL);
   const [savingRules, setSavingRules] = useState(false);
+  const [selectedTemplate, setSelectedTemplate] = useState<MandateTemplateKey | null>(null);
 
   // Step 3: Telegram
   const [linkCode, setLinkCode] = useState('');
@@ -93,6 +94,7 @@ export default function OnboardingWizard({ agent, onComplete }: Props) {
 
   function selectMandateTemplate(key: MandateTemplateKey) {
     setGuardRules(MANDATE_TEMPLATES[key].content);
+    setSelectedTemplate(key);
   }
 
   async function saveSpendLimits() {
@@ -354,7 +356,7 @@ export default function OnboardingWizard({ agent, onComplete }: Props) {
       {/* Template presets */}
       <div style={{ display: 'flex', gap: 8, marginBottom: 12 }}>
         {(Object.keys(MANDATE_TEMPLATES) as MandateTemplateKey[]).map(key => (
-          <button key={key} onClick={() => selectMandateTemplate(key)} style={btnPreset(false)}>
+          <button key={key} onClick={() => selectMandateTemplate(key)} style={btnPreset(key === selectedTemplate)}>
             {MANDATE_TEMPLATES[key].label}
           </button>
         ))}
@@ -488,7 +490,7 @@ export default function OnboardingWizard({ agent, onComplete }: Props) {
         Watch how Mandate detects and blocks a social engineering attack in real time.
       </p>
 
-      <LiveSimulationDemo />
+      <LiveSimulationDemo agentId={agent.id} />
 
       <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 20 }}>
         <a href="/audit" onClick={() => { sessionStorage.removeItem(STORAGE_KEY); }} style={btnPrimary}>Check Audit Log</a>
@@ -505,9 +507,10 @@ export default function OnboardingWizard({ agent, onComplete }: Props) {
       background: 'rgba(0, 0, 0, 0.85)',
       backdropFilter: 'blur(8px)',
       display: 'flex',
-      alignItems: 'center',
+      alignItems: 'flex-start',
       justifyContent: 'center',
-      padding: 24,
+      padding: '60px 24px 24px',
+      overflowY: 'auto',
     }}>
       {/* Progress bar */}
       <div style={{

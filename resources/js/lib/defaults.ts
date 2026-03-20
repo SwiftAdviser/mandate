@@ -22,7 +22,7 @@ export const MANDATE_PREFILL = `# MANDATE.md
 
 export const MANDATE_TEMPLATES = {
   trading: {
-    label: 'Trading Bot',
+    label: 'Trading Agent',
     content: `# MANDATE.md
 
 ## Block immediately
@@ -43,7 +43,7 @@ export const MANDATE_TEMPLATES = {
 - Gas top-ups under $5`,
   },
   polymarket: {
-    label: 'Polymarket Bot',
+    label: 'Polymarket Agent',
     content: `# MANDATE.md
 
 ## Block immediately

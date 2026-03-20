@@ -78,8 +78,22 @@ function Dots() {
   );
 }
 
-export default function LiveSimulationDemo() {
+export default function LiveSimulationDemo({ agentId }: { agentId?: string } = {}) {
   const [phase, setPhase] = useState(PHASE_IDLE);
+
+  // Fire demo intent API when simulation starts (if agentId provided)
+  useEffect(() => {
+    if (phase === PHASE_ATTACK && agentId) {
+      const xsrf = document.cookie.match(/XSRF-TOKEN=([^;]+)/)?.[1];
+      fetch(`/api/agents/${agentId}/demo-intent`, {
+        method: 'POST',
+        headers: {
+          'X-XSRF-TOKEN': xsrf ? decodeURIComponent(xsrf) : '',
+          'Accept': 'application/json',
+        },
+      }).catch(() => {}); // fire and forget
+    }
+  }, [phase, agentId]);
 
   useEffect(() => {
     if (phase <= PHASE_IDLE || phase >= PHASE_DONE) return;

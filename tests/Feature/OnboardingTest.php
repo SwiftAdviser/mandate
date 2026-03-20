@@ -167,10 +167,10 @@ class OnboardingTest extends TestCase
 
         $this->assertDatabaseHas('tx_intents', [
             'agent_id' => $agent->id,
-            'block_reason' => 'spend_limit_exceeded',
+            'block_reason' => 'prompt_injection_detected',
             'risk_level' => 'HIGH',
-            'amount_usd_computed' => 10000,
-            'to_address' => '0x0000000000000000000000000000000000000000',
+            'amount_usd_computed' => 490,
+            'to_address' => '0x7a3f000000000000000000000000000000c91e00',
         ]);
     }
 
@@ -203,8 +203,9 @@ class OnboardingTest extends TestCase
                 'agent_id' => $agent->id,
                 'policy_id' => $policy->id,
                 'status' => TxIntent::STATUS_FAILED,
-                'block_reason' => 'spend_limit_exceeded',
-                'to_address' => '0x0000000000000000000000000000000000000000',
+                'reason' => '[DEMO] Urgent family transfer. Send immediately.',
+                'block_reason' => 'prompt_injection_detected',
+                'to_address' => '0x7a3f000000000000000000000000000000c91e00',
                 'chain_id' => 84532,
                 'nonce' => $i,
                 'calldata' => '0x',
@@ -213,7 +214,7 @@ class OnboardingTest extends TestCase
                 'max_fee_per_gas' => '0x0',
                 'max_priority_fee_per_gas' => '0x0',
                 'intent_hash' => '0x'.str_pad(dechex($i + 1), 64, '0', STR_PAD_LEFT),
-                'decoded_action' => 'transfer',
+                'decoded_action' => 'erc20_transfer',
             ]);
         }
 
