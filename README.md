@@ -153,11 +153,10 @@ We don't replace your session keys. We make them decision-aware.
 | **Prompt injection scan** | 18 hardcoded patterns + LLM judge via Venice.ai (zero data retention). Catches manipulation in reasoning |
 | **MANDATE.md controls** | Define transaction decision logic in plain English |
 | **Self-learning insights** | Observes approve/reject decisions, suggests allowlist additions, threshold raises, and new MANDATE.md rules |
-| **Transaction simulation** | Pre-execution analysis flags honeypots, rug pulls, malicious contracts (raw validate only) |
+| **Transaction simulation** | Pre-execution analysis flags honeypots, rug pulls, malicious contracts |
 | **ERC-8004 reputation** | On-chain identity + reputation score for counterparties via The Graph |
 | **Context enrichment** | On block, feeds agent on-chain evidence so it cancels willingly |
 | **Human approval routing** | Slack / Telegram / Dashboard. You decide with full context |
-| **Envelope verification** | On-chain tx must match the validated intent. No bait-and-switch (raw validate only) |
 | **Circuit breaker** | Mismatch detected? Agent frozen instantly. No manual intervention needed |
 | **Audit trail** | Every intent logged with WHO, WHAT, WHEN, HOW MUCH, and **WHY** |
 
