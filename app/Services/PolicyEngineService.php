@@ -188,7 +188,7 @@ class PolicyEngineService
         $intentHash = '0x'.hash('sha256', $hashInput);
 
         // Determine status based on validation result
-        $intentStatus = $needsApproval ? 'approval_pending' : 'preflight';
+        $intentStatus = $needsApproval ? 'approval_pending' : 'allowed';
         $approvalId = null;
         $approvalExpiry = $needsApproval
             ? now()->addSeconds(config('mandate.intent_ttl.approval_pending', 3600))
@@ -216,7 +216,7 @@ class PolicyEngineService
             'reason' => $reason,
             'risk_level' => $riskLevel,
             'status' => $intentStatus,
-            'expires_at' => $approvalExpiry ?? now()->addMinutes(5),
+            'expires_at' => $approvalExpiry ?? now()->addHours(24),
             'created_at' => now(),
             'updated_at' => now(),
         ]);

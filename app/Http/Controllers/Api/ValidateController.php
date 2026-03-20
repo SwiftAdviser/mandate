@@ -60,6 +60,7 @@ class ValidateController extends Controller
             'allowed' => true,
             'intentId' => $result['intentId'],
             'action' => $data['action'],
+            'chain' => $data['chain'] ?? $agent->chain_id ?? null,
             'requiresApproval' => false,
         ]);
     }

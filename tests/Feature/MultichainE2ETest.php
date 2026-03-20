@@ -317,8 +317,8 @@ class MultichainE2ETest extends TestCase
             'chain' => $chainId,
         ]);
 
-        $response->assertOk()
-            ->assertJsonPath('allowed', true)
+        $response->assertStatus(202)
+            ->assertJsonPath('allowed', false)
             ->assertJsonPath('requiresApproval', true);
     }
 
@@ -566,8 +566,8 @@ class MultichainE2ETest extends TestCase
             'chain' => 'ton',
         ]);
 
-        $response->assertOk()
-            ->assertJsonPath('allowed', true)
+        $response->assertStatus(202)
+            ->assertJsonPath('allowed', false)
             ->assertJsonPath('requiresApproval', true);
     }
 }
