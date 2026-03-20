@@ -32,7 +32,8 @@ class ValidateController extends Controller
 
         $result = $this->engine->validate($agent, $data);
 
-        if (! $result['allowed']) {
+        // Hard block (policy violation)
+        if (! $result['allowed'] && ! ($result['requiresApproval'] ?? false)) {
             return response()->json([
                 'allowed' => false,
                 'blockReason' => $result['blockReason'],
@@ -42,12 +43,24 @@ class ValidateController extends Controller
             ], 422);
         }
 
+        // Approval required: accepted but pending human review
+        if ($result['requiresApproval'] ?? false) {
+            return response()->json([
+                'allowed' => false,
+                'intentId' => $result['intentId'],
+                'action' => $data['action'],
+                'requiresApproval' => true,
+                'approvalId' => $result['approvalId'],
+                'approvalReason' => $result['approvalReason'] ?? null,
+                'instruction' => 'Transaction requires human approval. The wallet owner has been notified. Poll GET /api/intents/'.$result['intentId'].'/status to check approval status.',
+            ], 202);
+        }
+
         return response()->json([
             'allowed' => true,
             'intentId' => $result['intentId'],
             'action' => $data['action'],
-            'requiresApproval' => $result['requiresApproval'] ?? false,
-            'approvalId' => $result['approvalId'] ?? null,
+            'requiresApproval' => false,
         ]);
     }
 

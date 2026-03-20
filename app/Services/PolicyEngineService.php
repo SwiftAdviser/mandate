@@ -189,6 +189,10 @@ class PolicyEngineService
 
         // Determine status based on validation result
         $intentStatus = $needsApproval ? 'approval_pending' : 'preflight';
+        $approvalId = null;
+        $approvalExpiry = $needsApproval
+            ? now()->addSeconds(config('mandate.intent_ttl.approval_pending', 3600))
+            : null;
 
         DB::table('tx_intents')->insert([
             'id' => $intentId,
@@ -212,10 +216,25 @@ class PolicyEngineService
             'reason' => $reason,
             'risk_level' => $riskLevel,
             'status' => $intentStatus,
-            'expires_at' => now()->addMinutes(5),
+            'expires_at' => $approvalExpiry ?? now()->addMinutes(5),
             'created_at' => now(),
             'updated_at' => now(),
         ]);
+
+        // Create approval queue entry if needed
+        if ($needsApproval) {
+            $approvalId = Str::uuid()->toString();
+
+            DB::table('approval_queues')->insert([
+                'id' => $approvalId,
+                'intent_id' => $intentId,
+                'agent_id' => $agent->id,
+                'status' => ApprovalQueue::STATUS_PENDING,
+                'expires_at' => $approvalExpiry,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+        }
 
         // Audit event
         DB::table('tx_events')->insert([
@@ -243,11 +262,17 @@ class PolicyEngineService
             $this->quota->reserve($agent->id, $amountUsd);
         }
 
+        // Dispatch notification after DB writes (best-effort)
+        if ($needsApproval && $approvalId) {
+            SendApprovalNotification::dispatch($approvalId, $intentId, $agent->id);
+        }
+
         return [
-            'allowed' => true,
+            'allowed' => ! $needsApproval,
             'intentId' => $intentId,
             'requiresApproval' => $needsApproval,
-            'approvalId' => null,
+            'approvalId' => $approvalId,
+            'approvalReason' => $needsApproval ? $this->buildApprovalReason($approvalReasons) : null,
             'blockReason' => null,
         ];
     }
