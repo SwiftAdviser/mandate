@@ -15,6 +15,8 @@ export const CHAINS: Record<string, ChainInfo> = {
   'solana-devnet': { id: 'solana-devnet', name: 'Solana Devnet', type: 'solana', testnet: true,  explorer: 'https://solscan.io/?cluster=devnet' },
   'ton':           { id: 'ton',           name: 'TON',           type: 'ton',    testnet: false, explorer: 'https://tonviewer.com' },
   'ton-testnet':   { id: 'ton-testnet',   name: 'TON Testnet',  type: 'ton',    testnet: true,  explorer: 'https://testnet.tonviewer.com' },
+  '56':            { id: '56',           name: 'BNB Chain',    type: 'evm',    testnet: false, explorer: 'https://bscscan.com' },
+  '97':            { id: '97',           name: 'BNB Testnet',  type: 'evm',    testnet: true,  explorer: 'https://testnet.bscscan.com' },
 };
 
 export function getChain(chainId: string | number | null | undefined): ChainInfo | null {

@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Agent;
 use App\Models\AgentApiKey;
 use App\Models\Policy;
+use App\Rules\BlockchainAddress;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
@@ -16,19 +17,23 @@ class AgentRegistrationController extends Controller
     {
         $data = $request->validate([
             'name' => ['required', 'string', 'max:100'],
-            'evmAddress' => ['required', 'string', 'regex:/^0x[a-fA-F0-9]{40}$/'],
-            'chainId' => ['sometimes', 'integer'],
+            'walletAddress' => ['required_without:evmAddress', 'string', new BlockchainAddress],
+            'evmAddress' => ['required_without:walletAddress', 'string', 'regex:/^0x[a-fA-F0-9]{40}$/'],
+            'chainId' => ['sometimes', 'max:32'],
             'defaultPolicy' => ['sometimes', 'array'],
             'defaultPolicy.spendLimitPerTxUsd' => ['sometimes', 'numeric', 'min:0'],
             'defaultPolicy.spendLimitPerDayUsd' => ['sometimes', 'numeric', 'min:0'],
         ]);
 
+        $walletAddress = $data['walletAddress'] ?? $data['evmAddress'];
+        $isEvm = str_starts_with($walletAddress, '0x');
+
         $claimCode = strtoupper(Str::random(8));
 
         $agent = Agent::create([
             'name' => $data['name'],
-            'wallet_address' => strtolower($data['evmAddress']),
-            'chain_id' => $data['chainId'] ?? null,
+            'wallet_address' => $isEvm ? strtolower($walletAddress) : $walletAddress,
+            'chain_id' => isset($data['chainId']) ? (string) $data['chainId'] : null,
             'claim_code' => $claimCode,
         ]);
 
@@ -54,6 +59,7 @@ class AgentRegistrationController extends Controller
             'agentId' => $agent->id,
             'runtimeKey' => $rawKey,
             'claimUrl' => $claimUrl,
+            'walletAddress' => $agent->wallet_address,
             'evmAddress' => $agent->wallet_address,
             'chainId' => $agent->chain_id,
             'defaultPolicy' => $defaultPolicy,
