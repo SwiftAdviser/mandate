@@ -447,7 +447,10 @@ function DetailModal({ item, runtimeKey, onClose }: { item: Integration; runtime
 
   const SKILL_URL = 'https://app.mandate.md/SKILL.md';
   const keyDisplay = runtimeKey || '<your-runtime-key>';
-  const activationText = `Follow ${SKILL_URL} to add Mandate to your ${item.framework} agent. Use this runtime_key: ${keyDisplay}`;
+  const isOpenClaw = item.id === 'openclaw';
+  const activationText = isOpenClaw
+    ? `openclaw plugins install @mandate.md/mandate-openclaw-plugin`
+    : `Follow ${SKILL_URL} to add Mandate to your ${item.framework} agent. Use this runtime_key: ${keyDisplay}`;
 
   async function copyQuickStart() {
     await navigator.clipboard.writeText(activationText);
@@ -529,10 +532,24 @@ function DetailModal({ item, runtimeKey, onClose }: { item: Integration; runtime
             wordBreak: 'break-all',
             marginBottom: 16,
           }}>
-            Follow{' '}
-            <span style={{ color: 'var(--accent)' }}>{SKILL_URL}</span>
-            {' '}to add Mandate to your {item.framework} agent. Use this runtime_key:{' '}
-            <span style={{ color: 'var(--accent)', fontWeight: 600 }}>{keyDisplay}</span>
+            {isOpenClaw ? (
+              <>
+                <span style={{ color: 'var(--text-dim)' }}>$</span>{' '}
+                <span style={{ color: 'var(--accent)' }}>openclaw plugins install @mandate.md/mandate-openclaw-plugin</span>
+                <br />
+                <span style={{ color: 'var(--text-dim)', fontSize: 11 }}>
+                  After install, the agent auto-discovers tools: mandate_register, mandate_validate, mandate_status.
+                  {runtimeKey ? <> Set runtimeKey in plugin config: <span style={{ color: 'var(--accent)' }}>{keyDisplay}</span></> : ' Or call mandate_register to get a runtimeKey.'}
+                </span>
+              </>
+            ) : (
+              <>
+                Follow{' '}
+                <span style={{ color: 'var(--accent)' }}>{SKILL_URL}</span>
+                {' '}to add Mandate to your {item.framework} agent. Use this runtime_key:{' '}
+                <span style={{ color: 'var(--accent)', fontWeight: 600 }}>{keyDisplay}</span>
+              </>
+            )}
           </div>
 
           {/* Big CTA */}
