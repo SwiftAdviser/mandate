@@ -5,6 +5,7 @@
 
 
 <p align="center">
+  <a href="https://www.youtube.com/watch?v=EwZdtncc5wQ"><img src="https://img.shields.io/badge/demo-1--min%20video-ff0000" alt="demo" /></a>
   <a href="https://mandate.md"><img src="https://img.shields.io/badge/website-mandate.md-10b981" alt="website" /></a>
   <a href="https://github.com/SwiftAdviser/mandate"><img src="https://img.shields.io/badge/tests-304%20passed-10b981" alt="tests" /></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-BSL%201.1-f59e0b" alt="license" /></a>
@@ -17,6 +18,8 @@
 **Approve intent, not just transactions.**
 
 > *Meet transaction intelligence and control for autonomous agents.*
+
+[One-minute demo](https://www.youtube.com/watch?v=EwZdtncc5wQ)
 
 Mandate adds a reason-aware control layer to existing agent wallets. Evaluate **why** an agent wants to pay, then approve, block, or escalate before signing. Stop risky payments before funds move, and keep a complete audit trail for operations, security, and compliance.
 
