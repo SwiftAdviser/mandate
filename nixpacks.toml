@@ -1,5 +1,5 @@
 [phases.setup]
-nixPkgs = ["php84", "php84Extensions.pdo_pgsql", "php84Extensions.redis", "php84Extensions.bcmath", "php84Extensions.pcntl", "php84Extensions.posix", "php84Extensions.gd", "php84Extensions.zip", "bun", "nodejs_22", "python3"]
+nixPkgs = ["php84", "php84Extensions.pdo_pgsql", "php84Extensions.redis", "php84Extensions.bcmath", "php84Extensions.pcntl", "php84Extensions.posix", "php84Extensions.gd", "php84Extensions.zip", "bun", "nodejs_22", "python3", "python311Packages.supervisor"]
 
 [phases.install]
 cmds = [
@@ -10,7 +10,12 @@ cmds = [
 ]
 
 [phases.build]
-cmds = ["php artisan config:cache", "php artisan route:cache", "php artisan view:cache"]
+cmds = [
+  "php artisan config:cache",
+  "php artisan route:cache",
+  "php artisan view:cache",
+  "mkdir -p /var/log/supervisor"
+]
 
 [start]
 cmd = "bash scripts/start.sh"
