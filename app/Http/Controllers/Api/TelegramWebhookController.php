@@ -131,7 +131,7 @@ class TelegramWebhookController extends Controller
 
         $newStatus = $decision === 'approved'
             ? TxIntent::STATUS_APPROVED
-            : TxIntent::STATUS_FAILED;
+            : TxIntent::STATUS_REJECTED;
 
         app(IntentStateMachineService::class)->transition(
             $approval->intent,

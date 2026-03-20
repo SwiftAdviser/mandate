@@ -37,7 +37,8 @@ class IntentStateMachineService
                 TxIntent::STATUS_BROADCASTED,
                 TxIntent::STATUS_CONFIRMED,
                 TxIntent::STATUS_FAILED,
-                TxIntent::STATUS_EXPIRED => null,
+                TxIntent::STATUS_EXPIRED,
+                TxIntent::STATUS_REJECTED => null,
                 TxIntent::STATUS_APPROVAL_PENDING => $intent->expires_at, // set by ApprovalQueue
                 default => $intent->expires_at,
             };
@@ -52,6 +53,7 @@ class IntentStateMachineService
             $isTerminal = in_array($newStatus, [
                 TxIntent::STATUS_FAILED,
                 TxIntent::STATUS_EXPIRED,
+                TxIntent::STATUS_REJECTED,
             ], true);
 
             if ($isTerminal && $intent->amount_usd_computed > 0) {

@@ -57,7 +57,7 @@ class ApprovalController extends Controller
 
         $newIntentStatus = $data['decision'] === 'approved'
             ? TxIntent::STATUS_APPROVED
-            : TxIntent::STATUS_FAILED;
+            : TxIntent::STATUS_REJECTED;
 
         $this->stateMachine->transition($intent, $newIntentStatus, $userId, 'user', [
             'approval_id' => $approvalId,
