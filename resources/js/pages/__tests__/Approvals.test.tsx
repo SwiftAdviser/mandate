@@ -60,7 +60,7 @@ describe('Approvals', () => {
 
   it('renders decision note input', () => {
     render(<Approvals approvals={{ data: [makeApproval()] }} />);
-    expect(screen.getByPlaceholderText('Decision note (optional)')).toBeInTheDocument();
+    expect(screen.getByPlaceholderText('Decision note to improve rules (optional)')).toBeInTheDocument();
   });
 
   it('calls fetch on approve click', async () => {

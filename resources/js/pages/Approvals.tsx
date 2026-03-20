@@ -152,7 +152,7 @@ function ApprovalCard({ approval, onDecide }: { approval: Approval; onDecide: ()
         <input
           value={note}
           onChange={e => setNote(e.target.value)}
-          placeholder="Decision note (optional)"
+          placeholder="Decision note to improve rules (optional)"
           style={{
             flex: 1,
             padding: '8px 12px',

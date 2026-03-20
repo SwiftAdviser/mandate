@@ -72,6 +72,18 @@ export const validateTool = {
 
       const data = await res.json().catch(() => ({}) as Record<string, unknown>);
 
+      // Approval required (202): not blocked, but needs human sign-off
+      if ((data as any).requiresApproval) {
+        return {
+          allowed: false, blocked: false,
+          requiresApproval: true,
+          intentId: (data as any).intentId,
+          approvalId: (data as any).approvalId,
+          reason: 'approval_required',
+          instruction: `Transaction requires human approval. The wallet owner has been notified. Poll GET ${MANDATE_BASE}/api/intents/${(data as any).intentId}/status to check approval status. Do NOT proceed until approved.`,
+        };
+      }
+
       if (!res.ok || (data as any).allowed === false) {
         return {
           allowed: false, blocked: true,
