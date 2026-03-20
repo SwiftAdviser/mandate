@@ -9,6 +9,7 @@ use App\Models\TokenRegistry;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Str;
 use Tests\TestCase;
 
@@ -156,8 +157,10 @@ class MultichainValidateTest extends TestCase
 
     // ── Approval by action ────────────────────────────────────────────
 
-    public function test_require_approval_actions(): void
+    public function test_require_approval_actions_blocks_with_approval_info(): void
     {
+        Queue::fake();
+
         $this->policy->update([
             'require_approval_actions' => ['bridge'],
         ]);
@@ -167,9 +170,63 @@ class MultichainValidateTest extends TestCase
             'reason' => 'Bridge to another chain',
         ]);
 
-        $response->assertOk()
-            ->assertJsonPath('allowed', true)
+        // Must NOT return allowed:true. Agent must wait for approval.
+        $response->assertStatus(202)
+            ->assertJsonPath('allowed', false)
             ->assertJsonPath('requiresApproval', true);
+
+        // Must have an approvalId
+        $this->assertNotNull($response->json('approvalId'));
+        $this->assertNotNull($response->json('intentId'));
+
+        // Must create approval_queues row
+        $this->assertDatabaseHas('approval_queues', [
+            'intent_id' => $response->json('intentId'),
+            'agent_id' => $this->agent->id,
+            'status' => 'pending',
+        ]);
+
+        // Must create tx_intent with approval_pending status
+        $this->assertDatabaseHas('tx_intents', [
+            'id' => $response->json('intentId'),
+            'status' => 'approval_pending',
+        ]);
+
+        // Must dispatch notification
+        Queue::assertPushed(\App\Jobs\SendApprovalNotification::class);
+    }
+
+    public function test_approval_by_amount_threshold(): void
+    {
+        Queue::fake();
+
+        $this->policy->update([
+            'require_approval_above_usd' => 50,
+        ]);
+
+        // Below threshold: allowed
+        $response = $this->validate([
+            'action' => 'transfer',
+            'amount' => '30.00',
+            'reason' => 'Small transfer',
+        ]);
+        $response->assertOk()->assertJsonPath('allowed', true);
+
+        // Above threshold: requires approval
+        $response = $this->validate([
+            'action' => 'transfer',
+            'amount' => '100.00',
+            'reason' => 'Large transfer',
+        ]);
+        $response->assertStatus(202)
+            ->assertJsonPath('allowed', false)
+            ->assertJsonPath('requiresApproval', true);
+
+        $this->assertNotNull($response->json('approvalId'));
+        $this->assertDatabaseHas('approval_queues', [
+            'intent_id' => $response->json('intentId'),
+            'status' => 'pending',
+        ]);
     }
 
     // ── Backwards compat alias ────────────────────────────────────────
