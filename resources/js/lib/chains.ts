@@ -25,3 +25,11 @@ export function getChain(chainId: string | number | null | undefined): ChainInfo
 export function getChainName(chainId: string | number | null | undefined): string {
   return getChain(chainId)?.name ?? `Chain ${chainId}`;
 }
+
+export function explorerTxUrl(chainId: string | number | null | undefined, txHash: string): string | null {
+  const chain = getChain(chainId);
+  if (!chain) return null;
+  const base = chain.explorer.replace(/\/$/, '');
+  if (chain.type === 'ton') return `${base}/transaction/${txHash}`;
+  return `${base}/tx/${txHash}`;
+}
