@@ -1,27 +1,9 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-
-vi.mock('@mandate.md/sdk', () => {
-  const PolicyBlockedError = class extends Error {
-    blockReason: string;
-    declineMessage?: string;
-    constructor(r: string, d?: string, dm?: string) {
-      super(r);
-      this.blockReason = r;
-      this.declineMessage = dm;
-    }
-  };
-  const CircuitBreakerError = class extends Error {
-    statusCode = 403;
-  };
-  const MandateClient = vi.fn().mockImplementation(() => ({
-    validate: vi.fn().mockResolvedValue({ allowed: true, intentId: 'id1' }),
-    preflight: vi.fn().mockResolvedValue({ allowed: true, intentId: 'id1', action: 'transfer' }),
-  }));
-  const computeIntentHash = vi.fn().mockReturnValue('0xdeadbeef');
-  return { MandateClient, PolicyBlockedError, CircuitBreakerError, computeIntentHash };
-});
-
 import { shouldIntercept, buildReason, preflightValidate } from '../hook.js';
+
+beforeEach(() => {
+  vi.restoreAllMocks();
+});
 
 describe('shouldIntercept', () => {
   it('intercepts "bankr_swap"', () => {
@@ -93,46 +75,41 @@ describe('buildReason', () => {
 
 describe('preflightValidate', () => {
   beforeEach(() => {
-    vi.clearAllMocks();
+    vi.restoreAllMocks();
   });
 
   it('returns allowed:true when Mandate responds OK', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({
+      ok: true, status: 200,
+      json: () => Promise.resolve({ allowed: true, intentId: 'id1' }),
+    }));
     const result = await preflightValidate('mndt_test_key', 'bankr_swap', { amount: '100' });
     expect(result.allowed).toBe(true);
   });
 
-  it('returns allowed:false + blockReason on PolicyBlockedError', async () => {
-    const { MandateClient } = await import('@mandate.md/sdk') as any;
-    const { PolicyBlockedError } = await import('@mandate.md/sdk') as any;
-    MandateClient.mockImplementationOnce(() => ({
-      preflight: vi.fn().mockRejectedValueOnce(
-        new PolicyBlockedError('per_tx_limit_exceeded', 'over limit', 'Split into smaller amounts'),
-      ),
+  it('returns allowed:false + blockReason on 422', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({
+      ok: false, status: 422,
+      json: () => Promise.resolve({ blockReason: 'per_tx_limit_exceeded', declineMessage: 'Split into smaller amounts' }),
     }));
-
     const result = await preflightValidate('mndt_test_key', 'bankr_swap', { amount: '999' });
     expect(result.allowed).toBe(false);
     expect(result.reason).toBe('per_tx_limit_exceeded');
     expect(result.declineMessage).toBe('Split into smaller amounts');
   });
 
-  it('returns allowed:false + circuit_breaker_active on CircuitBreakerError', async () => {
-    const { MandateClient, CircuitBreakerError } = await import('@mandate.md/sdk') as any;
-    MandateClient.mockImplementationOnce(() => ({
-      preflight: vi.fn().mockRejectedValueOnce(new CircuitBreakerError()),
+  it('returns allowed:false + circuit_breaker_active on 403', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({
+      ok: false, status: 403,
+      json: () => Promise.resolve({}),
     }));
-
     const result = await preflightValidate('mndt_test_key', 'mandate_transfer', { to: '0xabc' });
     expect(result.allowed).toBe(false);
     expect(result.reason).toBe('circuit_breaker_active');
   });
 
   it('returns allowed:false + mandate_unreachable on network error (FAIL-CLOSED)', async () => {
-    const { MandateClient } = await import('@mandate.md/sdk') as any;
-    MandateClient.mockImplementationOnce(() => ({
-      preflight: vi.fn().mockRejectedValueOnce(new TypeError('fetch failed')),
-    }));
-
+    vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new TypeError('fetch failed')));
     const result = await preflightValidate('mndt_test_key', 'bankr_swap', {});
     expect(result.allowed).toBe(false);
     expect(result.reason).toBe('mandate_unreachable');
@@ -145,12 +122,11 @@ describe('preflightValidate', () => {
     expect(result.reason).toBe('no_runtime_key');
   });
 
-  it('skips validation for non-financial tools (returns allowed:true, no API call)', async () => {
-    const { MandateClient } = await import('@mandate.md/sdk') as any;
-    MandateClient.mockClear();
-
+  it('skips validation for non-financial tools (returns allowed:true, no fetch)', async () => {
+    const mockFetch = vi.fn();
+    vi.stubGlobal('fetch', mockFetch);
     const result = await preflightValidate('mndt_test_key', 'Read', { file: 'test.ts' });
     expect(result.allowed).toBe(true);
-    expect(MandateClient).not.toHaveBeenCalled();
+    expect(mockFetch).not.toHaveBeenCalled();
   });
 });

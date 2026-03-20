@@ -25,7 +25,7 @@ import mandatePlugin from '../plugin.js';
 describe('openclaw plugin', () => {
   it('exports plugin with correct name and version', () => {
     expect(mandatePlugin.name).toBe('Mandate');
-    expect(mandatePlugin.version).toBe('0.4.5');
+    expect(mandatePlugin.version).toBe('1.0.0');
     expect(mandatePlugin.tools).toHaveLength(3);
   });
 
@@ -51,15 +51,15 @@ describe('openclaw plugin', () => {
 
 describe('register(api) pattern', () => {
   it('plugin has id, name, version, register function', () => {
-    expect(mandatePlugin.id).toBe('openclaw-plugin');
+    expect(mandatePlugin.id).toBe('mandate-openclaw-plugin');
     expect(mandatePlugin.name).toBe('Mandate');
-    expect(mandatePlugin.version).toBe('0.4.5');
+    expect(mandatePlugin.version).toBe('1.0.0');
     expect(typeof mandatePlugin.register).toBe('function');
   });
 
   it('register(api) registers 3 tools: register, validate, status', () => {
     const api = { registerTool: vi.fn(), on: vi.fn() };
-    mandatePlugin.register(api, { runtimeKey: 'mndt_test_x' });
+    mandatePlugin.register(api);
     expect(api.registerTool).toHaveBeenCalledTimes(3);
     const names = api.registerTool.mock.calls.map((c: any[]) => c[0].name);
     expect(names).toContain('mandate_register');
@@ -67,46 +67,59 @@ describe('register(api) pattern', () => {
     expect(names).toContain('mandate_status');
   });
 
-  it('no configSchema (runtimeKey obtained via mandate_register)', () => {
-    expect(mandatePlugin.configSchema).toBeUndefined();
+  it('configSchema has optional runtimeKey', () => {
+    expect(mandatePlugin.configSchema).toBeDefined();
+    expect((mandatePlugin.configSchema as any).properties).toHaveProperty('runtimeKey');
   });
 
-  it('register(api) also registers message:preprocessed hook', () => {
+  it('register(api) registers message:preprocessed hook', async () => {
+    const { setRuntimeKey } = await import('../keyStore.js');
+    setRuntimeKey('mndt_test_x');
     const api = { registerTool: vi.fn(), on: vi.fn() };
-    mandatePlugin.register(api, { runtimeKey: 'mndt_test_x' });
-    expect(api.on).toHaveBeenCalledTimes(1);
-    expect(api.on).toHaveBeenCalledWith('message:preprocessed', expect.any(Function), { priority: 100 });
+    mandatePlugin.register(api);
+    const hookCalls = api.on.mock.calls.filter((c: any[]) => c[0] === 'message:preprocessed');
+    expect(hookCalls).toHaveLength(1);
+    expect(hookCalls[0][2]).toEqual({ priority: 100 });
   });
 
   it('hook skips mandate_* tools (no recursion)', async () => {
+    const { setRuntimeKey } = await import('../keyStore.js');
+    setRuntimeKey('mndt_test_x');
     const api = { registerTool: vi.fn(), on: vi.fn() };
-    mandatePlugin.register(api, { runtimeKey: 'mndt_test_x' });
-    const hookHandler = api.on.mock.calls[0][1];
+    mandatePlugin.register(api);
+    const hookHandler = api.on.mock.calls.find((c: any[]) => c[0] === 'message:preprocessed')![1];
     const pushMessage = vi.fn();
     await hookHandler({ type: 'message', action: 'preprocessed', toolName: 'mandate_validate', pushMessage });
     expect(pushMessage).not.toHaveBeenCalled();
   });
 
-  it('hook blocks financial tools when policy fails', async () => {
-    const { MandateClient } = await import('@mandate.md/sdk') as any;
-    const { PolicyBlockedError } = await import('@mandate.md/sdk') as any;
-    MandateClient.mockImplementationOnce(() => ({
-      validate: vi.fn().mockRejectedValueOnce(new PolicyBlockedError('daily_quota_exceeded', '', 'Daily limit reached')),
+  it('hook blocks financial tools when fetch returns 422', async () => {
+    const { setRuntimeKey } = await import('../keyStore.js');
+    setRuntimeKey('mndt_test_x');
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({
+      ok: false, status: 422,
+      json: () => Promise.resolve({ blockReason: 'daily_quota_exceeded', declineMessage: 'Daily limit' }),
     }));
     const api = { registerTool: vi.fn(), on: vi.fn() };
-    mandatePlugin.register(api, { runtimeKey: 'mndt_test_x' });
-    const hookHandler = api.on.mock.calls[0][1];
+    mandatePlugin.register(api);
+    const hookHandler = api.on.mock.calls.find((c: any[]) => c[0] === 'message:preprocessed')![1];
     const pushMessage = vi.fn();
     await hookHandler({ type: 'message', action: 'preprocessed', toolName: 'locus_transfer', toolInput: { to: '0xabc' }, pushMessage });
     expect(pushMessage).toHaveBeenCalledWith(expect.stringContaining('blocked'));
   });
 
   it('registered validate tool returns allowed or blocked', async () => {
+    const { setRuntimeKey } = await import('../keyStore.js');
+    setRuntimeKey('mndt_test_x');
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({
+      ok: true, status: 200,
+      json: () => Promise.resolve({ allowed: true, intentId: 'id1', action: 'transfer' }),
+    }));
     const api = { registerTool: vi.fn(), on: vi.fn() };
-    mandatePlugin.register(api, { runtimeKey: 'mndt_test_x' });
+    mandatePlugin.register(api);
     const validateCall = api.registerTool.mock.calls.find((c: any[]) => c[0].name === 'mandate_validate');
     expect(validateCall).toBeDefined();
-    const result = await validateCall![0].execute({ action: 'transfer 0.02 USDC to 0xAlice' });
+    const result = await validateCall![0].execute('id1', { action: 'transfer', reason: 'test' });
     expect(result).toHaveProperty('allowed');
     expect(result).toHaveProperty('instruction');
   });

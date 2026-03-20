@@ -1,11 +1,11 @@
-# @mandate.md/openclaw-plugin
+# @mandate.md/mandate-openclaw-plugin
 
 Policy gatekeeper for AI agent wallets. Validates spending limits, allowlists, and schedules before every financial action.
 
 ## Install
 
 ```bash
-openclaw plugins install @mandate.md/openclaw-plugin
+openclaw plugins install @mandate.md/mandate-openclaw-plugin
 ```
 
 ## Setup (required after install)

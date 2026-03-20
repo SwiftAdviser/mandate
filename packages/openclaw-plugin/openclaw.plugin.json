@@ -1,7 +1,7 @@
 {
-  "id": "openclaw-plugin",
+  "id": "mandate-openclaw-plugin",
   "name": "Mandate",
-  "version": "0.6.3",
+  "version": "1.0.0",
   "description": "Policy gatekeeper for AI agent wallets. AFTER INSTALL: run mandate_register to get your runtimeKey, then mandate_validate before every financial action.",
   "skills": ["./skills/mandate"],
   "configSchema": {
@@ -25,12 +25,12 @@
   "activation": {
     "check": "mandate_status",
     "requiredConfig": ["runtimeKey"],
-    "notConfiguredMessage": "Mandate is not configured. Run mandate_register to get a runtimeKey, or set it in plugins.entries.openclaw-plugin.config.runtimeKey"
+    "notConfiguredMessage": "Mandate is not configured. Run mandate_register to get a runtimeKey, or set it in plugins.entries.mandate-openclaw-plugin.config.runtimeKey"
   },
   "security": {
     "envAccess": [],
     "networkAccess": ["https://app.mandate.md/api/*"],
     "reason": "Reads runtimeKey from plugin config or ~/.mandate/runtime-key. Sends policy validation requests to app.mandate.md before financial tool calls."
   },
-  "install": { "npmSpec": "@mandate.md/openclaw-plugin" }
+  "install": { "npmSpec": "@mandate.md/mandate-openclaw-plugin" }
 }

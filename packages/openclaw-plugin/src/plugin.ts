@@ -8,9 +8,9 @@ import type { OpenClawPlugin, OpenClawPluginApi } from './types.js';
 const tools = [registerTool, validateTool, statusTool];
 
 const mandatePlugin: OpenClawPlugin & { tools: typeof tools } = {
-  id: 'openclaw-plugin',
+  id: 'mandate-openclaw-plugin',
   name: 'Mandate',
-  version: '0.6.3',
+  version: '1.0.0',
   description: 'Policy gatekeeper for AI agent wallets. AFTER INSTALL: run mandate_register to get your runtimeKey, then mandate_validate before every financial action.',
   configSchema: {
     type: 'object',
@@ -25,7 +25,8 @@ const mandatePlugin: OpenClawPlugin & { tools: typeof tools } = {
     // Read runtimeKey from OpenClaw config
     try {
       const cfg = (api as any).config;
-      const key = cfg?.plugins?.entries?.['openclaw-plugin']?.config?.runtimeKey;
+      const key = cfg?.plugins?.entries?.['mandate-openclaw-plugin']?.config?.runtimeKey
+        ?? cfg?.plugins?.entries?.['openclaw-plugin']?.config?.runtimeKey;
       if (key) setRuntimeKey(key);
     } catch {}
 

@@ -30,7 +30,7 @@ Mandate adds a reason-aware control layer to existing agent wallets. Evaluate **
 ### OpenClaw (recommended)
 
 ```bash
-openclaw plugins install @mandate.md/openclaw-plugin
+openclaw plugins install @mandate.md/mandate-openclaw-plugin
 ```
 
 The plugin registers tools (`mandate_register`, `mandate_validate`, `mandate_status`) and a safety-net hook that intercepts financial tool calls automatically. After install, the agent self-registers and starts validating. Mandate needs hooks to reliably catch payment intents, so the plugin is the preferred integration.

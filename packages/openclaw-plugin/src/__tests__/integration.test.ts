@@ -261,7 +261,7 @@ describe('integration: sendEth tool + real SDK', () => {
 describe('integration: register(api) + hook', () => {
   it('register(api) registers 3 tools (register, validate, status)', () => {
     const api = { registerTool: vi.fn(), on: vi.fn() };
-    mandatePlugin.register(api, { runtimeKey: 'mndt_test_integration' });
+    mandatePlugin.register(api);
     expect(api.registerTool).toHaveBeenCalledTimes(3);
     const names = api.registerTool.mock.calls.map((c: any[]) => c[0].name);
     expect(names).toContain('mandate_register');
@@ -270,49 +270,46 @@ describe('integration: register(api) + hook', () => {
   });
 
   it('validate tool returns allowed when policy passes', async () => {
+    const { setRuntimeKey } = await import('../keyStore.js');
+    setRuntimeKey('mndt_test_integration');
     vi.stubGlobal('fetch', createFetchMock('allowed'));
     const api = { registerTool: vi.fn(), on: vi.fn() };
-    mandatePlugin.register(api, { runtimeKey: 'mndt_test_integration' });
+    mandatePlugin.register(api);
 
     const validateFn = api.registerTool.mock.calls.find((c: any[]) => c[0].name === 'mandate_validate')![0];
-    const result = await validateFn.execute({ action: 'transfer 0.02 USDC to 0xAlice' });
+    const result = await validateFn.execute('call1', { action: 'transfer', reason: 'test' });
     expect(result.allowed).toBe(true);
     expect(result.instruction).toContain('Policy check passed');
   });
 
   it('validate tool returns blocked when policy fails', async () => {
+    const { setRuntimeKey } = await import('../keyStore.js');
+    setRuntimeKey('mndt_test_integration');
     vi.stubGlobal('fetch', createFetchMock('blocked'));
     const api = { registerTool: vi.fn(), on: vi.fn() };
-    mandatePlugin.register(api, { runtimeKey: 'mndt_test_integration' });
+    mandatePlugin.register(api);
 
     const validateFn = api.registerTool.mock.calls.find((c: any[]) => c[0].name === 'mandate_validate')![0];
-    const result = await validateFn.execute({ action: 'transfer 999 USDC' });
+    const result = await validateFn.execute('call2', { action: 'transfer', reason: 'big tx' });
     expect(result.allowed).toBe(false);
     expect(result.blocked).toBe(true);
     expect(result.instruction).toContain('BLOCKED');
   });
 
   it('validate tool returns blocked when Mandate unreachable (fail-closed)', async () => {
+    const { setRuntimeKey } = await import('../keyStore.js');
+    setRuntimeKey('mndt_test_integration');
     vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new TypeError('fetch failed')));
     const api = { registerTool: vi.fn(), on: vi.fn() };
-    mandatePlugin.register(api, { runtimeKey: 'mndt_test_integration' });
+    mandatePlugin.register(api);
 
     const validateFn = api.registerTool.mock.calls.find((c: any[]) => c[0].name === 'mandate_validate')![0];
-    const result = await validateFn.execute({ action: 'swap ETH' });
+    const result = await validateFn.execute('call3', { action: 'swap', reason: 'test' });
     expect(result.allowed).toBe(false);
     expect(result.reason).toBe('mandate_unreachable');
   });
 
-  it('validate tool guides to register when no runtimeKey', async () => {
-    const api = { registerTool: vi.fn(), on: vi.fn() };
-    mandatePlugin.register(api, { runtimeKey: '' });
-
-    const validateFn = api.registerTool.mock.calls.find((c: any[]) => c[0].name === 'mandate_validate')![0];
-    const result = await validateFn.execute({ action: 'send USDC' });
-    expect(result.allowed).toBe(false);
-    expect(result.reason).toBe('no_runtime_key');
-    expect(result.instruction).toContain('mandate_register');
-  });
+  // no_runtime_key case covered by hook.test.ts (doesn't depend on file system)
 });
 
 // ── Real SDK Class Verification ──────────────────────────────────────────────
