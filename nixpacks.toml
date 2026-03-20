@@ -13,4 +13,4 @@ cmds = [
 cmds = ["php artisan config:cache", "php artisan route:cache", "php artisan view:cache"]
 
 [start]
-cmd = "php artisan queue:work --sleep=3 --tries=3 --max-time=3600 --daemon & php artisan serve --host=0.0.0.0 --port=8080"
+cmd = "bash scripts/start.sh"
