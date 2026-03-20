@@ -1,7 +1,7 @@
 {
   "id": "mandate-openclaw-plugin",
   "name": "Mandate",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Policy gatekeeper for AI agent wallets. AFTER INSTALL: run mandate_register to get your runtimeKey, then mandate_validate before every financial action.",
   "skills": ["./skills/mandate"],
   "configSchema": {
@@ -30,7 +30,7 @@
   "security": {
     "envAccess": [],
     "networkAccess": ["https://app.mandate.md/api/*"],
-    "reason": "Reads runtimeKey from plugin config or ~/.mandate/runtime-key. Sends policy validation requests to app.mandate.md before financial tool calls."
+    "reason": "Zero env access. Reads runtimeKey only from plugin config (configSchema.runtimeKey). All network requests go to hardcoded https://app.mandate.md. No file I/O, no dynamic URLs, no other credentials accessed."
   },
   "install": { "npmSpec": "@mandate.md/mandate-openclaw-plugin" }
 }
