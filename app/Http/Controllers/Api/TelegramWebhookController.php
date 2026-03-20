@@ -3,10 +3,13 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Jobs\RecordDecisionSignal;
 use App\Models\Agent;
 use App\Models\ApprovalQueue;
+use App\Models\PolicyInsight;
 use App\Models\TxIntent;
 use App\Services\IntentStateMachineService;
+use App\Services\PolicyInsightService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
@@ -79,6 +82,11 @@ class TelegramWebhookController extends Controller
         $chatId = (string) ($callback['message']['chat']['id'] ?? '');
         $messageId = $callback['message']['message_id'] ?? null;
 
+        // Handle insight callbacks
+        if (preg_match('/^(accept_insight|dismiss_insight):(.+)$/', $data, $im)) {
+            return $this->handleInsightCallback($callbackId, $chatId, $messageId, $im[1], $im[2]);
+        }
+
         // Expected format: "approve:{approvalId}" or "reject:{approvalId}"
         if (! preg_match('/^(approve|reject):(.+)$/', $data, $m)) {
             $this->answerCallback($callbackId, 'Unknown action');
@@ -133,6 +141,12 @@ class TelegramWebhookController extends Controller
             ['approval_id' => $approvalId, 'decision' => $decision, 'source' => 'telegram'],
         );
 
+        RecordDecisionSignal::dispatch(
+            $approval->intent->id,
+            $decision,
+            "Decided via Telegram by @{$tgUser}",
+        );
+
         // Feedback
         $emoji = $decision === 'approved' ? '✅' : '❌';
         $label = $decision === 'approved' ? 'Approved' : 'Rejected';
@@ -144,6 +158,48 @@ class TelegramWebhookController extends Controller
             'approval_id' => $approvalId,
             'decision' => $decision,
             'by' => $tgUser,
+        ]);
+
+        return response()->json(['ok' => true]);
+    }
+
+    // ── Insight callbacks ──────────────────────────────────────────────────
+
+    private function handleInsightCallback(string $callbackId, string $chatId, ?int $messageId, string $action, string $insightId): JsonResponse
+    {
+        $insight = PolicyInsight::find($insightId);
+
+        if (!$insight) {
+            $this->answerCallback($callbackId, 'Insight not found');
+            return response()->json(['ok' => true]);
+        }
+
+        if ($insight->status !== PolicyInsight::STATUS_ACTIVE) {
+            $this->answerCallback($callbackId, 'Already handled: ' . $insight->status);
+            $this->editMessageButtons($chatId, $messageId, "Status: {$insight->status}");
+            return response()->json(['ok' => true]);
+        }
+
+        $service = app(PolicyInsightService::class);
+
+        if ($action === 'accept_insight') {
+            $service->applyInsight($insight);
+            $emoji = '✅';
+            $label = $insight->insight_type === PolicyInsight::TYPE_MANDATE_RULE
+                ? 'Rule added to MANDATE.md'
+                : 'Applied to policy';
+        } else {
+            $service->dismissInsight($insight);
+            $emoji = '❌';
+            $label = 'Dismissed';
+        }
+
+        $this->answerCallback($callbackId, "{$emoji} {$label}");
+        $this->editMessageButtons($chatId, $messageId, "{$emoji} {$label}");
+
+        Log::info('Telegram insight decision', [
+            'insight_id' => $insightId,
+            'action'     => $action,
         ]);
 
         return response()->json(['ok' => true]);

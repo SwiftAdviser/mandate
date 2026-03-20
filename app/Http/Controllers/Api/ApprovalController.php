@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Jobs\RecordDecisionSignal;
 use App\Models\Agent;
 use App\Models\ApprovalQueue;
 use App\Models\TxIntent;
@@ -64,6 +65,8 @@ class ApprovalController extends Controller
             'decision'    => $data['decision'],
             'note'        => $data['note'] ?? null,
         ]);
+
+        RecordDecisionSignal::dispatch($intent->id, $data['decision'], $data['note'] ?? null);
 
         return response()->json([
             'approvalId' => $approvalId,

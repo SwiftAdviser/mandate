@@ -1,5 +1,5 @@
 import { Link, usePage } from '@inertiajs/react';
-import { LayoutDashboard, Bot, Shield, FileText, CheckCircle, Bell, ScrollText, Puzzle, Play } from 'lucide-react';
+import { LayoutDashboard, Bot, Shield, FileText, CheckCircle, Bell, ScrollText, Puzzle, Play, Sparkles } from 'lucide-react';
 import { ReactNode, useState } from 'react';
 
 const NAV = [
@@ -9,6 +9,7 @@ const NAV = [
   { href: '/mandate',          label: 'MANDATE.md',     icon: FileText, needsAgent: true },
   { href: '/agents',          label: 'Agents',         icon: Bot, needsAgent: true },
   { href: '/policies',        label: 'Policies',       icon: Shield, needsAgent: true },
+  { href: '/insights',        label: 'Insights',       icon: Sparkles, badgeKey: 'insights', needsAgent: true },
   { href: '/approvals',       label: 'Approvals',      icon: CheckCircle, badge: true, needsAgent: true },
   { href: '/notifications',   label: 'Notifications',  icon: Bell, needsAgent: true },
   { href: '/audit',           label: 'Audit Log',      icon: ScrollText, needsAgent: true },
@@ -19,6 +20,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
   const url = page.url;
   const user = (page.props as any).auth?.user;
   const pendingApprovals = (page.props as any).pending_approvals ?? 0;
+  const activeInsights = (page.props as any).active_insights_count ?? 0;
   const agentActivated = (page.props as any).agent_activated ?? false;
   const [collapsed, setCollapsed] = useState(false);
 
@@ -93,32 +95,40 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
                   justifyContent: collapsed ? 'center' : 'flex-start',
                 }}
               >
-                <span style={{ position: 'relative', flexShrink: 0, display: 'flex' }}>
-                  <Icon size={16} strokeWidth={1.8} />
-                  {item.badge && pendingApprovals > 0 && (
-                    <span style={{
-                      position: 'absolute', top: -3, right: -4,
-                      width: 7, height: 7, borderRadius: '50%',
-                      background: 'var(--red)',
-                      border: '1.5px solid var(--bg-surface)',
-                    }} />
-                  )}
-                </span>
-                {!collapsed && (
-                  <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                    {item.label}
-                    {item.badge && pendingApprovals > 0 && (
-                      <span style={{
-                        fontSize: 10, fontFamily: 'var(--font-mono)',
-                        background: 'var(--red)', color: '#fff',
-                        borderRadius: 8, padding: '0 5px', lineHeight: '16px',
-                        fontWeight: 600, minWidth: 16, textAlign: 'center',
-                      }}>
-                        {pendingApprovals}
+                {(() => {
+                  const badgeCount = item.badge ? pendingApprovals : item.badgeKey === 'insights' ? activeInsights : 0;
+                  const badgeColor = item.badgeKey === 'insights' ? 'var(--amber, #f59e0b)' : 'var(--red)';
+                  return (
+                    <>
+                      <span style={{ position: 'relative', flexShrink: 0, display: 'flex' }}>
+                        <Icon size={16} strokeWidth={1.8} />
+                        {badgeCount > 0 && (
+                          <span style={{
+                            position: 'absolute', top: -3, right: -4,
+                            width: 7, height: 7, borderRadius: '50%',
+                            background: badgeColor,
+                            border: '1.5px solid var(--bg-surface)',
+                          }} />
+                        )}
                       </span>
-                    )}
-                  </span>
-                )}
+                      {!collapsed && (
+                        <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                          {item.label}
+                          {badgeCount > 0 && (
+                            <span style={{
+                              fontSize: 10, fontFamily: 'var(--font-mono)',
+                              background: badgeColor, color: '#fff',
+                              borderRadius: 8, padding: '0 5px', lineHeight: '16px',
+                              fontWeight: 600, minWidth: 16, textAlign: 'center',
+                            }}>
+                              {badgeCount}
+                            </span>
+                          )}
+                        </span>
+                      )}
+                    </>
+                  );
+                })()}
               </Link>
             );
           })}

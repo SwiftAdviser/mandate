@@ -6,6 +6,7 @@ use App\Http\Controllers\Api\AgentWebhookController;
 use App\Http\Controllers\Api\ApprovalController;
 use App\Http\Controllers\Api\CircuitBreakerController;
 use App\Http\Controllers\Api\DemoIntentController;
+use App\Http\Controllers\Api\InsightController;
 use App\Http\Controllers\Api\IntentController;
 use App\Http\Controllers\Api\TelegramLinkController;
 use App\Http\Controllers\Api\PolicyController;
@@ -73,5 +74,10 @@ Route::middleware(['auth:sanctum'])->group(function () {
 
     // Telegram link via code (onboarding)
     Route::post('/telegram/verify-code', [TelegramLinkController::class, 'verifyCode']);
+
+    // Policy insights
+    Route::get('/insights', [InsightController::class, 'index']);
+    Route::post('/insights/{id}/accept', [InsightController::class, 'accept']);
+    Route::post('/insights/{id}/dismiss', [InsightController::class, 'dismiss']);
 
 });

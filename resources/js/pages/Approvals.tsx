@@ -206,9 +206,13 @@ function ApprovalCard({ approval, onDecide }: { approval: Approval; onDecide: ()
 
 export default function Approvals({ approvals }: Props) {
   const [items, setItems] = useState(approvals.data);
+  const [toast, setToast] = useState<string | null>(null);
 
   function remove(id: string) {
     setItems(prev => prev.filter(a => a.id !== id));
+    // Show insight toast briefly
+    setToast('New insight available.');
+    setTimeout(() => setToast(null), 5000);
   }
 
   return (
@@ -246,6 +250,27 @@ export default function Approvals({ approvals }: Props) {
                 <ApprovalCard approval={a} onDecide={() => remove(a.id)} />
               </div>
             ))}
+          </div>
+        )}
+        {/* Toast */}
+        {toast && (
+          <div style={{
+            position: 'fixed', bottom: 24, right: 24, zIndex: 100,
+            padding: '10px 16px',
+            background: 'var(--bg-surface)',
+            border: '1px solid var(--accent-dim)',
+            borderRadius: 8,
+            boxShadow: '0 4px 12px rgba(0,0,0,0.3)',
+            display: 'flex', alignItems: 'center', gap: 10,
+            animation: 'fadeIn 0.2s ease',
+          }}>
+            <span style={{ fontSize: 12, color: 'var(--text-primary)' }}>{toast}</span>
+            <a href="/insights" style={{
+              fontSize: 11, color: 'var(--accent)', textDecoration: 'none',
+              fontFamily: 'var(--font-mono)',
+            }}>
+              Review →
+            </a>
           </div>
         )}
       </div>

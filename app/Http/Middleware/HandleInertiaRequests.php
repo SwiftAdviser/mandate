@@ -4,6 +4,7 @@ namespace App\Http\Middleware;
 
 use App\Models\Agent;
 use App\Models\ApprovalQueue;
+use App\Models\PolicyInsight;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
 
@@ -15,8 +16,11 @@ class HandleInertiaRequests extends Middleware
 
         $pendingApprovals = 0;
         $agentActivated = false;
+        $activeInsightsCount = 0;
         if ($user) {
-            $pendingApprovals = ApprovalQueue::whereHas('agent', fn ($q) => $q->where('user_id', $user->id))
+            $agentIds = Agent::where('user_id', $user->id)->pluck('id');
+
+            $pendingApprovals = ApprovalQueue::whereIn('agent_id', $agentIds)
                 ->where('status', ApprovalQueue::STATUS_PENDING)
                 ->where('expires_at', '>', now())
                 ->count();
@@ -24,6 +28,11 @@ class HandleInertiaRequests extends Middleware
             $agentActivated = Agent::where('user_id', $user->id)
                 ->whereNotNull('evm_address')
                 ->exists();
+
+            $activeInsightsCount = PolicyInsight::whereIn('agent_id', $agentIds)
+                ->where('status', PolicyInsight::STATUS_ACTIVE)
+                ->where('confidence', '>=', 0.4)
+                ->count();
         }
 
         return array_merge(parent::share($request), [
@@ -37,6 +46,7 @@ class HandleInertiaRequests extends Middleware
                 ] : null,
             ],
             'pending_approvals' => $pendingApprovals,
+            'active_insights_count' => $activeInsightsCount,
             'agent_activated' => $agentActivated,
             'app_url' => config('app.url'),
         ]);

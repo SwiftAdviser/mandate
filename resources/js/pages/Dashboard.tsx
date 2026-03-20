@@ -5,7 +5,7 @@ import OnboardingWizard from '@/components/OnboardingWizard';
 import RuntimeKeyReveal from '@/components/RuntimeKeyReveal';
 import DashboardLayout from '@/layouts/DashboardLayout';
 import { formatUsd, riskColor, shortAddr, statusColor, timeAgo } from '@/lib/utils';
-import { KeyRound, Plus, Trash2, X } from 'lucide-react';
+import { KeyRound, Plus, Sparkles, Trash2, X } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 
 /* ── Types ─────────────────────────────────────────────────────────────── */
@@ -33,6 +33,10 @@ interface Props {
   pending_approvals: number;
   needs_onboarding: boolean;
   first_visit_key: string | null;
+  top_insight: {
+    id: string; title: string; description: string | null;
+    confidence: number; insight_type: string; evidence_count: number;
+  } | null;
 }
 
 /* ── Sub-components ─────────────────────────────────────────────────────── */
@@ -157,7 +161,7 @@ function CircuitBreakerToggle({ agent }: { agent: Agent }) {
 }
 
 /* ── Page ──────────────────────────────────────────────────────────────── */
-export default function Dashboard({ agents, selected_agent, daily_quota, monthly_quota, recent_intents, total_confirmed_today, pending_approvals, needs_onboarding, first_visit_key }: Props) {
+export default function Dashboard({ agents, selected_agent, daily_quota, monthly_quota, recent_intents, total_confirmed_today, pending_approvals, needs_onboarding, first_visit_key, top_insight }: Props) {
   const agent = selected_agent;
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
@@ -506,8 +510,37 @@ export default function Dashboard({ agents, selected_agent, daily_quota, monthly
               </div>
             </div>
 
+            {/* Insight teaser */}
+            {top_insight && (
+              <a href="/insights" className="fade-up fade-up-3" style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 12,
+                padding: '14px 18px',
+                marginBottom: 16,
+                background: 'var(--accent-glow)',
+                border: '1px solid var(--accent-dim)',
+                borderRadius: 10,
+                textDecoration: 'none',
+                transition: 'border-color 0.15s',
+              }}>
+                <Sparkles size={16} strokeWidth={1.5} style={{ color: 'var(--accent)', flexShrink: 0 }} />
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ fontSize: 12, fontWeight: 500, color: 'var(--text-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                    {top_insight.title}
+                  </div>
+                  <div style={{ fontSize: 11, color: 'var(--text-dim)', marginTop: 2 }}>
+                    {top_insight.evidence_count} decision{top_insight.evidence_count !== 1 ? 's' : ''} analyzed
+                  </div>
+                </div>
+                <span style={{ fontSize: 11, color: 'var(--accent)', fontFamily: 'var(--font-mono)', flexShrink: 0 }}>
+                  Review →
+                </span>
+              </a>
+            )}
+
             {/* Recent Intents */}
-            <div className="fade-up fade-up-3" style={{
+            <div className={`fade-up fade-up-${top_insight ? 4 : 3}`} style={{
               background: 'var(--bg-surface)',
               border: '1px solid var(--border)',
               borderRadius: 12,
