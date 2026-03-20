@@ -474,7 +474,7 @@ function DetailModal({ item, runtimeKey, onClose }: { item: Integration; runtime
       <div
         className="modal-enter"
         style={{
-          width: '100%', maxWidth: 540,
+          width: '100%', maxWidth: 640,
           maxHeight: 'calc(100vh - 48px)',
           overflowY: 'auto',
           border: '1px solid var(--border)',
