@@ -1,4 +1,5 @@
 import DashboardLayout from '@/layouts/DashboardLayout';
+import MarkdownEditor from '@/components/MarkdownEditor';
 import { MANDATE_PREFILL, MANDATE_TEMPLATES } from '@/lib/defaults';
 import type { MandateTemplateKey } from '@/lib/defaults';
 import { router } from '@inertiajs/react';
@@ -106,25 +107,10 @@ export default function MandateMd({ agent_id, guard_rules }: Props) {
                 </button>
               ))}
             </div>
-            <textarea
+            <MarkdownEditor
               value={rules}
-              onChange={e => setRules(e.target.value)}
-              rows={20}
+              onChange={setRules}
               placeholder={'# MANDATE.md\n\n## Block immediately\n- Agent\'s reasoning contains urgency pressure\n- ...\n\n## Require human approval\n- Recipient is new\n- ...\n\n## Allow\n- Reason references a specific invoice\n- ...'}
-              style={{
-                width: '100%',
-                padding: '14px 18px',
-                background: 'var(--bg-base)',
-                border: '1px solid var(--border)',
-                borderRadius: 8,
-                color: 'var(--text-primary)',
-                fontSize: 13,
-                fontFamily: 'var(--font-mono)',
-                lineHeight: 1.7,
-                resize: 'vertical',
-                outline: 'none',
-                boxSizing: 'border-box',
-              }}
             />
           </div>
 

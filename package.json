@@ -20,6 +20,7 @@
         "@testing-library/react": "^16.3.2",
         "@testing-library/user-event": "^14.6.1",
         "@types/node": "^25.4.0",
+        "@types/prismjs": "^1.26.6",
         "axios": "^1.11.0",
         "concurrently": "^9.0.1",
         "jsdom": "^29.0.0",
@@ -36,8 +37,10 @@
         "@web3icons/react": "^4.1.17",
         "clsx": "^2.1.1",
         "lucide-react": "^0.577.0",
+        "prismjs": "^1.30.0",
         "react": "^19.2.4",
         "react-dom": "^19.2.4",
-        "react-icons": "^5.6.0"
+        "react-icons": "^5.6.0",
+        "react-simple-code-editor": "^0.14.1"
     }
 }

@@ -1,4 +1,5 @@
 import { MANDATE_PREFILL, MANDATE_TEMPLATES, POLICY_PRESETS } from '@/lib/defaults';
+import MarkdownEditor from '@/components/MarkdownEditor';
 import type { MandateTemplateKey } from '@/lib/defaults';
 import LiveSimulationDemo from '@/components/LiveSimulationDemo';
 import { useState, useEffect, useRef } from 'react';
@@ -359,17 +360,11 @@ export default function OnboardingWizard({ agent, onComplete }: Props) {
         ))}
       </div>
 
-      <textarea
+      <MarkdownEditor
         value={guardRules}
-        onChange={e => setGuardRules(e.target.value)}
+        onChange={setGuardRules}
         placeholder="Write rules for your AI guard..."
-        style={{
-          ...inputStyle,
-          height: 200,
-          resize: 'vertical',
-          lineHeight: 1.7,
-          fontSize: 11,
-        }}
+        minHeight={200}
       />
 
       <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10, marginTop: 16 }}>
