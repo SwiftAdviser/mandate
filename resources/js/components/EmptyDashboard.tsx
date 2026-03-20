@@ -100,8 +100,12 @@ export default function EmptyDashboard({ runtimeKey }: Props) {
           {copiedOc ? 'Copied!' : 'Copy install command'}
         </button>
 
-        <div style={{ marginTop: 10, fontSize: 11, color: 'var(--text-dim)', lineHeight: 1.5, textAlign: 'center' }}>
+        <div style={{ marginTop: 10, fontSize: 11, color: 'var(--text-dim)', lineHeight: 1.6, textAlign: 'center' }}>
           Plugin auto-registers tools + safety-net hook. Agent self-registers on first run.
+        </div>
+        <div style={{ marginTop: 8, fontSize: 10, color: 'var(--text-dim)', lineHeight: 1.5, opacity: 0.7 }}>
+          OpenClaw may show a security warning about "env access + network send". This is expected: the plugin reads your Mandate runtime key and sends policy-check requests to app.mandate.md. No other credentials are accessed.{' '}
+          <a href="https://github.com/SwiftAdviser/mandate/tree/master/packages/openclaw-plugin" target="_blank" rel="noopener" style={{ color: 'var(--accent)', textDecoration: 'none' }}>Source is open.</a>
         </div>
       </div>
 

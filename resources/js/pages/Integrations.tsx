@@ -596,7 +596,10 @@ function DetailModal({ item, runtimeKey, onClose }: { item: Integration; runtime
             fontFamily: 'var(--font-mono)',
           }}>
             {isOpenClaw
-              ? null
+              ? <span style={{ fontFamily: 'var(--font-body)', fontSize: 10, opacity: 0.7 }}>
+                  OpenClaw may show a security warning about "env access + network send". This is expected: the plugin reads your Mandate runtime key and sends policy-check requests to app.mandate.md. No other credentials are accessed.{' '}
+                  <a href="https://github.com/SwiftAdviser/mandate/tree/master/packages/openclaw-plugin" target="_blank" rel="noopener" style={{ color: 'var(--accent)', textDecoration: 'none' }}>Source is open.</a>
+                </span>
               : runtimeKey
                 ? 'The agent will self-integrate using SKILL.md.'
                 : <>Get your runtime key from <a href="/dashboard" style={{ color: 'var(--accent)', textDecoration: 'none' }}>Dashboard</a></>
