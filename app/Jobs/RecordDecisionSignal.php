@@ -38,9 +38,11 @@ class RecordDecisionSignal implements ShouldQueue
 
         $newInsights = $service->analyzeAgent($intent->agent_id);
 
-        // Dispatch notifications for newly created insights
+        // Dispatch notifications only for insights with sufficient confidence
         foreach ($newInsights as $insight) {
-            SendInsightNotification::dispatch($insight->id, $intent->agent_id);
+            if ($insight->confidence >= 0.6) {
+                SendInsightNotification::dispatch($insight->id, $intent->agent_id);
+            }
         }
     }
 

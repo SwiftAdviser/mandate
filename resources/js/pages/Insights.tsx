@@ -75,14 +75,17 @@ function InsightCard({ insight, onAction }: { insight: Insight; onAction: () => 
     setActing(action);
     try {
       const xsrf = document.cookie.match(/XSRF-TOKEN=([^;]+)/)?.[1];
-      await fetch(`/api/insights/${insight.id}/${action}`, {
+      const res = await fetch(`/api/insights/${insight.id}/${action}`, {
         method: 'POST',
         headers: {
           'X-XSRF-TOKEN': xsrf ? decodeURIComponent(xsrf) : '',
+          'Content-Type': 'application/json',
           'Accept': 'application/json',
         },
       });
-      onAction();
+      if (res.ok) {
+        onAction();
+      }
     } finally {
       setActing(null);
     }

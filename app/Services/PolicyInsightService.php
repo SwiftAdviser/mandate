@@ -94,7 +94,7 @@ class PolicyInsightService
     {
         return PolicyInsight::where('agent_id', $agentId)
             ->where('status', PolicyInsight::STATUS_ACTIVE)
-            ->where('confidence', '>=', 0.4)
+            ->where('confidence', '>=', 0.6)
             ->orderByDesc('confidence')
             ->get();
     }

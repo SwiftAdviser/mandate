@@ -31,7 +31,7 @@ class HandleInertiaRequests extends Middleware
 
             $activeInsightsCount = PolicyInsight::whereIn('agent_id', $agentIds)
                 ->where('status', PolicyInsight::STATUS_ACTIVE)
-                ->where('confidence', '>=', 0.4)
+                ->where('confidence', '>=', 0.6)
                 ->count();
         }
 

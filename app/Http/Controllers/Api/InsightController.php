@@ -20,7 +20,7 @@ class InsightController extends Controller
 
         $insights = PolicyInsight::whereIn('agent_id', $agentIds)
             ->where('status', PolicyInsight::STATUS_ACTIVE)
-            ->where('confidence', '>=', 0.4)
+            ->where('confidence', '>=', 0.6)
             ->orderByDesc('confidence')
             ->get();
 
