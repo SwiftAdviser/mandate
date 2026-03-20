@@ -596,7 +596,7 @@ function DetailModal({ item, runtimeKey, onClose }: { item: Integration; runtime
             fontFamily: 'var(--font-mono)',
           }}>
             {isOpenClaw
-              ? <>Auto-registers tools + safety-net hook. Agent self-registers on first run.{runtimeKey ? <> Set runtimeKey in plugin config: <span style={{ color: 'var(--accent)' }}>{keyDisplay}</span></> : null}</>
+              ? null
               : runtimeKey
                 ? 'The agent will self-integrate using SKILL.md.'
                 : <>Get your runtime key from <a href="/dashboard" style={{ color: 'var(--accent)', textDecoration: 'none' }}>Dashboard</a></>
