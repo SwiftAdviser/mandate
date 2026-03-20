@@ -536,11 +536,6 @@ function DetailModal({ item, runtimeKey, onClose }: { item: Integration; runtime
               <>
                 <span style={{ color: 'var(--text-dim)' }}>$</span>{' '}
                 <span style={{ color: 'var(--accent)' }}>openclaw plugins install @mandate.md/mandate-openclaw-plugin</span>
-                <br />
-                <span style={{ color: 'var(--text-dim)', fontSize: 11 }}>
-                  After install, the agent auto-discovers tools: mandate_register, mandate_validate, mandate_status.
-                  {runtimeKey ? <> Set runtimeKey in plugin config: <span style={{ color: 'var(--accent)' }}>{keyDisplay}</span></> : ' Or call mandate_register to get a runtimeKey.'}
-                </span>
               </>
             ) : (
               <>
@@ -600,9 +595,11 @@ function DetailModal({ item, runtimeKey, onClose }: { item: Integration; runtime
             textAlign: 'center',
             fontFamily: 'var(--font-mono)',
           }}>
-            {runtimeKey
-              ? 'The agent will self-integrate using SKILL.md.'
-              : <>Get your runtime key from <a href="/dashboard" style={{ color: 'var(--accent)', textDecoration: 'none' }}>Dashboard</a></>
+            {isOpenClaw
+              ? <>Auto-registers tools + safety-net hook. Agent self-registers on first run.{runtimeKey ? <> Set runtimeKey in plugin config: <span style={{ color: 'var(--accent)' }}>{keyDisplay}</span></> : null}</>
+              : runtimeKey
+                ? 'The agent will self-integrate using SKILL.md.'
+                : <>Get your runtime key from <a href="/dashboard" style={{ color: 'var(--accent)', textDecoration: 'none' }}>Dashboard</a></>
             }
           </div>
 
