@@ -28,27 +28,29 @@ const INTEGRATIONS: Integration[] = [
   {
     id: 'openclaw',
     framework: 'OpenClaw',
-    package: '@mandate/openclaw-plugin',
+    package: '@mandate.md/mandate-openclaw-plugin',
     category: 'agent',
     icon: '🦀',
     logo: '/logos/openclaw.svg',
-    tagline: 'Drop-in policy plugin for OpenClaw agents',
-    install: 'bun add @mandate/openclaw-plugin',
-    quickStart: 'bun add @mandate/openclaw-plugin',
-    code: `import { MandatePlugin } from '@mandate/openclaw-plugin';
-import { OpenClaw } from 'openclaw';
+    tagline: 'Policy gatekeeper with hooks. Intercepts financial tool calls automatically.',
+    install: 'openclaw plugins install @mandate.md/mandate-openclaw-plugin',
+    quickStart: 'openclaw plugins install @mandate.md/mandate-openclaw-plugin',
+    code: `# Install the plugin
+openclaw plugins install @mandate.md/mandate-openclaw-plugin
 
-const agent = new OpenClaw({
-  plugins: [
-    new MandatePlugin({
-      runtimeKey: process.env.MANDATE_RUNTIME_KEY!,
-    }),
-  ],
-});
+# The plugin auto-registers 3 tools:
+#   mandate_register  - get runtimeKey (once)
+#   mandate_validate  - policy check before every tx
+#   mandate_status    - check intent status
 
-// Mandate intercepts all wallet calls automatically
-await agent.run('Send 10 USDC to alice.eth');`,
-    lang: 'typescript',
+# Plus a safety-net hook that intercepts
+# Locus/Bankr/Sponge calls automatically.
+
+# Flow:
+# 1. Agent calls mandate_register -> gets runtimeKey
+# 2. Before any tx: mandate_validate -> allowed/blocked
+# 3. If allowed: proceed with normal wallet (Locus, etc.)`,
+    lang: 'bash',
     envVars: [
       { name: 'MANDATE_RUNTIME_KEY', note: 'from dashboard' },
 
