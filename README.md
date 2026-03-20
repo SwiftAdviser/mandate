@@ -71,6 +71,16 @@ You don't configure Mandate. You **write a mandate**: a plain-language document 
 
 Mandate learns your patterns. Edit the markdown, behavior changes instantly. No code, no deploy, no waiting.
 
+### Self-improving rules
+
+Every time you approve or reject a transaction, Mandate observes the pattern. After your first decision, the system suggests policy improvements:
+
+- **Approve a transfer?** "Add this address to your allowlist."
+- **Reject vague reasoning?** "Add rule: block transactions with reasons under 20 characters."
+- **Approve above threshold repeatedly?** "Raise your approval threshold to $200."
+
+Suggestions appear as cards in the dashboard and as inline buttons in Telegram. Accept with one tap: Mandate writes the rule into your MANDATE.md or updates the policy field. Dismiss, and it never resurfaces. Your policy evolves from your decisions, not from manual editing.
+
 <p align="center">
   <img src="public/hackathon/mandate-rules.png" alt="MANDATE.md rules editor in dashboard" width="80%" />
 </p>
@@ -141,6 +151,7 @@ We don't replace your session keys. We make them decision-aware.
 | **Schedule enforcement** | Agent can't spend outside business hours |
 | **Prompt injection scan** | 18 hardcoded patterns + LLM judge via Venice.ai (zero data retention). Catches manipulation in reasoning |
 | **MANDATE.md controls** | Define transaction decision logic in plain English |
+| **Self-learning insights** | Observes approve/reject decisions, suggests allowlist additions, threshold raises, and new MANDATE.md rules |
 | **Transaction simulation** | Pre-execution analysis flags honeypots, rug pulls, malicious contracts |
 | **ERC-8004 reputation** | On-chain identity + reputation score for counterparties via The Graph |
 | **Context enrichment** | On block, feeds agent on-chain evidence so it cancels willingly |
@@ -235,6 +246,7 @@ app/             Laravel 12 API (PHP 8.2)
     IntentStateMachineService  reserved, broadcasted, confirmed/failed
     EnvelopeVerifierService  On-chain tx matches validated intent
     CircuitBreakerService    Auto-freeze on mismatch
+    PolicyInsightService     Self-learning from approval decisions
 
 resources/js/    React 19 + Tailwind 4 dashboard
 ```
