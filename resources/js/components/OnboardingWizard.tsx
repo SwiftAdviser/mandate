@@ -1,3 +1,4 @@
+import ChainBadge from '@/components/ChainBadge';
 import { MANDATE_PREFILL, MANDATE_TEMPLATES, POLICY_PRESETS } from '@/lib/defaults';
 import MarkdownEditor from '@/components/MarkdownEditor';
 import type { MandateTemplateKey } from '@/lib/defaults';
@@ -8,6 +9,7 @@ interface Agent {
   id: string;
   name: string;
   wallet_address: string | null;
+  chain_id: string | null;
 }
 
 interface Props {
@@ -265,7 +267,10 @@ export default function OnboardingWizard({ agent, onComplete }: Props) {
           borderRadius: 8,
           marginBottom: 16,
         }}>
-          <div style={{ fontSize: 16, fontWeight: 500, color: 'var(--text-primary)' }}>{agent.name}</div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <span style={{ fontSize: 16, fontWeight: 500, color: 'var(--text-primary)' }}>{agent.name}</span>
+            {agent.chain_id && <ChainBadge chainId={agent.chain_id} />}
+          </div>
           {agent.wallet_address && (
             <div style={{ fontSize: 11, color: 'var(--text-dim)', fontFamily: 'var(--font-mono)', marginTop: 4 }}>
               {agent.wallet_address}

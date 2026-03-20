@@ -1,3 +1,5 @@
+import ChainBadge from '@/components/ChainBadge';
+import { shortAddr } from '@/lib/utils';
 import { usePage } from '@inertiajs/react';
 import { useState } from 'react';
 
@@ -136,26 +138,36 @@ export default function Claim({ claim_code, agent_name, wallet_address, chain_id
 
                 {/* Agent details */}
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                  {[
-                    ...(wallet_address ? [{ label: 'EVM Address', value: wallet_address }] : []),
-                    ...(chain_id ? [{ label: 'Chain ID', value: String(chain_id) }] : []),
-                    { label: 'Claim Code',  value: claim_code },
-                  ].map(row => (
-                    <div key={row.label} style={{
-                      display: 'flex',
-                      justifyContent: 'space-between',
-                      alignItems: 'center',
-                      padding: '10px 14px',
-                      background: 'var(--bg-base)',
-                      border: '1px solid var(--border-dim)',
-                      borderRadius: 8,
+                  {wallet_address && (
+                    <div style={{
+                      display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                      padding: '10px 14px', background: 'var(--bg-base)',
+                      border: '1px solid var(--border-dim)', borderRadius: 8,
                     }}>
-                      <span style={{ fontSize: 11, color: 'var(--text-dim)' }}>{row.label}</span>
+                      <span style={{ fontSize: 11, color: 'var(--text-dim)' }}>Address</span>
                       <span style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--text-secondary)' }}>
-                        {row.value.length > 20 ? `${row.value.slice(0, 10)}…${row.value.slice(-6)}` : row.value}
+                        {shortAddr(wallet_address)}
                       </span>
                     </div>
-                  ))}
+                  )}
+                  {chain_id && (
+                    <div style={{
+                      display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                      padding: '10px 14px', background: 'var(--bg-base)',
+                      border: '1px solid var(--border-dim)', borderRadius: 8,
+                    }}>
+                      <span style={{ fontSize: 11, color: 'var(--text-dim)' }}>Chain</span>
+                      <ChainBadge chainId={chain_id} />
+                    </div>
+                  )}
+                  <div style={{
+                    display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                    padding: '10px 14px', background: 'var(--bg-base)',
+                    border: '1px solid var(--border-dim)', borderRadius: 8,
+                  }}>
+                    <span style={{ fontSize: 11, color: 'var(--text-dim)' }}>Claim Code</span>
+                    <span style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--text-secondary)' }}>{claim_code}</span>
+                  </div>
                 </div>
               </div>
 

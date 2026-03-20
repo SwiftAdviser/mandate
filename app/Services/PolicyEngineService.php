@@ -175,11 +175,26 @@ class PolicyEngineService
         $intentId = Str::uuid()->toString();
         $chainId = $data['chain'] ?? $agent->chain_id ?? '8453';
 
+        // Hash includes action+reason so same request deduplicates, different reason creates new row
+        $hashInput = implode('|', [
+            'validate',
+            $data['action'],
+            $data['reason'] ?? '',
+            $data['to'] ?? '',
+            $data['amount'] ?? '',
+            $chainId,
+            $intentId, // ensures uniqueness per call
+        ]);
+        $intentHash = '0x'.hash('sha256', $hashInput);
+
+        // Determine status based on validation result
+        $intentStatus = $needsApproval ? 'approval_pending' : 'preflight';
+
         DB::table('tx_intents')->insert([
             'id' => $intentId,
             'agent_id' => $agent->id,
             'policy_id' => $policy->id,
-            'intent_hash' => '0x'.hash('sha256', 'preflight:'.$intentId),
+            'intent_hash' => $intentHash,
             'chain_id' => $chainId,
             'nonce' => 0,
             'to_address' => $data['to'] ?? '0x0000000000000000000000000000000000000000',
@@ -196,7 +211,7 @@ class PolicyEngineService
             'amount_usd_computed' => $amountUsd,
             'reason' => $reason,
             'risk_level' => $riskLevel,
-            'status' => 'preflight',
+            'status' => $intentStatus,
             'expires_at' => now()->addMinutes(5),
             'created_at' => now(),
             'updated_at' => now(),

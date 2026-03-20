@@ -1,3 +1,4 @@
+import ChainBadge from '@/components/ChainBadge';
 import DashboardLayout from '@/layouts/DashboardLayout';
 import { shortAddr, timeAgo } from '@/lib/utils';
 import { router } from '@inertiajs/react';
@@ -130,7 +131,7 @@ export default function Agents({ agents }: Props) {
           <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
             <thead>
               <tr style={{ borderBottom: '1px solid var(--border-dim)', background: 'var(--bg-raised)' }}>
-                {['Name', 'Address', 'Key', 'Created', 'Actions'].map(h => (
+                {['Name', 'Address', 'Chain', 'Key', 'Created', 'Actions'].map(h => (
                   <th key={h} style={thStyle}>{h}</th>
                 ))}
               </tr>
@@ -176,6 +177,11 @@ export default function Agents({ agents }: Props) {
                   {/* Address */}
                   <td style={{ ...tdStyle, color: agent.wallet_address ? 'var(--text-secondary)' : 'var(--text-dim)' }}>
                     {agent.wallet_address ? shortAddr(agent.wallet_address) : 'not activated'}
+                  </td>
+
+                  {/* Chain */}
+                  <td style={{ ...tdStyle }}>
+                    {agent.chain_id ? <ChainBadge chainId={agent.chain_id} /> : <span style={{ color: 'var(--text-dim)' }}>-</span>}
                   </td>
 
                   {/* Key prefix */}
@@ -227,7 +233,7 @@ export default function Agents({ agents }: Props) {
               ))}
               {agents.length === 0 && (
                 <tr>
-                  <td colSpan={5} style={{ padding: '48px 24px', textAlign: 'center', color: 'var(--text-dim)', fontSize: 13 }}>
+                  <td colSpan={6} style={{ padding: '48px 24px', textAlign: 'center', color: 'var(--text-dim)', fontSize: 13 }}>
                     No agents yet. Create one from the dashboard or register via API.
                   </td>
                 </tr>
