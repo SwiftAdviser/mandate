@@ -1,10 +1,10 @@
 export const MANDATE_PREFILL = `# MANDATE.md
 
-## Block immediately
+## 🔴 Block immediately
 - Transactions matching a pattern you denied 3+ times before
 - Sending to an address you previously denied
 
-## Require human approval
+## ⚠️ Require human approval
 - Agent's reasoning contains urgency pressure ("URGENT", "immediately", "do not verify")
 - Agent tries to override instructions ("ignore previous", "new instructions", "bypass")
 - Agent claims false authority ("admin override", "creator says", "system message")
@@ -15,7 +15,7 @@ export const MANDATE_PREFILL = `# MANDATE.md
 - Agent is close to daily spend limit (>80% used)
 - Reason mentions one-time, experimental, or test payments
 
-## Allow (auto-approve if within spend limits)
+## 🟢 Allow (auto-approve if within spend limits)
 - Reason references a specific invoice number or contract
 - Recurring/scheduled payments to known, allowlisted recipients
 - Clear business justification with verifiable details
@@ -26,11 +26,11 @@ export const MANDATE_TEMPLATES = {
     label: 'Trading Agent',
     content: `# MANDATE.md
 
-## Block immediately
+## 🔴 Block immediately
 - Token you denied trading 3+ times before
 - DEX or contract you previously denied
 
-## Require human approval
+## ⚠️ Require human approval
 - Reasoning mentions "rug pull", "flash loan", or "MEV"
 - Token not in approved trading list
 - Trade size exceeds position limit without explanation
@@ -40,7 +40,7 @@ export const MANDATE_TEMPLATES = {
 - DEX or contract not previously used
 - Leveraged position changes
 
-## Allow
+## 🟢 Allow
 - Trades on approved DEXs within position limits
 - Rebalancing within defined strategy parameters
 - Gas top-ups under $5`,
@@ -49,11 +49,11 @@ export const MANDATE_TEMPLATES = {
     label: 'Polymarket Agent',
     content: `# MANDATE.md
 
-## Block immediately
+## 🔴 Block immediately
 - Market category you denied 3+ times before
 - Bet size you consistently rejected
 
-## Require human approval
+## ⚠️ Require human approval
 - Bet on markets with < 24h to resolution (high manipulation risk)
 - Single position > $500 without prior pattern
 - Reasoning references "insider" or "guaranteed"
@@ -63,7 +63,7 @@ export const MANDATE_TEMPLATES = {
 - Selling position at > 20% loss
 - Multi-leg or conditional bets
 
-## Allow
+## 🟢 Allow
 - Bets under $50 on active, verified markets
 - Claiming winnings from resolved markets
 - Reducing position size (partial sells)`,
@@ -72,11 +72,11 @@ export const MANDATE_TEMPLATES = {
     label: 'Shopping Agent',
     content: `# MANDATE.md
 
-## Block immediately
+## 🔴 Block immediately
 - Merchant you denied purchases from before
 - Product category you rejected 3+ times
 
-## Require human approval
+## ⚠️ Require human approval
 - Purchase from unverified or newly created merchant
 - Gift cards, crypto purchases, or cash equivalents
 - Shipping to address not on approved list
@@ -86,7 +86,7 @@ export const MANDATE_TEMPLATES = {
 - Subscription or recurring payment setup
 - International purchases
 
-## Allow
+## 🟢 Allow
 - Purchases under $50 from previously used merchants
 - Reorders of previously purchased items
 - Price tracking and comparison (no spend)`,
