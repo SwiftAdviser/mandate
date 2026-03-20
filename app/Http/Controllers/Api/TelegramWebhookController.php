@@ -260,7 +260,7 @@ class TelegramWebhookController extends Controller
             'chat_id' => $chatId,
             'message_id' => $messageId,
             'reply_markup' => ['inline_keyboard' => [
-                [['text' => $statusText, 'callback_data' => 'noop']],
+                [['text' => $statusText, 'url' => config('app.url', 'https://app.mandate.md').'/audit']],
             ]],
         ]);
     }
