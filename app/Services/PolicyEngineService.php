@@ -200,7 +200,7 @@ class PolicyEngineService
             'policy_id' => $policy->id,
             'intent_hash' => $intentHash,
             'chain_id' => $chainId,
-            'nonce' => 0,
+            'nonce' => null,
             'to_address' => $data['to'] ?? '',
             'calldata' => '0x',
             'value_wei' => '0',

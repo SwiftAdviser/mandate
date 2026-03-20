@@ -29,6 +29,8 @@ interface Props {
   selected_agent: Agent | null;
   daily_quota: QuotaWindow | null;
   monthly_quota: QuotaWindow | null;
+  daily_limit: number | null;
+  monthly_limit: number | null;
   recent_intents: RecentIntent[];
   total_confirmed_today: number;
   pending_approvals: number;
@@ -162,7 +164,7 @@ function CircuitBreakerToggle({ agent }: { agent: Agent }) {
 }
 
 /* ── Page ──────────────────────────────────────────────────────────────── */
-export default function Dashboard({ agents, selected_agent, daily_quota, monthly_quota, recent_intents, total_confirmed_today, pending_approvals, needs_onboarding, first_visit_key, top_insight }: Props) {
+export default function Dashboard({ agents, selected_agent, daily_quota, monthly_quota, daily_limit, monthly_limit, recent_intents, total_confirmed_today, pending_approvals, needs_onboarding, first_visit_key, top_insight }: Props) {
   const agent = selected_agent;
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
@@ -466,12 +468,12 @@ export default function Dashboard({ agents, selected_agent, daily_quota, monthly
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
                   <QuotaBar
                     used={daily_quota ? parseFloat(daily_quota.reserved_usd) + parseFloat(daily_quota.confirmed_usd) : 0}
-                    limit={null}
+                    limit={daily_limit}
                     label="Today"
                   />
                   <QuotaBar
                     used={monthly_quota ? parseFloat(monthly_quota.reserved_usd) + parseFloat(monthly_quota.confirmed_usd) : 0}
-                    limit={null}
+                    limit={monthly_limit}
                     label="This month"
                   />
                 </div>

@@ -26,8 +26,8 @@ class QuotaManagerService
         $dailyRow = $rows->get($dailyKey);
         $monthlyRow = $rows->get($monthlyKey);
 
-        $dailyUsed = $dailyRow ? (float) $dailyRow->reserved_usd : 0.0;
-        $monthlyUsed = $monthlyRow ? (float) $monthlyRow->reserved_usd : 0.0;
+        $dailyUsed = $dailyRow ? (float) $dailyRow->reserved_usd + (float) $dailyRow->confirmed_usd : 0.0;
+        $monthlyUsed = $monthlyRow ? (float) $monthlyRow->reserved_usd + (float) $monthlyRow->confirmed_usd : 0.0;
 
         $dailyOk = $policy->spend_limit_per_day_usd === null
             || ($dailyUsed + $amountUsd) <= (float) $policy->spend_limit_per_day_usd;

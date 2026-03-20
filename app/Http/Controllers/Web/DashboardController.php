@@ -88,11 +88,15 @@ class DashboardController extends Controller
                 ->count();
         }
 
+        $activePolicy = $selectedAgent?->activePolicy()->first();
+
         return Inertia::render('Dashboard', [
             'agents' => $agents,
             'selected_agent' => $selectedAgent,
             'daily_quota' => $dailyQuota,
             'monthly_quota' => $monthlyQuota,
+            'daily_limit' => $activePolicy?->spend_limit_per_day_usd ? (float) $activePolicy->spend_limit_per_day_usd : null,
+            'monthly_limit' => $activePolicy?->spend_limit_per_month_usd ? (float) $activePolicy->spend_limit_per_month_usd : null,
             'recent_intents' => $recentIntents,
             'total_confirmed_today' => (float) $totalToday,
             'pending_approvals' => $pendingApprovals,

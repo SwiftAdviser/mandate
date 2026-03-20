@@ -215,6 +215,26 @@ class IntentStateMachineServiceTest extends TestCase
     }
 
     /** @test */
+    public function it_expires_stale_allowed_intents(): void
+    {
+        [$agent, $policy] = $this->createAgentWithPolicy();
+
+        // Preflight intent with status 'allowed' whose TTL has passed
+        $intent = $this->createIntent($agent, $policy, TxIntent::STATUS_ALLOWED, [
+            'nonce' => null,
+            'expires_at' => now()->subMinutes(5),
+        ]);
+
+        $count = $this->service()->expireStale();
+
+        $this->assertGreaterThanOrEqual(1, $count);
+        $this->assertDatabaseHas('tx_intents', [
+            'id' => $intent->id,
+            'status' => TxIntent::STATUS_EXPIRED,
+        ]);
+    }
+
+    /** @test */
     public function it_does_not_expire_broadcasted_intents(): void
     {
         [$agent, $policy] = $this->createAgentWithPolicy();

@@ -91,6 +91,7 @@ class IntentStateMachineService
             TxIntent::STATUS_RESERVED,
             TxIntent::STATUS_APPROVED,
             TxIntent::STATUS_APPROVAL_PENDING,
+            TxIntent::STATUS_ALLOWED,
         ])
             ->where('expires_at', '<', now())
             ->get();

@@ -185,6 +185,34 @@ class PreflightValidateTest extends TestCase
         ]);
     }
 
+    public function test_preflight_multiple_approval_pending_no_collision(): void
+    {
+        $this->policy->update(['require_approval_above_usd' => 0.001]);
+
+        // Two preflight calls that both need approval should not collide
+        $r1 = $this->preflight([
+            'action' => 'transfer',
+            'amount' => '10.00',
+            'token' => 'USDC',
+            'reason' => 'First transfer',
+        ]);
+        $r1->assertStatus(202)->assertJsonPath('requiresApproval', true);
+
+        $r2 = $this->preflight([
+            'action' => 'transfer',
+            'amount' => '20.00',
+            'token' => 'USDC',
+            'reason' => 'Second transfer',
+        ]);
+        $r2->assertStatus(202)->assertJsonPath('requiresApproval', true);
+
+        // Both should have distinct intent IDs
+        $this->assertNotEquals(
+            $r1->json('intentId'),
+            $r2->json('intentId'),
+        );
+    }
+
     public function test_preflight_action_free_text(): void
     {
         $actions = ['swap', 'bridge', 'stake', 'lend', 'buy_nft', 'polymarket_bet', 'trade'];

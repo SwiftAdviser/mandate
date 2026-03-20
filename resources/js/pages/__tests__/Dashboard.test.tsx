@@ -7,9 +7,14 @@ const baseProps = {
   selected_agent: null,
   daily_quota: null,
   monthly_quota: null,
+  daily_limit: null,
+  monthly_limit: null,
   recent_intents: [],
   total_confirmed_today: 0,
   pending_approvals: 0,
+  needs_onboarding: false,
+  first_visit_key: null,
+  top_insight: null,
 };
 
 const agentProps = {
@@ -106,6 +111,7 @@ describe('Dashboard', () => {
         tx_hash: '0xabc123',
         risk_level: null,
         summary: 'Transfer 25 USDC to 0x1234...5678',
+        reason: 'Test payment',
       }],
     };
 

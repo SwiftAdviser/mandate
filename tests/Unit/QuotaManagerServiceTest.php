@@ -203,4 +203,45 @@ class QuotaManagerServiceTest extends TestCase
         $this->assertEqualsWithDelta(35.0, (float) $monthly->reserved_usd, 0.001, 'Monthly reserved should decrease by 15.');
         $this->assertEqualsWithDelta(15.0, (float) $monthly->confirmed_usd, 0.001, 'Monthly confirmed should increase by 15.');
     }
+
+    /** @test */
+    public function it_counts_confirmed_usd_toward_quota_check(): void
+    {
+        [$agent, $policy] = $this->createAgentWithPolicy([
+            'spend_limit_per_day_usd' => 100,
+        ]);
+
+        $dailyKey = now()->format('Y-m-d');
+        // All quota has been confirmed (reserved moved to confirmed)
+        $this->seedQuotaRow($agent->id, 'daily', $dailyKey, 0.0, 100.0);
+
+        // Even though reserved_usd is 0, confirmed_usd is 100 so quota should be exceeded
+        $result = $this->service()->check($agent->id, $policy, 1.0);
+
+        $this->assertFalse($result['daily_ok'], 'Confirmed spend must count toward daily quota.');
+        $this->assertEqualsWithDelta(100.0, $result['daily_used'], 0.001);
+    }
+
+    /** @test */
+    public function it_sums_reserved_and_confirmed_for_quota_check(): void
+    {
+        [$agent, $policy] = $this->createAgentWithPolicy([
+            'spend_limit_per_day_usd' => 100,
+            'spend_limit_per_month_usd' => 500,
+        ]);
+
+        $dailyKey = now()->format('Y-m-d');
+        $monthlyKey = now()->format('Y-m');
+        // 40 reserved + 50 confirmed = 90 used
+        $this->seedQuotaRow($agent->id, 'daily', $dailyKey, 40.0, 50.0);
+        $this->seedQuotaRow($agent->id, 'monthly', $monthlyKey, 40.0, 50.0);
+
+        // 90 + 15 = 105 > 100 daily limit
+        $result = $this->service()->check($agent->id, $policy, 15.0);
+
+        $this->assertFalse($result['daily_ok']);
+        $this->assertTrue($result['monthly_ok']); // 105 < 500
+        $this->assertEqualsWithDelta(90.0, $result['daily_used'], 0.001);
+        $this->assertEqualsWithDelta(90.0, $result['monthly_used'], 0.001);
+    }
 }
