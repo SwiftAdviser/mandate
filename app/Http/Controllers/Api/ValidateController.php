@@ -42,10 +42,13 @@ class ValidateController extends Controller
             ], 422);
         }
 
+        $chainId = $data['chain'] ?? $agent->chain_id ?? '8453';
+
         return response()->json([
             'allowed' => true,
             'intentId' => $result['intentId'],
             'action' => $data['action'],
+            'chain' => $chainId,
             'requiresApproval' => $result['requiresApproval'] ?? false,
             'approvalId' => $result['approvalId'] ?? null,
         ]);
@@ -96,6 +99,7 @@ class ValidateController extends Controller
         return response()->json([
             'allowed' => $result['allowed'],
             'intentId' => $result['intentId'],
+            'chain' => (string) $data['chainId'],
             'requiresApproval' => $result['requiresApproval'],
             'approvalId' => $result['approvalId'],
             'approvalReason' => $result['approvalReason'] ?? null,
