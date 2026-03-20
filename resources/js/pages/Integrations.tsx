@@ -68,13 +68,13 @@ openclaw plugins install @mandate.md/mandate-openclaw-plugin
     tagline: 'Plugin with stateful two-phase enforcement gate',
     install: 'claude --plugin-dir ./claude-mandate-plugin',
     quickStart: 'claude --plugin-dir ./claude-mandate-plugin',
-    code: `// Plugin auto-blocks transaction tools until you preflight with Mandate.
-// 1. PostToolUse watches for mandate preflight / validate calls
+    code: `// Plugin auto-blocks transaction tools until you validate with Mandate.
+// 1. PostToolUse watches for mandate validate calls
 // 2. PreToolUse intercepts wallet tools, checks for valid token
 // 3. No token = DENY with instructions
 
 // Flow:
-mandate preflight --action "swap" --reason "Swap ETH for USDC"
+mandate validate --action "swap" --reason "Swap ETH for USDC"
 bankr prompt "Swap 0.1 ETH for USDC"  // now allowed`,
     lang: 'bash',
     envVars: [
@@ -261,7 +261,7 @@ enforcement. Use this runtime_key: <your-key>
 
 # Or add to agent config / system prompt:
 # The agent reads the skill file, registers itself,
-# and starts calling /validate/preflight before every transaction.
+# and starts calling /validate before every transaction.
 
 # Works with any agent that can read URLs:
 # Claude, ChatGPT, Codex, OpenClaw, custom agents`,

@@ -3,11 +3,19 @@ name: mandate-api
 description: Non-custodial agent wallet policy layer. Enforces spend limits, allowlists, and approval workflows. Preflight or validate before every transaction.
 ---
 
+## Integration note
+
+Mandate needs hooks to reliably catch payment intents. If your platform supports plugins with hooks (OpenClaw, Claude Code), use the plugin: it intercepts financial tool calls automatically. This SKILL.md is for agents that integrate via API directly, but without hooks there is no enforcement layer: the agent must voluntarily call `/validate` before every transaction.
+
+**OpenClaw:** `openclaw plugins install @mandate.md/mandate-openclaw-plugin` (preferred, has hooks)
+**Claude Code:** `claude --plugin-dir ./packages/claude-mandate-plugin` (has hooks)
+**Other frameworks:** Use this SKILL.md + SDK. No hooks, agent must self-enforce.
+
 ## MANDATORY SECURITY RULES
 
 Mandate is the security boundary, not optional infrastructure. The card must be swiped before the purchase.
 
-1. You **MUST** call `/validate/preflight` or `/validate` before EVERY transaction. No exceptions. No shortcuts.
+1. You **MUST** call `/validate` before EVERY transaction. No exceptions. No shortcuts. (Legacy `/validate/raw` is also available for existing EVM integrations.)
 2. If validation returns `allowed: false`, you **MUST NOT** execute the transaction. Display the `blockReason` to the user.
 3. If validation is unreachable, you **MUST NOT** execute the transaction. Do NOT fall back to calling the wallet directly. See [Fail-Safe Behavior](#fail-safe-behavior).
 4. You **MUST** display validation results to the user before any wallet call. See [Required User Feedback](#required-user-feedback).
@@ -21,9 +29,11 @@ Auth:   Authorization: Bearer <MANDATE_RUNTIME_KEY>
 
 NON-CUSTODIAL: your private key NEVER leaves your machine.
 
-Two validation modes:
-  POST /validate/preflight  -> lightweight (action + reason). For custodial wallets.
-  POST /validate            -> full tx params + intentHash. For self-custodial signing.
+Primary endpoint:
+  POST /validate            -> action + reason. Works with any wallet type.
+
+Legacy endpoints:
+  POST /validate/raw        -> full tx params + intentHash. EVM only. (deprecated)
 
 Other endpoints:
   POST /agents/register        -> register agent (no auth), get runtimeKey + claimUrl
@@ -70,13 +80,13 @@ Mandate: policy server unreachable, transaction halted for safety
 
 # Mandate API, Agent Skills Guide
 
-## Preflight Validation (recommended)
+## Validation
 
-Lightweight policy check for custodial wallets (Bankr, Locus, Sponge) and any flow where you don't control signing. No intentHash, nonce, or gas params needed.
+Policy check before every transaction. Works with any wallet type (custodial or self-custodial). No intentHash, nonce, or gas params needed.
 
 ### CLI
 ```bash
-mandate preflight \
+mandate validate \
   --action "swap" \
   --reason "Swap 0.1 ETH for USDC on Uniswap" \
   --amount 50 --to 0xAlice
@@ -84,13 +94,13 @@ mandate preflight \
 
 ### REST
 ```bash
-curl -X POST https://app.mandate.md/api/validate/preflight \
+curl -X POST https://app.mandate.md/api/validate \
   -H "Authorization: Bearer $MANDATE_RUNTIME_KEY" \
   -H "Content-Type: application/json" \
   -d '{"action":"swap","reason":"Swap 0.1 ETH for USDC","amount":"50","to":"0xAlice"}'
 ```
 
-### Preflight params
+### Validate params
 
 | Field | Required | Description |
 |-------|----------|-------------|
@@ -104,20 +114,22 @@ curl -X POST https://app.mandate.md/api/validate/preflight \
 
 All policy checks apply: circuit breaker, schedule, allowlist, spend limits, daily/monthly quotas, reason scanner. Every call is logged to the audit trail with the `action` field.
 
-### Preflight flow
+### Validate flow
 ```
-1. mandate preflight --action "swap" --reason "Swap ETH for USDC"  (policy check)
+1. mandate validate --action "swap" --reason "Swap ETH for USDC"   (policy check)
 2. bankr prompt "Swap 0.1 ETH for USDC"                           (execute via wallet)
-3. Done. No txHash posting needed for preflight.
+3. Done.
 ```
 
-## Raw Validation (advanced)
+## Raw Validation (deprecated, EVM only)
+
+> **Deprecated.** Use `/validate` for all new integrations. `/validate/raw` remains available for existing EVM integrations that require intent hash verification and envelope verification.
 
 Full pre-signing policy check for self-custodial agents who sign transactions locally. Requires all tx params + intentHash.
 
 ### CLI
 ```bash
-mandate validate \
+mandate validate-raw \
   --to 0x036CbD53842c5426634e7929541eC2318f3dCF7e \
   --calldata 0xa9059cbb... \
   --nonce 42 \
@@ -139,7 +151,7 @@ mandate transfer \
 
 ### Raw validate flow
 ```
-1. mandate validate --to ... --calldata ... --reason "..."   (policy check)
+1. mandate validate-raw --to ... --calldata ... --reason "..."   (policy check)
 2. Sign locally (your keys, Mandate never sees them)
 3. Broadcast transaction
 4. mandate event <intentId> --tx-hash 0x...                  (envelope verify)
@@ -192,8 +204,8 @@ Agents create an identity via `mandate login` (or `/agents/register` API). Dashb
 |-------------|--------|------|
 | `mandate login` | POST | `/api/agents/register` |
 | `mandate activate <address>` | POST | `/api/activate` |
-| `mandate preflight` | POST | `/api/validate/preflight` |
 | `mandate validate` | POST | `/api/validate` |
+| `mandate validate-raw` | POST | `/api/validate/raw` (deprecated) |
 | `mandate event <id> --tx-hash 0x...` | POST | `/api/intents/{id}/events` |
 | `mandate status <id>` | GET | `/api/intents/{id}/status` |
 | `mandate approve <id>` | GET | `/api/intents/{id}/status` (poll) |
@@ -239,7 +251,7 @@ Mandate: injection patterns in reason ("URGENT", "do not verify") -> BLOCK
 
 ## Agent Self-Integration (SDK)
 
-### Preflight with custodial wallets (Bankr, Locus, Sponge)
+### Validate with any wallet (Bankr, Locus, Sponge, self-custodial)
 
 ```js
 import { MandateClient, PolicyBlockedError } from '@mandate.md/sdk';
@@ -248,8 +260,8 @@ const mandate = new MandateClient({
   runtimeKey: process.env.MANDATE_RUNTIME_KEY,
 });
 
-// Preflight: just action + reason, no gas params needed
-const { intentId, allowed } = await mandate.preflight({
+// Validate: just action + reason, no gas params needed
+const { intentId, allowed } = await mandate.validate({
   action: 'swap',
   reason: 'Swap 0.1 ETH for USDC on Uniswap',
   amount: '50',
@@ -257,11 +269,11 @@ const { intentId, allowed } = await mandate.preflight({
   token: '0x...',
 });
 
-// After preflight passes, call your custodial wallet
+// After validation passes, call your wallet
 await bankr.prompt('Swap 0.1 ETH for USDC');
 ```
 
-### Raw validate with self-custodial wallet
+### Raw validate with self-custodial wallet (deprecated)
 
 ```js
 import { MandateWallet } from '@mandate.md/sdk';
@@ -297,8 +309,7 @@ const { runtimeKey, claimUrl } = await MandateClient.register({
 import { PolicyBlockedError, ApprovalRequiredError, CircuitBreakerError, RiskBlockedError } from '@mandate.md/sdk';
 
 try {
-  const result = await mandate.preflight({ action: 'swap', reason: '...' });
-  // or: await mandate.validate(fullPayload);
+  const result = await mandate.validate({ action: 'swap', reason: '...' });
 } catch (err) {
   if (err instanceof PolicyBlockedError) {
     // err.blockReason, err.detail, err.declineMessage
@@ -319,14 +330,14 @@ try {
 
 Install the Mandate plugin:
 
-    openclaw plugins install @mandate.md/openclaw-plugin
+    openclaw plugins install @mandate.md/mandate-openclaw-plugin
 
 ### Tools
 
 | Tool | When | What |
 |------|------|------|
 | `mandate_register` | Once, on first run | Registers agent, returns `runtimeKey` + `claimUrl` |
-| `mandate_validate` | Before EVERY financial action | Pre-flight policy check (action, amount, to, token, reason) |
+| `mandate_validate` | Before EVERY financial action | Policy check (action, amount, to, token, reason) |
 | `mandate_status` | After validate | Check intent status |
 
 ### Flow
@@ -336,9 +347,9 @@ Install the Mandate plugin:
 3. If `allowed: true`: proceed with your normal wallet (Locus, Bankr, etc.).
 4. If `blocked: true`: do NOT proceed, show `reason` + `declineMessage` to the user.
 
-### Pre-flight endpoint
+### Validate endpoint
 
-The plugin uses `POST /api/validate/preflight`, a lightweight endpoint for custodial wallets.
+The plugin uses `POST /api/validate`.
 No intentHash, nonce, or gas params needed. Just: `action`, `reason`, and optionally `amount`, `to`, `token`.
 All checks apply: circuit breaker, schedule, allowlist, spend limits, daily/monthly quotas, reason scanner.
 Every call is logged to the audit trail with the `action` field the agent provides.
@@ -361,7 +372,7 @@ claude --plugin-dir ./packages/claude-mandate-plugin
 
 The plugin automatically BLOCKS transaction tools (Bankr CLI/API, wallet MCPs, financial Bash commands) until you validate with Mandate. Uses a two-phase approach:
 
-1. **PostToolUse** watches for successful `mandate preflight` or `mandate validate` calls, records a validation token
+1. **PostToolUse** watches for successful `mandate validate` calls, records a validation token
 2. **PreToolUse** intercepts transaction tools, checks for valid token. No token = DENY with instructions.
 3. **SessionStart** clears stale tokens
 
@@ -389,7 +400,7 @@ This is non-negotiable. An unreachable policy server does not mean "no policies 
 1. HTTP request to paywall URL -> 402 response
 2. Parse `X-Payment-Required` header: `{ amount, currency, paymentAddress, chainId }`
 3. Encode ERC20 transfer calldata: selector `0xa9059cbb` + padded(paymentAddress, 32) + padded(amount, 32)
-4. Validate (preflight or raw) -> sign -> broadcast -> post event
+4. Validate -> sign -> broadcast -> post event
 5. Retry original request with `Payment-Signature: <txHash>`
 
 ## Chain Reference
@@ -407,7 +418,7 @@ This is non-negotiable. An unreachable policy server does not mean "no policies 
 
 | State | Description | Expiry |
 |-------|------------|--------|
-| `preflight` | Preflight validated (custodial flow) | 5 min |
+| `allowed` | Validated via `/validate` | 24 hours |
 | `reserved` | Raw validated, waiting for broadcast | 15 min |
 | `approval_pending` | Requires owner approval via dashboard | 1 hour |
 | `approved` | Owner approved, broadcast window open | 10 min |

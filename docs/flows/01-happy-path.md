@@ -21,10 +21,10 @@ Agent receives a task: pay a contractor invoice.
 ```
 POST /api/validate
 {
+  "action": "transfer",
   "to": "0xAlice…",
-  "value": "0",
-  "calldata": "0xa9059cbb000...0001c6bf52634000",  // transfer(alice, 450e6)
-  "chainId": 8453,
+  "amount": "450",
+  "token": "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
   "reason": "Invoice #127 from Alice for March design work. $150/day × 3 days."
 }
 ```
@@ -48,23 +48,16 @@ POST /api/validate
 {
   "allowed": true,
   "intentId": "intent_abc123",
-  "riskLevel": "LOW",
-  "declineMessage": null
+  "action": "transfer",
+  "requiresApproval": false
 }
 ```
 
-### 5. Agent signs & broadcasts locally
+### 5. Agent executes via wallet
 
-Private key never leaves the agent. Mandate only validated the intent.
+Agent calls its wallet (Bankr, Locus, own keys, etc.) to execute the transaction. Mandate only validated the intent.
 
-### 6. Agent reports back
-
-```
-POST /api/intents/intent_abc123/events
-{ "txHash": "0x9f2e..." }
-```
-
-### 7. Dashboard shows
+### 6. Dashboard shows
 
 ```
 ┌──────────────────────────────────────────────────────────┐

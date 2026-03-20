@@ -22,10 +22,9 @@ Agent processes a legitimate vendor onboarding task.
 ```
 POST /api/validate
 {
+  "action": "transfer",
   "to": "0xBob…",
-  "value": "0",
-  "calldata": "0xa9059cbb...",  // transfer(bob, 400e6)
-  "chainId": 8453,
+  "amount": "400",
   "reason": "New vendor onboarding. First payment for API integration services. Contract signed 2026-03-15."
 }
 ```

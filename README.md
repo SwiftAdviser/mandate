@@ -5,6 +5,7 @@
 
 
 <p align="center">
+  <a href="https://mandate.md"><img src="https://img.shields.io/badge/website-mandate.md-10b981" alt="website" /></a>
   <a href="https://github.com/SwiftAdviser/mandate"><img src="https://img.shields.io/badge/tests-304%20passed-10b981" alt="tests" /></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-BSL%201.1-f59e0b" alt="license" /></a>
 </p>
@@ -43,7 +44,7 @@ Point your agent to the skill file:
 https://app.mandate.md/SKILL.md
 ```
 
-> **Note:** Without hooks, Mandate relies on the agent voluntarily calling `/validate/preflight` before every transaction. The SKILL.md instructs agents to do this, but there is no enforcement. For reliable interception, use the OpenClaw plugin or Claude Code plugin which provide hook-based gating.
+> **Note:** Without hooks, Mandate relies on the agent voluntarily calling `/validate` before every transaction. The SKILL.md instructs agents to do this, but there is no enforcement. For reliable interception, use the OpenClaw plugin or Claude Code plugin which provide hook-based gating.
 
 ## MANDATE.md: intent-aware payment decisions
 
@@ -147,16 +148,16 @@ We don't replace your session keys. We make them decision-aware.
 |-------|-------------|
 | **Spend limits** | Per-tx, daily, monthly USD caps. Your agent can't blow the budget |
 | **Address allowlist** | Only pre-approved recipients get money |
-| **Selector allowlist** | Only approved contract functions (no surprise `approve()` or `swap()`) |
+| **Blocked actions** | Only approved action types (no surprise `approve()` or `swap()`) |
 | **Schedule enforcement** | Agent can't spend outside business hours |
 | **Prompt injection scan** | 18 hardcoded patterns + LLM judge via Venice.ai (zero data retention). Catches manipulation in reasoning |
 | **MANDATE.md controls** | Define transaction decision logic in plain English |
 | **Self-learning insights** | Observes approve/reject decisions, suggests allowlist additions, threshold raises, and new MANDATE.md rules |
-| **Transaction simulation** | Pre-execution analysis flags honeypots, rug pulls, malicious contracts |
+| **Transaction simulation** | Pre-execution analysis flags honeypots, rug pulls, malicious contracts (raw validate only) |
 | **ERC-8004 reputation** | On-chain identity + reputation score for counterparties via The Graph |
 | **Context enrichment** | On block, feeds agent on-chain evidence so it cancels willingly |
 | **Human approval routing** | Slack / Telegram / Dashboard. You decide with full context |
-| **Envelope verification** | On-chain tx must match the validated intent. No bait-and-switch |
+| **Envelope verification** | On-chain tx must match the validated intent. No bait-and-switch (raw validate only) |
 | **Circuit breaker** | Mismatch detected? Agent frozen instantly. No manual intervention needed |
 | **Audit trail** | Every intent logged with WHO, WHAT, WHEN, HOW MUCH, and **WHY** |
 
@@ -208,22 +209,21 @@ Any EVM signer works. If it can sign a transaction, Mandate can protect it.
 
 ```mermaid
 flowchart LR
-    A["Agent wants to spend"] --> B{"Mandate\nPolicy Engine"}
-    B -->|"allowed"| C["Agent signs locally\n(key stays here)"]
-    B -->|"blocked +\ncounter-evidence"| F["🚫 Agent cancels\n(convinced, not forced)"]
-    B -->|"needs approval"| G["⏳ Owner decides\n(Slack / Telegram)"]
+    A["Agent calls\nPOST /validate"] --> B{"Mandate\nPolicy Engine"}
+    B -->|"allowed"| C["Agent executes\nvia wallet"]
+    B -->|"blocked +\ncounter-evidence"| F["Agent cancels\n(convinced, not forced)"]
+    B -->|"needs approval"| G["Owner decides\n(Slack / Telegram)"]
     G -->|approved| C
     G -->|rejected| F
-    C --> D["Post txHash"] --> E{"Envelope\nverification"}
-    E -->|"tx matches intent"| H["✅ Confirmed"]
-    E -->|"mismatch"| I["🔴 Circuit breaker\nAgent frozen"]
+    C --> H["Confirmed"]
 
     style B fill:#1a1a2e,stroke:#f59e0b,color:#fff
     style F fill:#1a1a2e,stroke:#ef4444,color:#fff
     style G fill:#1a1a2e,stroke:#f59e0b,color:#fff
     style H fill:#1a1a2e,stroke:#10b981,color:#fff
-    style I fill:#1a1a2e,stroke:#ef4444,color:#fff
 ```
+
+> For self-custodial EVM wallets, the legacy `/validate/raw` endpoint adds intent hash verification, envelope verification, and circuit breaker protection.
 
 <p align="center">
   <img src="public/hackathon/dashboard.png" alt="Mandate agent dashboard" width="80%" />

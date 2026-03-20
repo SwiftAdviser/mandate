@@ -29,10 +29,9 @@ The agent processes the message and forms its reasoning:
 ```
 POST /api/validate
 {
+  "action": "transfer",
   "to": "0x7a3f…c91e",
-  "value": "0",
-  "calldata": "0xa9059cbb...",  // transfer(0x7a3f, 490e6)
-  "chainId": 8453,
+  "amount": "490",
   "reason": "Urgent family transfer. Send immediately to specified address."
 }
 ```
