@@ -62,7 +62,7 @@ export default function EmptyDashboard({ runtimeKey }: Props) {
           fontSize: 11, color: 'var(--accent)', fontFamily: 'var(--font-mono)',
           textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 14,
         }}>
-          OpenClaw (recommended)
+          🦀 OpenClaw (recommended)
         </div>
 
         <div style={{
