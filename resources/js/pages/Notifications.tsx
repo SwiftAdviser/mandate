@@ -1,5 +1,5 @@
 import DashboardLayout from '@/layouts/DashboardLayout';
-import { FaTelegram, FaSlack } from 'react-icons/fa';
+import { FaTelegram, FaSlack, FaDiscord } from 'react-icons/fa';
 import { useState, useRef } from 'react';
 
 interface Webhook {
@@ -292,6 +292,30 @@ export default function Notifications({ agent_id, agent_name, telegram_links: in
               </div>
             </div>
 
+            {/* Discord — coming soon */}
+            <div className="fade-up fade-up-3" style={{
+              padding: '20px 24px',
+              background: 'var(--bg-surface)',
+              border: '1px solid var(--border)',
+              borderRadius: 12,
+              opacity: 0.5,
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                <FaDiscord size={20} color="#5865F2" />
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontSize: 14, fontWeight: 500, color: 'var(--text-primary)' }}>Discord</div>
+                  <div style={{ fontSize: 11, color: 'var(--text-dim)' }}>Bot notifications to your server</div>
+                </div>
+                <span style={{
+                  fontSize: 10, fontFamily: 'var(--font-mono)', color: 'var(--text-dim)',
+                  padding: '3px 8px', border: '1px solid var(--border)', borderRadius: 4,
+                  textTransform: 'uppercase', letterSpacing: '0.06em',
+                }}>
+                  coming soon
+                </span>
+              </div>
+            </div>
+
             {/* Error */}
             {error && (
               <div style={{
@@ -302,7 +326,7 @@ export default function Notifications({ agent_id, agent_name, telegram_links: in
             )}
 
             {/* Actions */}
-            <div className="fade-up fade-up-3" style={{ display: 'flex', justifyContent: 'flex-end', gap: 10 }}>
+            <div className="fade-up fade-up-4" style={{ display: 'flex', justifyContent: 'flex-end', gap: 10 }}>
               <button
                 onClick={sendTest}
                 disabled={testing || !hasChannels}
