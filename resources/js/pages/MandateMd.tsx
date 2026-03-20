@@ -1,5 +1,6 @@
 import DashboardLayout from '@/layouts/DashboardLayout';
-import { MANDATE_PREFILL } from '@/lib/defaults';
+import { MANDATE_PREFILL, MANDATE_TEMPLATES } from '@/lib/defaults';
+import type { MandateTemplateKey } from '@/lib/defaults';
 import { router } from '@inertiajs/react';
 import { useState } from 'react';
 
@@ -83,6 +84,27 @@ export default function MandateMd({ agent_id, guard_rules }: Props) {
               >
                 Prefill with common sense
               </button>
+            </div>
+            <div style={{ display: 'flex', gap: 8, marginBottom: 14 }}>
+              {(Object.keys(MANDATE_TEMPLATES) as MandateTemplateKey[]).map(key => (
+                <button
+                  key={key}
+                  onClick={() => setRules(MANDATE_TEMPLATES[key].content)}
+                  style={{
+                    padding: '6px 14px',
+                    fontSize: 11,
+                    fontFamily: 'var(--font-mono)',
+                    borderRadius: 6,
+                    border: '1px solid var(--border)',
+                    background: 'var(--bg-base)',
+                    color: 'var(--text-secondary)',
+                    cursor: 'pointer',
+                    transition: 'all 0.12s',
+                  }}
+                >
+                  {MANDATE_TEMPLATES[key].label}
+                </button>
+              ))}
             </div>
             <textarea
               value={rules}

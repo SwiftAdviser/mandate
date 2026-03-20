@@ -200,6 +200,51 @@ class PolicyControllerTest extends TestCase
         $response->assertCreated();
     }
 
+    /** @test */
+    public function store_carries_forward_fields_not_in_request(): void
+    {
+        $agent = $this->createAgent();
+
+        // Create initial policy with spend limits
+        $this->actingAs($this->user)->postJson("/api/agents/{$agent->id}/policies", [
+            'spendLimitPerTxUsd'    => 100,
+            'spendLimitPerDayUsd'   => 1000,
+            'spendLimitPerMonthUsd' => 10000,
+            'allowedAddresses'      => ['0xabc'],
+        ])->assertCreated();
+
+        // Update only guardRules (simulates onboarding step 2)
+        $response = $this->actingAs($this->user)->postJson("/api/agents/{$agent->id}/policies", [
+            'guardRules' => 'Block swaps above $500',
+        ]);
+
+        $response->assertCreated();
+        // Spend limits should be carried forward from previous policy
+        $response->assertJsonPath('spend_limit_per_tx_usd', '100.000000');
+        $response->assertJsonPath('spend_limit_per_day_usd', '1000.000000');
+        $response->assertJsonPath('spend_limit_per_month_usd', '10000.000000');
+        $response->assertJsonFragment(['allowed_addresses' => ['0xabc']]);
+        $response->assertJsonPath('guard_rules', 'Block swaps above $500');
+    }
+
+    /** @test */
+    public function store_allows_explicit_null_to_clear_carried_field(): void
+    {
+        $agent = $this->createAgent();
+
+        $this->actingAs($this->user)->postJson("/api/agents/{$agent->id}/policies", [
+            'spendLimitPerTxUsd' => 100,
+        ])->assertCreated();
+
+        // Explicitly send null to clear a field
+        $response = $this->actingAs($this->user)->postJson("/api/agents/{$agent->id}/policies", [
+            'spendLimitPerTxUsd' => null,
+        ]);
+
+        $response->assertCreated();
+        $response->assertJsonFragment(['spend_limit_per_tx_usd' => null]);
+    }
+
     // -------------------------------------------------------------------------
     // show
     // -------------------------------------------------------------------------

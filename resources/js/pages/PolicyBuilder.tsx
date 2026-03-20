@@ -11,6 +11,7 @@ interface Policy {
   spend_limit_per_month_usd: string;
   require_approval_above_usd: string;
   allowed_addresses: string[];
+  allowed_contracts: string[];
   blocked_selectors: string[];
   max_gas_limit: string;
   schedule: { days: string[]; hours: number[] } | null;
@@ -120,14 +121,21 @@ function TagInput({ values, onChange, placeholder }: { values: string[]; onChang
   );
 }
 
+function cleanNum(v: string | null | undefined): string {
+  if (!v) return '';
+  const n = parseFloat(v);
+  return isNaN(n) ? '' : String(n);
+}
+
 export default function PolicyBuilder({ agent_id, current_policy }: Props) {
   const cp = current_policy;
   const [form, setForm] = useState({
-    spendLimitPerTxUsd:      cp?.spend_limit_per_tx_usd ?? '',
-    spendLimitPerDayUsd:     cp?.spend_limit_per_day_usd ?? '',
-    spendLimitPerMonthUsd:   cp?.spend_limit_per_month_usd ?? '',
-    requireApprovalAboveUsd: cp?.require_approval_above_usd ?? '',
+    spendLimitPerTxUsd:      cleanNum(cp?.spend_limit_per_tx_usd),
+    spendLimitPerDayUsd:     cleanNum(cp?.spend_limit_per_day_usd),
+    spendLimitPerMonthUsd:   cleanNum(cp?.spend_limit_per_month_usd),
+    requireApprovalAboveUsd: cleanNum(cp?.require_approval_above_usd),
     allowedAddresses:        cp?.allowed_addresses ?? [],
+    allowedContracts:        cp?.allowed_contracts ?? [],
     blockedSelectors:        cp?.blocked_selectors ?? [],
     maxGasLimit:             cp?.max_gas_limit ?? '',
     scheduleDays:            cp?.schedule?.days ?? [],
@@ -139,11 +147,12 @@ export default function PolicyBuilder({ agent_id, current_policy }: Props) {
   useEffect(() => {
     if (!current_policy) return;
     setForm({
-      spendLimitPerTxUsd:      current_policy.spend_limit_per_tx_usd ?? '',
-      spendLimitPerDayUsd:     current_policy.spend_limit_per_day_usd ?? '',
-      spendLimitPerMonthUsd:   current_policy.spend_limit_per_month_usd ?? '',
-      requireApprovalAboveUsd: current_policy.require_approval_above_usd ?? '',
+      spendLimitPerTxUsd:      cleanNum(current_policy.spend_limit_per_tx_usd),
+      spendLimitPerDayUsd:     cleanNum(current_policy.spend_limit_per_day_usd),
+      spendLimitPerMonthUsd:   cleanNum(current_policy.spend_limit_per_month_usd),
+      requireApprovalAboveUsd: cleanNum(current_policy.require_approval_above_usd),
       allowedAddresses:        current_policy.allowed_addresses ?? [],
+      allowedContracts:        current_policy.allowed_contracts ?? [],
       blockedSelectors:        current_policy.blocked_selectors ?? [],
       maxGasLimit:             current_policy.max_gas_limit ?? '',
       scheduleDays:            current_policy.schedule?.days ?? [],
@@ -185,6 +194,7 @@ export default function PolicyBuilder({ agent_id, current_policy }: Props) {
           spendLimitPerMonthUsd:   form.spendLimitPerMonthUsd   || null,
           requireApprovalAboveUsd: form.requireApprovalAboveUsd || null,
           allowedAddresses:        form.allowedAddresses.length ? form.allowedAddresses : null,
+          allowedContracts:        form.allowedContracts.length ? form.allowedContracts : null,
           blockedSelectors:        form.blockedSelectors.length ? form.blockedSelectors : null,
           maxGasLimit:             form.maxGasLimit             || null,
           schedule,
@@ -211,8 +221,34 @@ export default function PolicyBuilder({ agent_id, current_policy }: Props) {
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
 
+          {/* MANDATE.md */}
+          <a href="/mandate" className="fade-up fade-up-1" style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            padding: '20px 24px',
+            background: 'var(--bg-surface)',
+            border: '1px solid var(--border)',
+            borderRadius: 12,
+            textDecoration: 'none',
+            transition: 'border-color 0.15s',
+          }}>
+            <div>
+              <div style={{ fontSize: 11, fontFamily: 'var(--font-mono)', color: 'var(--text-dim)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 6 }}>
+                AI Guard
+              </div>
+              <div style={{ fontFamily: 'var(--font-mono)', fontSize: 14, fontWeight: 600, color: 'var(--text-primary)' }}>
+                MANDATE.md
+              </div>
+              <div style={{ fontSize: 12, color: 'var(--text-dim)', marginTop: 4 }}>
+                {current_policy?.guard_rules ? 'Rules configured' : 'No rules set — write natural language rules for your AI guard'}
+              </div>
+            </div>
+            <span style={{ color: 'var(--accent)', fontSize: 14 }}>Edit rules →</span>
+          </a>
+
           {/* Spend limits */}
-          <div className="fade-up fade-up-1" style={{ padding: '24px', background: 'var(--bg-surface)', border: '1px solid var(--border)', borderRadius: 12 }}>
+          <div className="fade-up fade-up-2" style={{ padding: '24px', background: 'var(--bg-surface)', border: '1px solid var(--border)', borderRadius: 12 }}>
             <div style={{ fontSize: 11, fontFamily: 'var(--font-mono)', color: 'var(--text-dim)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 20 }}>
               Spend Limits
             </div>
@@ -230,7 +266,7 @@ export default function PolicyBuilder({ agent_id, current_policy }: Props) {
           </div>
 
           {/* Human-in-the-loop */}
-          <div className="fade-up fade-up-2" style={{ padding: '24px', background: 'var(--bg-surface)', border: '1px solid var(--border)', borderRadius: 12 }}>
+          <div className="fade-up fade-up-3" style={{ padding: '24px', background: 'var(--bg-surface)', border: '1px solid var(--border)', borderRadius: 12 }}>
             <div style={{ fontSize: 11, fontFamily: 'var(--font-mono)', color: 'var(--text-dim)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 20 }}>
               Human-in-the-Loop
             </div>
@@ -240,7 +276,7 @@ export default function PolicyBuilder({ agent_id, current_policy }: Props) {
           </div>
 
           {/* Address controls */}
-          <div className="fade-up fade-up-3" style={{ padding: '24px', background: 'var(--bg-surface)', border: '1px solid var(--border)', borderRadius: 12 }}>
+          <div className="fade-up fade-up-4" style={{ padding: '24px', background: 'var(--bg-surface)', border: '1px solid var(--border)', borderRadius: 12 }}>
             <div style={{ fontSize: 11, fontFamily: 'var(--font-mono)', color: 'var(--text-dim)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 20 }}>
               Address Controls
             </div>
@@ -279,6 +315,40 @@ export default function PolicyBuilder({ agent_id, current_policy }: Props) {
                   })}
                 </div>
               </Field>
+              <Field label="Allowed contracts" hint="If set, agent may only interact with these contracts. Leave empty to allow all.">
+                <TagInput values={form.allowedContracts} onChange={v => setForm(f => ({ ...f, allowedContracts: v }))} placeholder="0x… contract address (enter to add)" />
+                <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginTop: 4 }}>
+                  {POPULAR_ADDRESSES.filter(a => a.symbol !== 'ETH').map(({ symbol, address, Icon }) => {
+                    const added = form.allowedContracts.some(a => a.toLowerCase() === address.toLowerCase());
+                    return (
+                      <button
+                        key={symbol}
+                        onClick={() => {
+                          if (!added) setForm(f => ({ ...f, allowedContracts: [...f.allowedContracts, address] }));
+                        }}
+                        style={{
+                          display: 'flex', alignItems: 'center', gap: 5,
+                          padding: '4px 10px',
+                          fontSize: 11,
+                          fontFamily: 'var(--font-mono)',
+                          borderRadius: 6,
+                          border: '1px solid',
+                          cursor: added ? 'default' : 'pointer',
+                          transition: 'all 0.12s',
+                          background: added ? 'var(--accent-glow)' : 'var(--bg-base)',
+                          borderColor: added ? 'var(--accent-dim)' : 'var(--border)',
+                          color: added ? 'var(--accent)' : 'var(--text-dim)',
+                          opacity: added ? 0.6 : 1,
+                        }}
+                      >
+                        <Icon variant="branded" size={14} />
+                        {symbol}
+                        {added && <span style={{ fontSize: 10 }}>✓</span>}
+                      </button>
+                    );
+                  })}
+                </div>
+              </Field>
               <Field label="Blocked selectors" hint="4-byte function selectors to block (e.g. 0x23b872dd for transferFrom)">
                 <TagInput values={form.blockedSelectors} onChange={v => setForm(f => ({ ...f, blockedSelectors: v }))} placeholder="0x… selector" />
               </Field>
@@ -286,7 +356,7 @@ export default function PolicyBuilder({ agent_id, current_policy }: Props) {
           </div>
 
           {/* Schedule */}
-          <div className="fade-up fade-up-4" style={{ padding: '24px', background: 'var(--bg-surface)', border: '1px solid var(--border)', borderRadius: 12 }}>
+          <div className="fade-up fade-up-5" style={{ padding: '24px', background: 'var(--bg-surface)', border: '1px solid var(--border)', borderRadius: 12 }}>
             <div style={{ fontSize: 11, fontFamily: 'var(--font-mono)', color: 'var(--text-dim)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 20 }}>
               Operating Schedule (optional)
             </div>
@@ -317,32 +387,6 @@ export default function PolicyBuilder({ agent_id, current_policy }: Props) {
               </Field>
             </div>
           </div>
-
-          {/* MANDATE.md link */}
-          <a href="/mandate" className="fade-up fade-up-5" style={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            padding: '20px 24px',
-            background: 'var(--bg-surface)',
-            border: '1px solid var(--border)',
-            borderRadius: 12,
-            textDecoration: 'none',
-            transition: 'border-color 0.15s',
-          }}>
-            <div>
-              <div style={{ fontSize: 11, fontFamily: 'var(--font-mono)', color: 'var(--text-dim)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 6 }}>
-                AI Guard
-              </div>
-              <div style={{ fontFamily: 'var(--font-mono)', fontSize: 14, fontWeight: 600, color: 'var(--text-primary)' }}>
-                MANDATE.md
-              </div>
-              <div style={{ fontSize: 12, color: 'var(--text-dim)', marginTop: 4 }}>
-                {current_policy?.guard_rules ? 'Rules configured' : 'No rules set — write natural language rules for your AI guard'}
-              </div>
-            </div>
-            <span style={{ color: 'var(--accent)', fontSize: 14 }}>Edit rules →</span>
-          </a>
 
           {/* Save */}
           <div className="fade-up fade-up-6" style={{ display: 'flex', justifyContent: 'flex-end', gap: 12 }}>
