@@ -188,7 +188,7 @@ class PolicyEngineService
         $intentHash = '0x'.hash('sha256', $hashInput);
 
         // Determine status based on validation result
-        $intentStatus = $needsApproval ? 'approval_pending' : 'preflight';
+        $intentStatus = $needsApproval ? 'approval_pending' : 'allowed';
 
         DB::table('tx_intents')->insert([
             'id' => $intentId,
