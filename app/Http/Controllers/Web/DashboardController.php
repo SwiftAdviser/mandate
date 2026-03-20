@@ -7,6 +7,7 @@ use App\Models\Agent;
 use App\Models\AgentApiKey;
 use App\Models\ApprovalQueue;
 use App\Models\Policy;
+use App\Models\PolicyInsight;
 use App\Models\TxIntent;
 use App\Services\IntentSummaryService;
 use Illuminate\Http\Request;
@@ -23,26 +24,8 @@ class DashboardController extends Controller
         $firstVisitKey = null;
         $needsOnboarding = $request->query('onboarding') === '1';
 
-        // Skip auto-create when onboarding=1 (user arrived via claim redirect)
-        if ($agents->isEmpty() && !$needsOnboarding) {
-            $agent = Agent::create([
-                'user_id' => $userId,
-                'name' => 'first-agent',
-                'claimed_at' => now(),
-            ]);
-
-            Policy::create([
-                'agent_id' => $agent->id,
-                'spend_limit_per_tx_usd' => 100,
-                'spend_limit_per_day_usd' => 1000,
-                'is_active' => true,
-            ]);
-
-            [$rawKey] = AgentApiKey::generate($agent);
-            $request->session()->put('first_agent_key', $rawKey);
-
-            $agents = Agent::where('user_id', $userId)->get();
-        }
+        // No auto-create: agents register via plugin/SDK (POST /api/agents/register)
+        // or via dashboard "Create Agent" button
 
         // When onboarding, select most recently claimed agent and clear first_agent_key
         if ($needsOnboarding) {
@@ -68,7 +51,15 @@ class DashboardController extends Controller
         $totalToday = 0;
         $pendingApprovals = 0;
 
+        $topInsight = null;
+
         if ($selectedAgent) {
+            $topInsight = PolicyInsight::where('agent_id', $selectedAgent->id)
+                ->where('status', PolicyInsight::STATUS_ACTIVE)
+                ->where('confidence', '>=', 0.4)
+                ->orderByDesc('confidence')
+                ->first();
+
             $dailyQuota = \DB::table('quota_reservations')
                 ->where('agent_id', $selectedAgent->id)
                 ->where('window_type', 'daily')
@@ -109,6 +100,7 @@ class DashboardController extends Controller
             'pending_approvals' => $pendingApprovals,
             'needs_onboarding' => $needsOnboarding,
             'first_visit_key' => $firstVisitKey,
+            'top_insight' => $topInsight,
         ]);
     }
 
@@ -201,6 +193,22 @@ class DashboardController extends Controller
             'agent_name' => $agent?->name ?? '',
             'webhooks' => $webhooks,
             'telegram_links' => $telegramLinks,
+        ]);
+    }
+
+    public function insights(Request $request): Response
+    {
+        $userId   = auth()->id();
+        $agentIds = Agent::where('user_id', $userId)->pluck('id');
+
+        $insights = PolicyInsight::whereIn('agent_id', $agentIds)
+            ->where('status', PolicyInsight::STATUS_ACTIVE)
+            ->where('confidence', '>=', 0.4)
+            ->orderByDesc('confidence')
+            ->get();
+
+        return Inertia::render('Insights', [
+            'insights' => $insights,
         ]);
     }
 
