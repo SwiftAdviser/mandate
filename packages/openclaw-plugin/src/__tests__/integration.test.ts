@@ -8,6 +8,14 @@
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
+// Mock fs so keyStore doesn't touch real disk
+vi.mock('node:fs', () => ({
+  existsSync: vi.fn().mockReturnValue(false),
+  mkdirSync: vi.fn(),
+  readFileSync: vi.fn().mockReturnValue(''),
+  writeFileSync: vi.fn(),
+}));
+
 import { transferTool } from '../tools/transferTool.js';
 import { x402Tool } from '../tools/x402Tool.js';
 import { sendEthTool } from '../tools/sendEthTool.js';

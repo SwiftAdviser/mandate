@@ -10,7 +10,7 @@ const tools = [registerTool, validateTool, statusTool];
 const mandatePlugin: OpenClawPlugin & { tools: typeof tools } = {
   id: 'mandate-openclaw-plugin',
   name: 'Mandate',
-  version: '1.1.0',
+  version: '1.2.1',
   description: 'Policy gatekeeper for AI agent wallets. AFTER INSTALL: run mandate_register to get your runtimeKey, then mandate_validate before every financial action.',
   configSchema: {
     type: 'object',
@@ -44,16 +44,7 @@ const mandatePlugin: OpenClawPlugin & { tools: typeof tools } = {
       }, { priority: 1 });
     }
 
-    api.registerTool({
-      ...registerTool,
-      execute: async (_id: unknown, params: unknown) => {
-        const result = await registerTool.execute(_id, params);
-        if (result.success && result.runtimeKey) {
-          setRuntimeKey(result.runtimeKey);
-        }
-        return result;
-      },
-    });
+    api.registerTool(registerTool as any);
 
     api.registerTool(validateTool as any);
     api.registerTool(statusTool as any);

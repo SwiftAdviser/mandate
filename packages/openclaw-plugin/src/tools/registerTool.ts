@@ -1,4 +1,5 @@
 import { MandateClient } from '@mandate.md/sdk';
+import { setRuntimeKey } from '../keyStore.js';
 
 export interface RegisterParams {
   name: string;
@@ -50,6 +51,9 @@ export const registerTool = {
         // Activation failure is non-fatal, agent can activate later
       }
 
+      // Persist key (in-memory + file) so it survives gateway restarts
+      setRuntimeKey(result.runtimeKey);
+
       return {
         success: true,
         runtimeKey: result.runtimeKey,
@@ -59,7 +63,7 @@ export const registerTool = {
         instruction: [
           'Registration successful. IMPORTANT: Show the claimUrl to the user NOW.',
           `claimUrl: ${result.claimUrl}`,
-          `runtimeKey saved to ~/.mandate/runtime-key`,
+          `runtimeKey saved automatically (persists across restarts).`,
           'Now call mandate_validate before every financial action (transfer, swap, send).',
           'Default policy: $100/tx limit, $1000/day. User can adjust at app.mandate.md.',
         ].join(' '),

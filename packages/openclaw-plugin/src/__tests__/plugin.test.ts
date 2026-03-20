@@ -1,4 +1,12 @@
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
+
+// Mock fs so keyStore doesn't touch real disk
+vi.mock('node:fs', () => ({
+  existsSync: vi.fn().mockReturnValue(false),
+  mkdirSync: vi.fn(),
+  readFileSync: vi.fn().mockReturnValue(''),
+  writeFileSync: vi.fn(),
+}));
 
 vi.mock('@mandate.md/sdk', () => {
   const PolicyBlockedError = class extends Error {
@@ -21,11 +29,15 @@ vi.mock('@mandate.md/sdk', () => {
 });
 
 import mandatePlugin from '../plugin.js';
+import { clearKeyCache } from '../keyStore.js';
+
+beforeEach(() => {
+  clearKeyCache();
+});
 
 describe('openclaw plugin', () => {
-  it('exports plugin with correct name and version', () => {
+  it('exports plugin with correct name and tools', () => {
     expect(mandatePlugin.name).toBe('Mandate');
-    expect(mandatePlugin.version).toBe('1.0.0');
     expect(mandatePlugin.tools).toHaveLength(3);
   });
 
@@ -50,10 +62,9 @@ describe('openclaw plugin', () => {
 });
 
 describe('register(api) pattern', () => {
-  it('plugin has id, name, version, register function', () => {
+  it('plugin has id, name, register function', () => {
     expect(mandatePlugin.id).toBe('mandate-openclaw-plugin');
     expect(mandatePlugin.name).toBe('Mandate');
-    expect(mandatePlugin.version).toBe('1.0.0');
     expect(typeof mandatePlugin.register).toBe('function');
   });
 

@@ -174,6 +174,17 @@ No implementation code without a corresponding test written beforehand.
 - All TS packages extend `tsconfig.base.json` at repo root
 - Package manager for TS: **bun**; for PHP: **composer**
 
+## Version Bumps (TS packages)
+
+When bumping a package version, update all locations. Per-package list:
+
+**`@mandate.md/mandate-openclaw-plugin`** (3 files):
+- `packages/openclaw-plugin/package.json` (version field)
+- `packages/openclaw-plugin/src/plugin.ts` (version in plugin object)
+- `packages/openclaw-plugin/openclaw.plugin.json` (version field)
+
+Then: `bun run test && bun run build && bunx npm publish --access public`
+
 ## OpenClaw Agent
 
 There is an OpenClaw agent running locally. You can send messages to it for debugging and testing:

@@ -1,8 +1,16 @@
 {
   "name": "@mandate.md/mandate-openclaw-plugin",
-  "version": "1.1.0",
+  "version": "1.2.1",
   "description": "OpenClaw plugin for Mandate policy-enforced on-chain tools",
   "type": "module",
+  "files": [
+    "dist",
+    "hooks",
+    "skills",
+    "openclaw.plugin.json",
+    "SKILL.md",
+    "README.md"
+  ],
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "exports": {
