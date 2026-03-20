@@ -109,6 +109,7 @@ class ValidateController extends Controller
         return response()->json([
             'allowed' => $result['allowed'],
             'intentId' => $result['intentId'],
+            'chain' => (string) $data['chainId'],
             'requiresApproval' => $result['requiresApproval'],
             'approvalId' => $result['approvalId'],
             'approvalReason' => $result['approvalReason'] ?? null,

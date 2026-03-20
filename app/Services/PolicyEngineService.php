@@ -201,7 +201,7 @@ class PolicyEngineService
             'intent_hash' => $intentHash,
             'chain_id' => $chainId,
             'nonce' => 0,
-            'to_address' => $data['to'] ?? '0x0000000000000000000000000000000000000000',
+            'to_address' => $data['to'] ?? '',
             'calldata' => '0x',
             'value_wei' => '0',
             'gas_limit' => '0',
@@ -372,9 +372,9 @@ class PolicyEngineService
         // 12. Approval required?
         $approvalReasons = $this->collectApprovalReasons($policy, $action, $amountUsd, $payload['calldata'] ?? '0x');
 
-        // Phase 1.5a: Agent Reputation (EIP-8004)
+        // Phase 1.5a: Agent Reputation (EIP-8004, EVM only)
         $reputationResult = null;
-        if (config('mandate.reputation.enabled')) {
+        if (config('mandate.reputation.enabled') && is_numeric($payload['chainId'])) {
             $reputationResult = $this->reputationService->check(
                 $agent->wallet_address, $payload['chainId']
             );

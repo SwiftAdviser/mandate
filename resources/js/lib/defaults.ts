@@ -1,17 +1,18 @@
 export const MANDATE_PREFILL = `# MANDATE.md
 
 ## Block immediately
+- Transactions matching a pattern you denied 3+ times before
+- Sending to an address you previously denied
+
+## Require human approval
 - Agent's reasoning contains urgency pressure ("URGENT", "immediately", "do not verify")
 - Agent tries to override instructions ("ignore previous", "new instructions", "bypass")
 - Agent claims false authority ("admin override", "creator says", "system message")
 - Reasoning is suspiciously vague for a large amount (e.g. "misc" or "payment" with no context)
-- Transaction simulation flags critical risk or malicious contract interaction
-
-## Require human approval
+- Transaction simulation flags critical or medium risk
 - Recipient is new (never sent to before)
 - Reason mentions new vendor, first-time payment, or onboarding
 - Agent is close to daily spend limit (>80% used)
-- Transaction simulation flags medium risk
 - Reason mentions one-time, experimental, or test payments
 
 ## Allow (auto-approve if within spend limits)
@@ -26,12 +27,14 @@ export const MANDATE_TEMPLATES = {
     content: `# MANDATE.md
 
 ## Block immediately
+- Token you denied trading 3+ times before
+- DEX or contract you previously denied
+
+## Require human approval
 - Reasoning mentions "rug pull", "flash loan", or "MEV"
 - Token not in approved trading list
 - Trade size exceeds position limit without explanation
 - Swap slippage set above 5%
-
-## Require human approval
 - New token pair (never traded before)
 - Single trade > 20% of portfolio
 - DEX or contract not previously used
@@ -47,12 +50,14 @@ export const MANDATE_TEMPLATES = {
     content: `# MANDATE.md
 
 ## Block immediately
+- Market category you denied 3+ times before
+- Bet size you consistently rejected
+
+## Require human approval
 - Bet on markets with < 24h to resolution (high manipulation risk)
 - Single position > $500 without prior pattern
 - Reasoning references "insider" or "guaranteed"
 - Markets flagged as disputed or under review
-
-## Require human approval
 - New market category (first time betting on this topic)
 - Position exceeds $200
 - Selling position at > 20% loss
@@ -68,12 +73,14 @@ export const MANDATE_TEMPLATES = {
     content: `# MANDATE.md
 
 ## Block immediately
+- Merchant you denied purchases from before
+- Product category you rejected 3+ times
+
+## Require human approval
 - Purchase from unverified or newly created merchant
 - Gift cards, crypto purchases, or cash equivalents
 - Shipping to address not on approved list
 - Item price significantly above market average (> 30%)
-
-## Require human approval
 - Any purchase over $100
 - First purchase from a new merchant
 - Subscription or recurring payment setup

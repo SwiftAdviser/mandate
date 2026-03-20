@@ -1,4 +1,5 @@
 import DashboardLayout from '@/layouts/DashboardLayout';
+import { explorerTxUrl } from '@/lib/chains';
 import { formatUsd, riskColor, shortAddr, statusColor, timeAgo } from '@/lib/utils';
 import { router } from '@inertiajs/react';
 import { useState } from 'react';
@@ -94,6 +95,7 @@ export default function AuditLog({ intents, filters }: Props) {
                   ['Reason', 'Why the agent initiated this transaction'],
                   ['Recipient', 'Destination wallet address'],
                   ['Time', 'When this intent was created'],
+                  ['Tx Hash', 'On-chain transaction hash with explorer link'],
                 ] as const).map(([h, tip]) => (
                   <th key={h} style={{ padding: '11px 16px', textAlign: 'left', color: 'var(--text-dim)', fontWeight: 400, fontFamily: 'var(--font-mono)', fontSize: 10, textTransform: 'uppercase', letterSpacing: '0.06em', whiteSpace: 'nowrap' }}>
                     {h}
@@ -197,12 +199,24 @@ export default function AuditLog({ intents, filters }: Props) {
                     <td style={{ padding: '12px 16px', color: 'var(--text-dim)', fontSize: 11, whiteSpace: 'nowrap' }}>
                       {timeAgo(intent.created_at)}
                     </td>
+                    <td style={{ padding: '12px 16px', fontFamily: 'var(--font-mono)', fontSize: 11, whiteSpace: 'nowrap' }}>
+                      {intent.tx_hash ? (() => {
+                        const url = explorerTxUrl(intent.chain_id, intent.tx_hash);
+                        const short = `${intent.tx_hash.slice(0, 6)}...${intent.tx_hash.slice(-4)}`;
+                        return url ? (
+                          <a href={url} target="_blank" rel="noopener" style={{ color: 'var(--accent)', textDecoration: 'none' }}
+                            onMouseEnter={e => (e.currentTarget.style.textDecoration = 'underline')}
+                            onMouseLeave={e => (e.currentTarget.style.textDecoration = 'none')}
+                          >{short}</a>
+                        ) : <span style={{ color: 'var(--text-dim)' }}>{short}</span>;
+                      })() : <span style={{ color: 'var(--text-dim)' }}>-</span>}
+                    </td>
                   </tr>
                 );
               })}
               {intents.data.length === 0 && (
                 <tr>
-                  <td colSpan={7} style={{ padding: '48px 24px', textAlign: 'center', color: 'var(--text-dim)', fontSize: 13 }}>
+                  <td colSpan={8} style={{ padding: '48px 24px', textAlign: 'center', color: 'var(--text-dim)', fontSize: 13 }}>
                     No intents match your filters.
                   </td>
                 </tr>

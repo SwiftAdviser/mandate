@@ -91,6 +91,9 @@ return [
         // TON
         'ton' => ['name' => 'TON',            'type' => 'ton',    'testnet' => false, 'explorer' => 'https://tonviewer.com'],
         'ton-testnet' => ['name' => 'TON Testnet',    'type' => 'ton',    'testnet' => true,  'explorer' => 'https://testnet.tonviewer.com'],
+        // BNB
+        '56' => ['name' => 'BNB Chain',      'type' => 'evm',    'testnet' => false, 'explorer' => 'https://bscscan.com'],
+        '97' => ['name' => 'BNB Testnet',    'type' => 'evm',    'testnet' => true,  'explorer' => 'https://testnet.bscscan.com'],
     ],
 
     'token_registry' => [
@@ -110,5 +113,8 @@ return [
         ['chain_id' => 'solana',   'address' => 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v', 'symbol' => 'USDC', 'decimals' => 6, 'is_stable' => true],
         // TON
         ['chain_id' => 'ton',      'address' => 'EQCxE6mUtQJKFnGfaROTKOt1lZbDiiX1kCixRv7Nw2Id_sDs', 'symbol' => 'USDT', 'decimals' => 6, 'is_stable' => true],
+        // BNB Chain
+        ['chain_id' => '56',       'address' => '0x8AC76a51cc950d9822D68b83fE1Ad97B32Cd580d', 'symbol' => 'USDC', 'decimals' => 18, 'is_stable' => true],
+        ['chain_id' => '56',       'address' => '0xe9e7CEA3DedcA5984780Bafc599bD69ADd087D56', 'symbol' => 'BUSD', 'decimals' => 18, 'is_stable' => true],
     ],
 ];
