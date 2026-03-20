@@ -62,7 +62,8 @@ export default function EmptyDashboard({ runtimeKey }: Props) {
           fontSize: 11, color: 'var(--accent)', fontFamily: 'var(--font-mono)',
           textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 14,
         }}>
-          🦀 OpenClaw (recommended)
+          <img src="/logos/openclaw.svg" alt="OpenClaw" style={{ width: 14, height: 14, display: 'inline-block', verticalAlign: 'middle', marginRight: 6 }} />
+          OpenClaw (recommended)
         </div>
 
         <div style={{
@@ -168,10 +169,10 @@ export default function EmptyDashboard({ runtimeKey }: Props) {
       }}>
         <div>
           <div style={{ fontFamily: 'var(--font-display)', fontSize: 15, fontWeight: 500, color: 'var(--text-primary)', letterSpacing: '-0.02em' }}>
-            How It Works
+            Check Demo First
           </div>
           <div style={{ fontSize: 12, color: 'var(--text-dim)', marginTop: 3 }}>
-            8 intelligence checks on every transaction
+            See how Mandate protects your agent
           </div>
         </div>
         <span style={{ color: 'var(--accent)', fontSize: 13, flexShrink: 0 }}>View →</span>
