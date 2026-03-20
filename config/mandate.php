@@ -72,6 +72,10 @@ return [
         'webhook_secret' => env('TELEGRAM_WEBHOOK_SECRET', 'mandate-tg-wh-2026'),
     ],
 
+    'insights' => [
+        'min_confidence' => (float) env('INSIGHT_MIN_CONFIDENCE', 0.75),
+    ],
+
     'reason_scanner' => [
         'llm_enabled' => env('REASON_SCANNER_LLM_ENABLED', false),
         'api_base' => env('REASON_SCANNER_API_BASE', 'https://api.venice.ai/api/v1'),

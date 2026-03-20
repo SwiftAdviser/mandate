@@ -54,7 +54,7 @@ class DashboardController extends Controller
         if ($selectedAgent) {
             $topInsight = PolicyInsight::where('agent_id', $selectedAgent->id)
                 ->where('status', PolicyInsight::STATUS_ACTIVE)
-                ->where('confidence', '>=', 0.6)
+                ->where('confidence', '>=', config('mandate.insights.min_confidence'))
                 ->orderByDesc('confidence')
                 ->first();
 
@@ -215,7 +215,7 @@ class DashboardController extends Controller
 
         $insights = PolicyInsight::whereIn('agent_id', $agentIds)
             ->where('status', PolicyInsight::STATUS_ACTIVE)
-            ->where('confidence', '>=', 0.6)
+            ->where('confidence', '>=', config('mandate.insights.min_confidence'))
             ->orderByDesc('confidence')
             ->get();
 

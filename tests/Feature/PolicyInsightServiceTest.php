@@ -444,13 +444,13 @@ class PolicyInsightServiceTest extends TestCase
     {
         PolicyInsight::create([
             'agent_id' => $this->agent->id, 'insight_type' => PolicyInsight::TYPE_ADD_TO_ALLOWLIST,
-            'status' => PolicyInsight::STATUS_ACTIVE, 'confidence' => 0.7,
+            'status' => PolicyInsight::STATUS_ACTIVE, 'confidence' => 0.8,
             'evidence_count' => 3, 'evidence' => [], 'suggestion' => [],
             'title' => 'active one', 'description' => 'test',
         ]);
         PolicyInsight::create([
             'agent_id' => $this->agent->id, 'insight_type' => PolicyInsight::TYPE_ADD_TO_ALLOWLIST,
-            'status' => PolicyInsight::STATUS_DISMISSED, 'confidence' => 0.7,
+            'status' => PolicyInsight::STATUS_DISMISSED, 'confidence' => 0.8,
             'evidence_count' => 3, 'evidence' => [], 'suggestion' => [],
             'title' => 'dismissed one', 'description' => 'test',
         ]);

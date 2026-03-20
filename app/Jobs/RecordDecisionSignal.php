@@ -40,7 +40,7 @@ class RecordDecisionSignal implements ShouldQueue
 
         // Dispatch notifications only for insights with sufficient confidence
         foreach ($newInsights as $insight) {
-            if ($insight->confidence >= 0.6) {
+            if ($insight->confidence >= config('mandate.insights.min_confidence')) {
                 SendInsightNotification::dispatch($insight->id, $intent->agent_id);
             }
         }
