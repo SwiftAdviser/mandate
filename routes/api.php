@@ -10,6 +10,7 @@ use App\Http\Controllers\Api\InsightController;
 use App\Http\Controllers\Api\IntentController;
 use App\Http\Controllers\Api\PolicyController;
 use App\Http\Controllers\Api\RiskCheckController;
+use App\Http\Controllers\Api\ScanTelemetryController;
 use App\Http\Controllers\Api\TelegramLinkController;
 use App\Http\Controllers\Api\TelegramWebhookController;
 use App\Http\Controllers\Api\ValidateController;
@@ -23,6 +24,9 @@ Route::prefix('agents')->group(function () {
 
 // Telegram bot webhook (public, verified by secret in path)
 Route::post('/telegram/webhook/{secret}', TelegramWebhookController::class);
+
+// CLI scan telemetry (anonymous, fire-and-forget)
+Route::post('/scan-telemetry', [ScanTelemetryController::class, 'store']);
 
 // ── Runtime key (agent → validate/events/status) ───────────────────────────
 Route::middleware([RuntimeKeyAuth::class])->group(function () {
