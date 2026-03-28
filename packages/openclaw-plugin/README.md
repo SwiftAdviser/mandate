@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="../../docs/demos/pixel-banner.svg" alt="Mandate.md" width="100%" />
+</p>
+
 # @mandate.md/mandate-openclaw-plugin
 
 Policy gatekeeper for AI agent wallets. Validates spending limits, allowlists, and schedules before every financial action.
