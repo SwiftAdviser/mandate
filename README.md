@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="public/hackathon/cover.png" alt="Mandate. See why your agent spends. Stop it when it shouldn't." width="100%" />
+  <img src="docs/demos/pixel-banner.svg" alt="Mandate.md" width="100%" />
 </p>
 
 
