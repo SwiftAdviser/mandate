@@ -424,6 +424,59 @@ export default function Dashboard({ agents, selected_agent, daily_quota, monthly
           <EmptyDashboard runtimeKey={first_visit_key} />
         )}
 
+        {/* No agents yet */}
+        {!agent && !first_visit_key && (
+          <div className="fade-up" style={{ maxWidth: 520, margin: '0 auto', textAlign: 'center', paddingTop: 40 }}>
+            <div style={{ fontSize: 48, marginBottom: 20 }}>🛡️</div>
+            <h1 style={{
+              fontFamily: 'var(--font-display)',
+              fontSize: 26,
+              fontWeight: 400,
+              letterSpacing: '-0.03em',
+              margin: '0 0 12px',
+            }}>
+              Welcome to Mandate
+            </h1>
+            <p style={{
+              color: 'var(--text-dim)',
+              fontSize: 14,
+              lineHeight: 1.7,
+              margin: '0 0 32px',
+            }}>
+              Connect an AI agent to start enforcing spend limits, allowlists, and approval workflows.
+            </p>
+            <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' }}>
+              <a href="/integrations" style={{
+                padding: '14px 28px',
+                background: 'var(--accent)',
+                color: '#09090b',
+                border: 'none',
+                borderRadius: 8,
+                fontFamily: 'var(--font-mono)',
+                fontSize: 14,
+                fontWeight: 600,
+                textDecoration: 'none',
+                letterSpacing: '-0.01em',
+              }}>
+                Connect an agent
+              </a>
+              <a href="/how-it-works" style={{
+                padding: '14px 28px',
+                background: 'transparent',
+                color: 'var(--text-secondary)',
+                border: '1px solid var(--border)',
+                borderRadius: 8,
+                fontFamily: 'var(--font-mono)',
+                fontSize: 14,
+                fontWeight: 500,
+                textDecoration: 'none',
+              }}>
+                How it works
+              </a>
+            </div>
+          </div>
+        )}
+
         {agent && !first_visit_key && (
           <>
             {/* Stats row */}
