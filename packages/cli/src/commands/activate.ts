@@ -3,16 +3,16 @@ import { updateCredentials } from '../credentials.js';
 import type { CommandDef } from './types.js';
 
 export const activateCommand: CommandDef = {
-  description: 'Set EVM address after registration',
+  description: 'Set wallet address after registration',
   args: z.object({
-    address: z.string().describe('EVM address (0x...)'),
+    address: z.string().describe('Wallet address (EVM 0x..., Solana base58, or TON)'),
   }),
   examples: [
-    { args: { address: '0x1234567890abcdef1234567890abcdef12345678' }, description: 'Set wallet address' },
+    { args: { address: '0x1234567890abcdef1234567890abcdef12345678' }, description: 'Set EVM wallet address' },
+    { args: { address: '7xKXtg2CW87d97TXJSDpbD5jBkheTqA83TZRuJosgAsU' }, description: 'Set Solana wallet address' },
   ],
   async run(c: any) {
     const { address } = c.args;
-    const client = c.var.client;
 
     const res = await fetch(`${c.var.credentials.baseUrl ?? 'https://app.mandate.md'}/api/activate`, {
       method: 'POST',
@@ -20,7 +20,7 @@ export const activateCommand: CommandDef = {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${c.var.credentials.runtimeKey}`,
       },
-      body: JSON.stringify({ evmAddress: address }),
+      body: JSON.stringify({ walletAddress: address }),
     });
 
     if (!res.ok) {
@@ -29,11 +29,11 @@ export const activateCommand: CommandDef = {
     }
 
     const data = await res.json();
-    updateCredentials({ evmAddress: data.evmAddress });
+    updateCredentials({ walletAddress: data.walletAddress, evmAddress: data.evmAddress });
 
     return {
       activated: true,
-      evmAddress: data.evmAddress,
+      walletAddress: data.walletAddress,
       onboardingUrl: data.onboardingUrl,
       next: 'Run: mandate validate (start validating transactions)',
     };

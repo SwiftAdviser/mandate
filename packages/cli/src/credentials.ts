@@ -6,8 +6,9 @@ export interface MandateCredentials {
   runtimeKey: string;
   agentId: string;
   claimUrl: string;
+  walletAddress?: string;
   evmAddress?: string;
-  chainId?: number;
+  chainId?: number | string;
   baseUrl?: string;
 }
 

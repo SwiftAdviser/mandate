@@ -22,7 +22,7 @@ vi.mock('@mandate.md/sdk', () => {
   }));
   (MandateClient as any).register = vi.fn().mockResolvedValue({
     agentId: 'ag1', runtimeKey: 'mndt_test_new', claimUrl: 'https://app.mandate.md/claim/x',
-    evmAddress: '0x1234', chainId: 8453,
+    walletAddress: '0x1234', evmAddress: '0x1234', chainId: 8453,
   });
   const computeIntentHash = vi.fn().mockReturnValue('0xdeadbeef');
   return { MandateClient, PolicyBlockedError, CircuitBreakerError, computeIntentHash };
@@ -54,10 +54,10 @@ describe('openclaw plugin', () => {
     expect(vt.parameters.properties).not.toHaveProperty('privateKey');
   });
 
-  it('register tool has name and evmAddress as required', () => {
+  it('register tool has name and walletAddress as required', () => {
     const rt = mandatePlugin.tools.find(t => t.name === 'mandate_register')!;
     expect(rt.parameters.required).toContain('name');
-    expect(rt.parameters.required).toContain('evmAddress');
+    expect(rt.parameters.required).toContain('walletAddress');
   });
 });
 

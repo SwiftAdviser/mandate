@@ -21,14 +21,14 @@ Block reasons: per_tx_limit_exceeded, per_day_limit_exceeded, per_month_limit_ex
 Register endpoint: POST /api/agents/register (no auth required)
 Fields:
   name: string
-  evmAddress: string (0x address of agent wallet)
-  chainId: number
+  walletAddress: string (EVM 0x..., Solana base58, or TON address)
+  chainId: number | string (e.g. 84532, "solana", "ton")
   defaultPolicy?: {
     spendLimitPerTxUsd?: number
     spendLimitPerDayUsd?: number
     spendLimitPerMonthUsd?: number
   }
-Response: { agentId, runtimeKey, claimUrl, evmAddress, chainId }
+Response: { agentId, runtimeKey, claimUrl, walletAddress, evmAddress, chainId }
   `.trim(),
 
   'policy fields': `
@@ -66,7 +66,7 @@ Example register call:
   "action": "register",
   "params": {
     "name": "My DeFi Agent",
-    "evmAddress": "0x1234...",
+    "walletAddress": "0x1234...",
     "chainId": 84532,
     "defaultPolicy": { "spendLimitPerTxUsd": 10 }
   }

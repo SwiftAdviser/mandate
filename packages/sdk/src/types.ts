@@ -62,8 +62,9 @@ export interface RegisterResult {
   agentId: string;
   runtimeKey: string;
   claimUrl: string;
+  walletAddress: string;
   evmAddress: string;
-  chainId: number;
+  chainId: number | string;
 }
 
 export class MandateError extends Error {

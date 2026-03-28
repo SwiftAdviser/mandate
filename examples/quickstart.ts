@@ -21,7 +21,7 @@ async function main() {
     console.log('No runtimeKey found. Registering new agent...');
     const reg = await MandateClient.register({
       name: 'QuickstartAgent',
-      evmAddress: '0x0000000000000000000000000000000000000000' as `0x${string}`, // replace with your address
+      walletAddress: '0x0000000000000000000000000000000000000000', // replace with your EVM, Solana, or TON address
       chainId: CHAIN_ID.BASE_SEPOLIA,
     });
     runtimeKey = reg.runtimeKey;

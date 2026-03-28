@@ -326,7 +326,7 @@ function CopyInstall() {
 const SDK_SNIPPET = `import { MandateWallet, MandateClient } from '@mandate/sdk';
 
 const { runtimeKey } = await MandateClient.register({
-  name: 'MyAgent', evmAddress: wallet.address, chainId: 84532
+  name: 'MyAgent', walletAddress: wallet.address, chainId: 84532
 });
 
 const mandate = new MandateWallet({ runtimeKey, signer: wallet, chainId: 84532 });

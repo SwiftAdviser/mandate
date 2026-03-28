@@ -40,7 +40,7 @@ The `reason` field is where Mandate catches prompt injections, urgency pressure,
 ```typescript
 const { runtimeKey, claimUrl } = await MandateClient.register({
   name: 'MyAgent',
-  evmAddress: '0xYourAgentAddress',
+  walletAddress: 'YourAgentAddress', // EVM 0x..., Solana base58, or TON
 });
 // Owner visits claimUrl to link agent to their dashboard
 ```

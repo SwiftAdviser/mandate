@@ -8,7 +8,7 @@ export const whoamiCommand: CommandDef = {
 
     return {
       agentId: creds.agentId,
-      evmAddress: creds.evmAddress ?? 'not set',
+      walletAddress: creds.walletAddress ?? creds.evmAddress ?? 'not set',
       chainId: creds.chainId ?? 84532,
       keyPrefix: masked,
       baseUrl: creds.baseUrl ?? 'https://app.mandate.md',

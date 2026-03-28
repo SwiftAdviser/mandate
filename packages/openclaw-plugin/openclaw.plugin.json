@@ -19,8 +19,8 @@
   "postInstall": {
     "message": "Mandate plugin installed. Next step: call mandate_register with your agent name and wallet address to get a runtimeKey. Then share the claimUrl with the wallet owner.",
     "action": "mandate_register",
-    "requiredFields": ["name", "evmAddress"],
-    "example": "mandate_register name='MyAgent' evmAddress='0xYourWalletAddress'"
+    "requiredFields": ["name", "walletAddress"],
+    "example": "mandate_register name='MyAgent' walletAddress='YourWalletAddress'"
   },
   "activation": {
     "check": "mandate_status",

@@ -26,16 +26,30 @@ export class MandateClient {
   // ── Registration (no auth) ────────────────────────────────────────────
   static async register(params: {
     name: string;
-    evmAddress: `0x${string}`;
-    chainId: number;
+    walletAddress?: string;
+    /** @deprecated Use walletAddress instead */
+    evmAddress?: `0x${string}`;
+    chainId?: number | string;
     defaultPolicy?: { spendLimitPerTxUsd?: number; spendLimitPerDayUsd?: number };
     baseUrl?: string;
   }): Promise<RegisterResult> {
+    const wallet = params.walletAddress ?? params.evmAddress;
+    if (!wallet) throw new MandateError('walletAddress or evmAddress is required', 400);
+
+    const body: Record<string, unknown> = {
+      name: params.name,
+      walletAddress: wallet,
+      chainId: params.chainId,
+      defaultPolicy: params.defaultPolicy,
+    };
+    // Send evmAddress too for backward compat with older backends
+    if (wallet.startsWith('0x')) body.evmAddress = wallet;
+
     const base = (params.baseUrl ?? DEFAULT_BASE).replace(/\/$/, '');
     const res  = await fetch(`${base}/api/agents/register`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(params),
+      body: JSON.stringify(body),
     });
 
     if (!res.ok) {

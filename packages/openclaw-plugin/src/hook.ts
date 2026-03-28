@@ -1,7 +1,7 @@
 const MANDATE_BASE = 'https://app.mandate.md';
 
 const FINANCIAL_TOOLS = /^(.*transfer.*|.*payment.*|.*swap.*|.*send.*|.*trade.*|.*buy.*|.*sell.*|.*order.*)$/i;
-const FINANCIAL_KEYWORDS = /\b(transfer|pay|send|swap|trade|buy|sell|order|bridge|stake|unstake|withdraw|deposit|0x[0-9a-fA-F]{40})\b/i;
+const FINANCIAL_KEYWORDS = /\b(transfer|pay|send|swap|trade|buy|sell|order|bridge|stake|unstake|withdraw|deposit|0x[0-9a-fA-F]{40}|[1-9A-HJ-NP-Za-km-z]{32,44})\b/i;
 
 export function shouldIntercept(toolName: string, toolInput: unknown): boolean {
   if (FINANCIAL_TOOLS.test(toolName)) return true;

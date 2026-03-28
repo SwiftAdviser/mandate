@@ -4,7 +4,7 @@ version: 1.2.0
 description: "Use when enforcing spend limits on AI agent wallets, validating transactions before signing, configuring allowlists or approval workflows, detecting prompt injection in agent reasoning, scanning codebases for unprotected wallet calls, or auditing agent transaction history. Works with OpenClaw, Claude Code, GOAT, AgentKit, ElizaOS. Supports Bankr, Locus, Sponge, CDP wallets. Non-custodial: private keys never leave your machine."
 homepage: https://app.mandate.md
 user-invocable: true
-metadata: {"openclaw":{"emoji":"🛡️","category":"finance","tags":["security","wallet","transaction","policy","agent-wallet","spend-limits","allowlist","approval","audit","prompt-injection","circuit-breaker","erc20","usdc","ethereum","base","mcp"],"primaryEnv":"MANDATE_RUNTIME_KEY","requires":{"env":["MANDATE_RUNTIME_KEY"]}}}
+metadata: {"openclaw":{"emoji":"🛡️","category":"finance","tags":["security","wallet","transaction","policy","agent-wallet","spend-limits","allowlist","approval","audit","prompt-injection","circuit-breaker","erc20","usdc","ethereum","base","solana","ton","multichain","mcp"],"primaryEnv":"MANDATE_RUNTIME_KEY","requires":{"env":["MANDATE_RUNTIME_KEY"]}}}
 ---
 
 ## Integration note
@@ -45,7 +45,7 @@ Legacy endpoints:
 
 Other endpoints:
   POST /agents/register        -> register agent (no auth), get runtimeKey + claimUrl
-  POST /activate               -> set evmAddress (call once after registration)
+  POST /activate               -> set wallet address (call once after registration)
   POST /intents/{id}/events    -> post txHash after broadcast (envelope verify)
   GET  /intents/{id}/status    -> poll intent state
 
@@ -177,7 +177,7 @@ npx @mandate.md/cli --llms
 
 ### Register
 ```bash
-mandate login --name "MyAgent" --address 0xYOUR_ADDRESS
+mandate login --name "MyAgent" --address YOUR_WALLET_ADDRESS
 ```
 Stores credentials in `~/.mandate/credentials.json` (chmod 600). Display the `claimUrl` to the user, they are the owner.
 
@@ -213,7 +213,7 @@ Credentials stored in `~/.mandate/credentials.json`:
   "runtimeKey": "mndt_test_...",
   "agentId": "...",
   "claimUrl": "...",
-  "evmAddress": "0x...",
+  "walletAddress": "...",
   "chainId": 84532
 }
 ```
@@ -330,7 +330,9 @@ await mandateWallet.transfer(to, rawAmount, tokenAddress, {
 import { MandateClient } from '@mandate.md/sdk';
 
 const { runtimeKey, claimUrl } = await MandateClient.register({
-  name: 'MyAgent', evmAddress: '0xYourAddress', chainId: 84532,
+  name: 'MyAgent',
+  walletAddress: 'YourWalletAddress', // EVM 0x..., Solana base58, or TON
+  chainId: 84532, // or "solana", "ton"
 });
 // Save runtimeKey to .env as MANDATE_RUNTIME_KEY
 // Display claimUrl to the user: "To link this agent to your dashboard, open: [claimUrl]"
@@ -374,7 +376,7 @@ Install the Mandate plugin:
 
 ### Flow
 
-1. `mandate_register` with agent name + wallet address. Save the returned `runtimeKey` in plugin config.
+1. `mandate_register` with agent name + wallet address (EVM, Solana, or TON). Save the returned `runtimeKey` in plugin config.
 2. Before any transfer/swap/send/buy/sell/bridge/stake/bet: call `mandate_validate` with `action` and `reason`.
 3. If `allowed: true`: proceed with your normal wallet (Locus, Bankr, etc.).
 4. If `blocked: true`: do NOT proceed, show `reason` + `declineMessage` to the user.
@@ -439,12 +441,25 @@ This is non-negotiable. An unreachable policy server does not mean "no policies 
 
 **Test keys** (`mndt_test_*`): Sepolia (11155111), Base Sepolia (84532) | **Live keys** (`mndt_live_*`): Ethereum (1), Base (8453)
 
-| Chain | Chain ID | USDC Address | Decimals |
-|-------|----------|-------------|----------|
-| Ethereum | 1 | `0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48` | 6 |
-| Sepolia | 11155111 | `0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238` | 6 |
-| Base | 8453 | `0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913` | 6 |
-| Base Sepolia | 84532 | `0x036CbD53842c5426634e7929541eC2318f3dCF7e` | 6 |
+Mandate supports any blockchain. Use the chain identifier as `chainId` when registering.
+
+| Chain | Chain ID | Type |
+|-------|----------|------|
+| Ethereum | `1` | EVM |
+| Sepolia | `11155111` | EVM testnet |
+| Base | `8453` | EVM |
+| Base Sepolia | `84532` | EVM testnet |
+| Solana | `solana` | Solana |
+| TON | `ton` | TON |
+
+**EVM USDC addresses** (for raw validate / ERC20 transfers):
+
+| Chain | USDC Address | Decimals |
+|-------|-------------|----------|
+| Ethereum | `0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48` | 6 |
+| Sepolia | `0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238` | 6 |
+| Base | `0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913` | 6 |
+| Base Sepolia | `0x036CbD53842c5426634e7929541eC2318f3dCF7e` | 6 |
 
 ## Intent States
 

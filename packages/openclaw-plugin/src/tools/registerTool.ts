@@ -3,7 +3,9 @@ import { setRuntimeKey } from '../keyStore.js';
 
 export interface RegisterParams {
   name: string;
-  evmAddress: string;
+  walletAddress?: string;
+  /** @deprecated Use walletAddress instead */
+  evmAddress?: string;
 }
 
 export const registerTool = {
@@ -13,9 +15,10 @@ export const registerTool = {
     type: 'object',
     properties: {
       name: { type: 'string', description: 'Agent name, e.g. "OpenClaw Agent"' },
-      evmAddress: { type: 'string', description: 'Agent EVM wallet address (0x...). Use the address of the wallet that sends transactions (e.g. Locus wallet address).' },
+      walletAddress: { type: 'string', description: 'Agent wallet address (EVM 0x..., Solana base58, or TON). Use the address of the wallet that sends transactions (e.g. Locus wallet address).' },
+      evmAddress: { type: 'string', description: '(deprecated, use walletAddress) EVM wallet address (0x...).' },
     },
-    required: ['name', 'evmAddress'],
+    required: ['name', 'walletAddress'],
   },
   // OpenClaw: execute(_id, params)
   async execute(_id: unknown, params?: RegisterParams | unknown): Promise<{
@@ -23,21 +26,25 @@ export const registerTool = {
     runtimeKey?: string;
     claimUrl?: string;
     agentId?: string;
+    walletAddress?: string;
     evmAddress?: string;
     error?: string;
     instruction?: string;
   }> {
     // Handle both OpenClaw (id, params) and direct (params) signatures
     const p = (params && typeof params === 'object' && 'name' in params ? params : _id) as RegisterParams;
+    const walletAddress = p.walletAddress ?? p.evmAddress;
+    if (!walletAddress) {
+      return { success: false, error: 'walletAddress is required', instruction: 'Provide walletAddress (EVM, Solana, or TON address).' };
+    }
     try {
       // Step 1: Register agent (no auth)
       const result = await MandateClient.register({
         name: p.name,
-        evmAddress: p.evmAddress as `0x${string}`,
-        chainId: 8453,
+        walletAddress,
       });
 
-      // Step 2: Activate (set EVM address)
+      // Step 2: Activate (set wallet address)
       try {
         await fetch('https://app.mandate.md/api/activate', {
           method: 'POST',
@@ -45,7 +52,7 @@ export const registerTool = {
             'Content-Type': 'application/json',
             Authorization: `Bearer ${result.runtimeKey}`,
           },
-          body: JSON.stringify({ evmAddress: p.evmAddress }),
+          body: JSON.stringify({ walletAddress }),
         });
       } catch {
         // Activation failure is non-fatal, agent can activate later
@@ -59,7 +66,8 @@ export const registerTool = {
         runtimeKey: result.runtimeKey,
         claimUrl: result.claimUrl,
         agentId: result.agentId,
-        evmAddress: p.evmAddress,
+        walletAddress,
+        evmAddress: walletAddress,
         instruction: [
           'Registration successful. IMPORTANT: Show the claimUrl to the user NOW.',
           `claimUrl: ${result.claimUrl}`,

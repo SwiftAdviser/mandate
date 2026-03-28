@@ -13,7 +13,7 @@ openclaw plugins install @mandate.md/mandate-openclaw-plugin
 ### Step 1: Register with Mandate
 
 ```
-mandate_register name="MyAgent" evmAddress="0xYourWalletAddress"
+mandate_register name="MyAgent" walletAddress="YourWalletAddress"
 ```
 
 Returns `runtimeKey` (saved automatically) and `claimUrl` (show to wallet owner to configure limits).

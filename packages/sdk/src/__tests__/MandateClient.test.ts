@@ -43,8 +43,63 @@ beforeEach(() => { vi.unstubAllGlobals(); });
 
 // -- MandateClient.register ---------------------------------------------------
 describe('MandateClient.register', () => {
-  it('returns RegisterResult on 201', async () => {
-    const body = { agentId: 'uuid-1', runtimeKey: 'mndt_test_xyz', claimUrl: 'http://x', evmAddress: '0xabc', chainId: 84532 };
+  it('returns RegisterResult on 201 with walletAddress', async () => {
+    const body = { agentId: 'uuid-1', runtimeKey: 'mndt_test_xyz', claimUrl: 'http://x', walletAddress: '0xabc', evmAddress: '0xabc', chainId: 84532 };
+    mockFetch(201, body);
+
+    const result = await MandateClient.register({
+      name: 'TestAgent',
+      walletAddress: '0xabc',
+      chainId: 84532,
+      baseUrl: BASE_URL,
+    });
+
+    expect(result.agentId).toBe('uuid-1');
+    expect(result.runtimeKey).toBe('mndt_test_xyz');
+    expect(result.walletAddress).toBe('0xabc');
+  });
+
+  it('sends evmAddress for backward compat when wallet is EVM', async () => {
+    const spy = vi.fn().mockResolvedValue({
+      ok: true, status: 201,
+      json: () => Promise.resolve({ agentId: 'uuid-1', runtimeKey: 'mndt_test_xyz', claimUrl: 'http://x', walletAddress: '0xabc', evmAddress: '0xabc', chainId: 84532 }),
+    });
+    vi.stubGlobal('fetch', spy);
+
+    await MandateClient.register({
+      name: 'TestAgent',
+      walletAddress: '0xabc',
+      baseUrl: BASE_URL,
+    });
+
+    const body = JSON.parse(spy.mock.calls[0][1].body);
+    expect(body.walletAddress).toBe('0xabc');
+    expect(body.evmAddress).toBe('0xabc');
+  });
+
+  it('registers with Solana address (no evmAddress sent)', async () => {
+    const solanaAddr = '7xKXtg2CW87d97TXJSDpbD5jBkheTqA83TZRuJosgAsU';
+    const spy = vi.fn().mockResolvedValue({
+      ok: true, status: 201,
+      json: () => Promise.resolve({ agentId: 'uuid-2', runtimeKey: 'mndt_test_sol', claimUrl: 'http://x', walletAddress: solanaAddr, evmAddress: solanaAddr, chainId: 'solana' }),
+    });
+    vi.stubGlobal('fetch', spy);
+
+    const result = await MandateClient.register({
+      name: 'SolanaAgent',
+      walletAddress: solanaAddr,
+      chainId: 'solana',
+      baseUrl: BASE_URL,
+    });
+
+    const body = JSON.parse(spy.mock.calls[0][1].body);
+    expect(body.walletAddress).toBe(solanaAddr);
+    expect(body.evmAddress).toBeUndefined();
+    expect(result.walletAddress).toBe(solanaAddr);
+  });
+
+  it('supports legacy evmAddress param', async () => {
+    const body = { agentId: 'uuid-1', runtimeKey: 'mndt_test_xyz', claimUrl: 'http://x', walletAddress: '0xabc', evmAddress: '0xabc', chainId: 84532 };
     mockFetch(201, body);
 
     const result = await MandateClient.register({
@@ -55,7 +110,13 @@ describe('MandateClient.register', () => {
     });
 
     expect(result.agentId).toBe('uuid-1');
-    expect(result.runtimeKey).toBe('mndt_test_xyz');
+  });
+
+  it('throws if neither walletAddress nor evmAddress provided', async () => {
+    await expect(MandateClient.register({
+      name: 'Bad',
+      baseUrl: BASE_URL,
+    })).rejects.toThrow('walletAddress or evmAddress is required');
   });
 
   it('throws MandateError on non-ok response', async () => {
@@ -63,7 +124,7 @@ describe('MandateClient.register', () => {
 
     await expect(MandateClient.register({
       name: 'Bad',
-      evmAddress: '0x' as `0x${string}`,
+      walletAddress: '0x',
       chainId: 84532,
       baseUrl: BASE_URL,
     })).rejects.toThrow(MandateError);

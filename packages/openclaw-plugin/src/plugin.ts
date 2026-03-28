@@ -37,7 +37,7 @@ const mandatePlugin: OpenClawPlugin & { tools: typeof tools } = {
         if (getRuntimeKey()) return;
         event.pushMessage?.([
           'MANDATE PLUGIN: Not configured yet. You MUST run mandate_register before any financial action.',
-          'Call: mandate_register name="YourAgentName" evmAddress="0xYourWalletAddress"',
+          'Call: mandate_register name="YourAgentName" walletAddress="YourWalletAddress"',
           'This will return a runtimeKey (saved automatically) and a claimUrl (SHOW IT to the user).',
           'Until registered, all financial actions will be blocked.',
         ].join('\n'));

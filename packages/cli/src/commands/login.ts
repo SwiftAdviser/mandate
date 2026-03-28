@@ -7,7 +7,7 @@ export const loginCommand: CommandDef = {
   description: 'Register a new agent and store credentials',
   options: z.object({
     name: z.string().describe('Agent name'),
-    address: z.string().optional().describe('EVM address (0x...)'),
+    address: z.string().optional().describe('Wallet address (EVM 0x..., Solana base58, or TON)'),
     perTxLimit: z.number().optional().describe('Per-transaction USD limit'),
     dailyLimit: z.number().optional().describe('Daily USD limit'),
     baseUrl: z.string().optional().describe('Mandate API base URL'),
@@ -25,18 +25,25 @@ export const loginCommand: CommandDef = {
     if (perTxLimit !== undefined) defaultPolicy.spendLimitPerTxUsd = perTxLimit;
     if (dailyLimit !== undefined) defaultPolicy.spendLimitPerDayUsd = dailyLimit;
 
-    const result = await MandateClient.register({
+    const registerParams: Parameters<typeof MandateClient.register>[0] = {
       name,
-      evmAddress: (address ?? '0x0000000000000000000000000000000000000000') as `0x${string}`,
       chainId: chainId ?? 84532,
       defaultPolicy: Object.keys(defaultPolicy).length ? defaultPolicy : undefined,
       baseUrl,
-    });
+    };
+    if (address) {
+      registerParams.walletAddress = address;
+    } else {
+      registerParams.walletAddress = '0x0000000000000000000000000000000000000000';
+    }
+
+    const result = await MandateClient.register(registerParams);
 
     saveCredentials({
       runtimeKey: result.runtimeKey,
       agentId: result.agentId,
       claimUrl: result.claimUrl,
+      walletAddress: result.walletAddress,
       evmAddress: result.evmAddress,
       chainId: result.chainId,
       baseUrl,
@@ -48,7 +55,7 @@ export const loginCommand: CommandDef = {
       agentId: result.agentId,
       runtimeKey: masked,
       claimUrl: result.claimUrl,
-      evmAddress: result.evmAddress || undefined,
+      walletAddress: result.walletAddress || undefined,
       next: 'Run: mandate whoami (verify) or mandate validate (first tx)',
     };
   },
