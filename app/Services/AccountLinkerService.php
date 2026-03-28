@@ -10,7 +10,7 @@ class AccountLinkerService
 {
     public function findOrCreateOAuth(
         string $provider,
-        int $providerId,
+        int|string $providerId,
         string $name,
         ?string $email,
         ?string $avatarUrl,
