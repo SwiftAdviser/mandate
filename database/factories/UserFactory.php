@@ -22,6 +22,7 @@ class UserFactory extends Factory
             'password' => static::$password ??= Hash::make('password'),
             'remember_token' => Str::random(10),
             'github_id' => fake()->unique()->numberBetween(100000, 99999999),
+            'google_id' => null,
             'avatar_url' => 'https://avatars.githubusercontent.com/u/'.fake()->numberBetween(1, 99999),
         ];
     }
@@ -30,6 +31,16 @@ class UserFactory extends Factory
     {
         return $this->state(fn (array $attributes) => [
             'email_verified_at' => null,
+        ]);
+    }
+
+    public function emailOnly(): static
+    {
+        return $this->state(fn () => [
+            'github_id' => null,
+            'google_id' => null,
+            'avatar_url' => null,
+            'password' => Hash::make('password'),
         ]);
     }
 }

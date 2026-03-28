@@ -1,6 +1,11 @@
 <?php
 
-use App\Http\Controllers\Auth\GitHubController;
+use App\Http\Controllers\Auth\EmailVerificationController;
+use App\Http\Controllers\Auth\LoginController;
+use App\Http\Controllers\Auth\LogoutController;
+use App\Http\Controllers\Auth\PasswordResetController;
+use App\Http\Controllers\Auth\RegisterController;
+use App\Http\Controllers\Auth\SocialAuthController;
 use App\Http\Controllers\Web\DashboardController;
 use Illuminate\Support\Facades\Route;
 
@@ -22,17 +27,47 @@ if (app()->environment('local')) {
     });
 }
 
-// Auth
-Route::get('/login', function (\Illuminate\Http\Request $request) {
-    if ($redirect = $request->query('redirect')) {
-        $request->session()->put('url.intended', $redirect);
-    }
+// Auth — guest routes
+Route::middleware('guest')->group(function () {
+    Route::get('/login', function (\Illuminate\Http\Request $request) {
+        if ($redirect = $request->query('redirect')) {
+            $request->session()->put('url.intended', $redirect);
+        }
 
-    return \Inertia\Inertia::render('Login');
-})->middleware('guest')->name('login');
-Route::get('/auth/github', [GitHubController::class, 'redirect'])->middleware('guest');
-Route::get('/auth/github/callback', [GitHubController::class, 'callback'])->middleware('guest');
-Route::post('/logout', [GitHubController::class, 'logout'])->middleware('auth');
+        return \Inertia\Inertia::render('Login');
+    })->name('login');
+
+    // Email/password
+    Route::get('/register', fn () => \Inertia\Inertia::render('Register'))->name('register');
+    Route::post('/register', [RegisterController::class, 'store']);
+    Route::post('/login', [LoginController::class, 'store']);
+
+    // OAuth (GitHub + Google)
+    Route::get('/auth/{provider}', [SocialAuthController::class, 'redirect'])
+        ->whereIn('provider', ['github', 'google']);
+    Route::get('/auth/{provider}/callback', [SocialAuthController::class, 'callback'])
+        ->whereIn('provider', ['github', 'google']);
+
+    // Password reset
+    Route::get('/forgot-password', fn () => \Inertia\Inertia::render('ForgotPassword'))->name('password.request');
+    Route::post('/forgot-password', [PasswordResetController::class, 'sendLink'])->name('password.email');
+    Route::get('/reset-password/{token}', fn (\Illuminate\Http\Request $request, string $token) => \Inertia\Inertia::render('ResetPassword', [
+        'token' => $token, 'email' => $request->query('email'),
+    ]))->name('password.reset');
+    Route::post('/reset-password', [PasswordResetController::class, 'reset'])->name('password.update');
+});
+
+// Auth — authenticated routes
+Route::post('/logout', LogoutController::class)->middleware('auth');
+
+// Email verification
+Route::middleware('auth')->group(function () {
+    Route::get('/email/verify', fn () => \Inertia\Inertia::render('VerifyEmail'))->name('verification.notice');
+    Route::get('/email/verify/{id}/{hash}', [EmailVerificationController::class, 'verify'])
+        ->middleware('signed')->name('verification.verify');
+    Route::post('/email/verification-notification', [EmailVerificationController::class, 'resend'])
+        ->middleware('throttle:6,1')->name('verification.send');
+});
 
 // Claim page — public (user has claimUrl, may not be logged in yet)
 Route::get('/claim', [DashboardController::class, 'claim']);

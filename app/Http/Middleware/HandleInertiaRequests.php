@@ -43,7 +43,13 @@ class HandleInertiaRequests extends Middleware
                     'email' => $user->email,
                     'avatar_url' => $user->avatar_url,
                     'github_id' => $user->github_id,
+                    'google_id' => $user->google_id,
+                    'email_verified' => (bool) $user->email_verified_at,
                 ] : null,
+            ],
+            'flash' => [
+                'error' => $request->session()->get('error'),
+                'success' => $request->session()->get('success'),
             ],
             'pending_approvals' => $pendingApprovals,
             'active_insights_count' => $activeInsightsCount,

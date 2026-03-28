@@ -1,94 +1,47 @@
 import { useState, FormEvent } from 'react';
 import { router, usePage } from '@inertiajs/react';
 
-export default function Login() {
-    const { errors, flash } = usePage<{
-        errors: Record<string, string>;
-        flash: { error?: string; success?: string };
-    }>().props;
+export default function Register() {
+    const { errors } = usePage<{ errors: Record<string, string> }>().props;
 
-    const [form, setForm] = useState({ email: '', password: '', remember: false });
+    const [form, setForm] = useState({
+        name: '', email: '', password: '', password_confirmation: '',
+    });
     const [submitting, setSubmitting] = useState(false);
 
     function handleSubmit(e: FormEvent) {
         e.preventDefault();
         setSubmitting(true);
-        router.post('/login', form, {
+        router.post('/register', form, {
             onFinish: () => setSubmitting(false),
         });
     }
 
     return (
-        <div style={{
-            minHeight: '100vh',
-            background: 'var(--bg-base)',
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            justifyContent: 'center',
-            padding: '24px',
-        }}>
-            {/* Logo */}
-            <a href="/" style={{
-                display: 'flex', alignItems: 'center', gap: 12,
-                textDecoration: 'none',
-                marginBottom: 48,
-            }}>
+        <div style={pageStyle}>
+            <a href="/" style={logoLinkStyle}>
                 <img src="/logo.png" alt="Mandate" style={{ width: 36, height: 36 }} />
-                <span style={{
-                    fontFamily: 'var(--font-display)',
-                    fontSize: 28,
-                    fontWeight: 300,
-                    fontStyle: 'italic',
-                    color: 'var(--text-primary)',
-                    letterSpacing: '-0.04em',
-                }}>mandate</span>
+                <span style={logoTextStyle}>mandate</span>
             </a>
 
-            {/* Card */}
-            <div style={{
-                width: '100%',
-                maxWidth: 400,
-                background: 'var(--bg-surface)',
-                border: '1px solid var(--border)',
-                borderRadius: 10,
-                padding: '36px 32px',
-            }}>
-                <h1 style={{
-                    fontFamily: 'var(--font-display)',
-                    fontSize: 26,
-                    fontWeight: 300,
-                    letterSpacing: '-0.03em',
-                    margin: '0 0 8px',
-                    color: 'var(--text-primary)',
-                }}>
-                    Sign in to Mandate
-                </h1>
-                <p style={{
-                    fontSize: 14,
-                    color: 'var(--text-secondary)',
-                    margin: '0 0 28px',
-                    lineHeight: 1.5,
-                }}>
-                    Manage your agent policies, approvals, and audit log.
-                </p>
+            <div style={cardStyle}>
+                <h1 style={titleStyle}>Create your account</h1>
+                <p style={subtitleStyle}>Start managing your agent wallets with Mandate.</p>
 
-                {/* Flash error */}
-                {flash?.error && (
-                    <div style={{
-                        padding: '10px 14px',
-                        background: 'rgba(239, 68, 68, 0.1)',
-                        border: '1px solid rgba(239, 68, 68, 0.25)',
-                        borderRadius: 6,
-                        marginBottom: 20,
-                        fontSize: 13,
-                        color: '#ef4444',
-                        fontFamily: 'var(--font-mono)',
-                    }}>{flash.error}</div>
-                )}
-
-                {/* Email/Password form */}
                 <form onSubmit={handleSubmit}>
+                    <div style={{ marginBottom: 16 }}>
+                        <label style={labelStyle}>Name</label>
+                        <input
+                            type="text"
+                            value={form.name}
+                            onChange={e => setForm({ ...form, name: e.target.value })}
+                            style={inputStyle}
+                            placeholder="Your name"
+                            required
+                        />
+                        {errors?.name && <span style={errorStyle}>{errors.name}</span>}
+                    </div>
+
                     <div style={{ marginBottom: 16 }}>
                         <label style={labelStyle}>Email</label>
                         <input
@@ -103,63 +56,44 @@ export default function Login() {
                     </div>
 
                     <div style={{ marginBottom: 16 }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                            <label style={labelStyle}>Password</label>
-                            <a href="/forgot-password" style={{
-                                fontSize: 12,
-                                color: 'var(--text-dim)',
-                                textDecoration: 'none',
-                                fontFamily: 'var(--font-mono)',
-                            }}>Forgot password?</a>
-                        </div>
+                        <label style={labelStyle}>Password</label>
                         <input
                             type="password"
                             value={form.password}
                             onChange={e => setForm({ ...form, password: e.target.value })}
                             style={inputStyle}
+                            placeholder="Min 8 characters"
                             required
                         />
+                        {errors?.password && <span style={errorStyle}>{errors.password}</span>}
                     </div>
 
-                    <div style={{ marginBottom: 20, display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <div style={{ marginBottom: 20 }}>
+                        <label style={labelStyle}>Confirm password</label>
                         <input
-                            type="checkbox"
-                            id="remember"
-                            checked={form.remember}
-                            onChange={e => setForm({ ...form, remember: e.target.checked })}
-                            style={{ accentColor: 'var(--accent)' }}
+                            type="password"
+                            value={form.password_confirmation}
+                            onChange={e => setForm({ ...form, password_confirmation: e.target.value })}
+                            style={inputStyle}
+                            required
                         />
-                        <label htmlFor="remember" style={{
-                            fontSize: 13,
-                            color: 'var(--text-secondary)',
-                            cursor: 'pointer',
-                        }}>Remember me</label>
                     </div>
 
                     <button type="submit" disabled={submitting} style={{
                         ...primaryBtnStyle,
                         opacity: submitting ? 0.7 : 1,
                     }}>
-                        {submitting ? 'Signing in...' : 'Sign in'}
+                        {submitting ? 'Creating account...' : 'Create account'}
                     </button>
                 </form>
 
                 {/* Divider */}
-                <div style={{
-                    display: 'flex', alignItems: 'center', gap: 12,
-                    margin: '24px 0',
-                }}>
+                <div style={dividerStyle}>
                     <div style={{ flex: 1, height: 1, background: 'var(--border)' }} />
-                    <span style={{
-                        fontSize: 12,
-                        color: 'var(--text-dim)',
-                        fontFamily: 'var(--font-mono)',
-                        whiteSpace: 'nowrap',
-                    }}>or continue with</span>
+                    <span style={dividerTextStyle}>or continue with</span>
                     <div style={{ flex: 1, height: 1, background: 'var(--border)' }} />
                 </div>
 
-                {/* OAuth buttons */}
                 <div style={{ display: 'flex', gap: 10 }}>
                     <a href="/auth/google" style={oauthBtnStyle}>
                         <svg width="16" height="16" viewBox="0 0 24 24">
@@ -178,7 +112,6 @@ export default function Login() {
                     </a>
                 </div>
 
-                {/* Register link */}
                 <p style={{
                     fontSize: 13,
                     color: 'var(--text-dim)',
@@ -186,25 +119,63 @@ export default function Login() {
                     textAlign: 'center',
                     fontFamily: 'var(--font-mono)',
                 }}>
-                    Don't have an account?{' '}
-                    <a href="/register" style={{ color: 'var(--accent)', textDecoration: 'none' }}>Register</a>
-                </p>
-
-                <p style={{
-                    fontSize: 12,
-                    color: 'var(--text-dim)',
-                    margin: '12px 0 0',
-                    textAlign: 'center',
-                    fontFamily: 'var(--font-mono)',
-                }}>
-                    <a href="/" style={{ color: 'var(--text-dim)', textDecoration: 'none' }}>
-                        ← Back to landing
-                    </a>
+                    Already have an account?{' '}
+                    <a href="/login" style={{ color: 'var(--accent)', textDecoration: 'none' }}>Sign in</a>
                 </p>
             </div>
         </div>
     );
 }
+
+const pageStyle: React.CSSProperties = {
+    minHeight: '100vh',
+    background: 'var(--bg-base)',
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: '24px',
+};
+
+const logoLinkStyle: React.CSSProperties = {
+    display: 'flex', alignItems: 'center', gap: 12,
+    textDecoration: 'none',
+    marginBottom: 48,
+};
+
+const logoTextStyle: React.CSSProperties = {
+    fontFamily: 'var(--font-display)',
+    fontSize: 28,
+    fontWeight: 300,
+    fontStyle: 'italic',
+    color: 'var(--text-primary)',
+    letterSpacing: '-0.04em',
+};
+
+const cardStyle: React.CSSProperties = {
+    width: '100%',
+    maxWidth: 400,
+    background: 'var(--bg-surface)',
+    border: '1px solid var(--border)',
+    borderRadius: 10,
+    padding: '36px 32px',
+};
+
+const titleStyle: React.CSSProperties = {
+    fontFamily: 'var(--font-display)',
+    fontSize: 26,
+    fontWeight: 300,
+    letterSpacing: '-0.03em',
+    margin: '0 0 8px',
+    color: 'var(--text-primary)',
+};
+
+const subtitleStyle: React.CSSProperties = {
+    fontSize: 14,
+    color: 'var(--text-secondary)',
+    margin: '0 0 28px',
+    lineHeight: 1.5,
+};
 
 const labelStyle: React.CSSProperties = {
     display: 'block',
@@ -253,6 +224,18 @@ const primaryBtnStyle: React.CSSProperties = {
     letterSpacing: '-0.01em',
 };
 
+const dividerStyle: React.CSSProperties = {
+    display: 'flex', alignItems: 'center', gap: 12,
+    margin: '24px 0',
+};
+
+const dividerTextStyle: React.CSSProperties = {
+    fontSize: 12,
+    color: 'var(--text-dim)',
+    fontFamily: 'var(--font-mono)',
+    whiteSpace: 'nowrap',
+};
+
 const oauthBtnStyle: React.CSSProperties = {
     flex: 1,
     display: 'flex',
@@ -269,5 +252,4 @@ const oauthBtnStyle: React.CSSProperties = {
     fontWeight: 500,
     textDecoration: 'none',
     cursor: 'pointer',
-    transition: 'border-color 0.15s, background 0.15s',
 };
