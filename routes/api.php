@@ -15,6 +15,7 @@ use App\Http\Controllers\Api\TelegramLinkController;
 use App\Http\Controllers\Api\TelegramWebhookController;
 use App\Http\Controllers\Api\ValidateController;
 use App\Http\Middleware\RuntimeKeyAuth;
+use App\Http\Middleware\RuntimeKeyOrX402;
 use Illuminate\Support\Facades\Route;
 
 // ── Open (no auth) ──────────────────────────────────────────────────────────
@@ -28,13 +29,15 @@ Route::post('/telegram/webhook/{secret}', TelegramWebhookController::class);
 // CLI scan telemetry (anonymous, fire-and-forget)
 Route::post('/scan-telemetry', [ScanTelemetryController::class, 'store']);
 
-// ── Runtime key (agent → validate/events/status) ───────────────────────────
-Route::middleware([RuntimeKeyAuth::class])->group(function () {
-    Route::post('/activate', [ActivateController::class, 'activate']);
-
-    // Primary validation (chain-agnostic)
+// ── x402-enabled validation (accepts RuntimeKey OR x402 payment) ───────────
+Route::middleware([RuntimeKeyOrX402::class])->group(function () {
     Route::post('/validate', [ValidateController::class, 'validate']);
     Route::post('/validate/preflight', [ValidateController::class, 'validate']); // alias
+});
+
+// ── Runtime key only (agent → activate/events/status) ──────────────────────
+Route::middleware([RuntimeKeyAuth::class])->group(function () {
+    Route::post('/activate', [ActivateController::class, 'activate']);
 
     // Legacy raw EVM validation (deprecated)
     Route::post('/validate/raw', [ValidateController::class, 'rawValidate']);

@@ -76,6 +76,21 @@ return [
         'min_confidence' => (float) env('INSIGHT_MIN_CONFIDENCE', 0.75),
     ],
 
+    'x402' => [
+        'enabled' => env('X402_ENABLED', false),
+        'facilitator_url' => env('X402_FACILITATOR_URL', 'https://api.cdp.coinbase.com/platform/v2/x402'),
+        'pay_to' => env('X402_PAY_TO', ''),
+        'network_id' => env('X402_NETWORK_ID', '84532'),
+        'asset' => env('X402_ASSET', '0x036CbD53842c5426634e7929541eC2318f3dCF7e'), // USDC Base Sepolia
+        'cdp_api_key_id' => env('CDP_API_KEY_ID', ''),
+        'cdp_api_key_secret' => env('CDP_API_KEY_SECRET', ''),
+        'prices' => [
+            'validate' => env('X402_PRICE_VALIDATE', '100000'),   // $0.10 USDC
+            'preflight' => env('X402_PRICE_PREFLIGHT', '50000'),  // $0.05 USDC
+        ],
+        'timeout' => 10,
+    ],
+
     'reason_scanner' => [
         'llm_enabled' => env('REASON_SCANNER_LLM_ENABLED', false),
         'api_base' => env('REASON_SCANNER_API_BASE', 'https://api.venice.ai/api/v1'),

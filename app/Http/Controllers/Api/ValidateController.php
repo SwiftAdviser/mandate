@@ -30,6 +30,20 @@ class ValidateController extends Controller
 
         $agent = $request->attributes->get('agent');
 
+        // x402 anonymous: paid request without registered agent.
+        // Return lightweight validation (no policy engine, no quotas).
+        if (! $agent && $request->attributes->get('x402_payment')) {
+            return response()->json([
+                'allowed' => true,
+                'intentId' => null,
+                'action' => $data['action'],
+                'chain' => $data['chain'] ?? null,
+                'requiresApproval' => false,
+                'x402' => true,
+                'payer' => $request->attributes->get('x402_payer'),
+            ]);
+        }
+
         $result = $this->engine->validate($agent, $data);
 
         // Hard block (policy violation)

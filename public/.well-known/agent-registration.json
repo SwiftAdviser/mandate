@@ -1,0 +1,141 @@
+{
+  "type": "https://eips.ethereum.org/EIPS/eip-8004#registration-v1",
+  "name": "Mandate",
+  "description": "Non-custodial agent wallet policy layer for AI agents. Enforces spend limits, allowlists, approval workflows, and circuit breakers for agent transactions without receiving private keys. Supports EVM (Ethereum, Base, BNB), Solana, and TON. Pay-per-call validation via x402 protocol (USDC on Base). Integrates with OpenClaw, Claude Code, GOAT SDK, Coinbase AgentKit, ElizaOS, GAME by Virtuals, and ACP.",
+  "image": "https://app.mandate.md/mandate-logo.png",
+  "services": [
+    {
+      "name": "web",
+      "endpoint": "https://app.mandate.md/"
+    },
+    {
+      "name": "MCP",
+      "endpoint": "https://mcp.mandate.md/mcp",
+      "version": "2025-06-18"
+    },
+    {
+      "name": "API",
+      "endpoint": "https://app.mandate.md/api/validate"
+    },
+    {
+      "name": "API",
+      "endpoint": "https://app.mandate.md/api/agents/register"
+    },
+    {
+      "name": "API",
+      "endpoint": "https://app.mandate.md/api/validate/preflight"
+    },
+    {
+      "name": "SKILL",
+      "endpoint": "https://app.mandate.md/SKILL.md"
+    },
+    {
+      "name": "email",
+      "endpoint": "krutovoyroman@gmail.com"
+    }
+  ],
+  "x402Support": true,
+  "active": true,
+  "registrations": [
+    {
+      "agentId": 37665,
+      "agentRegistry": "eip155:8453:0x8004A169FB4a3325136EB29fA0ceB6D2e539a432"
+    }
+  ],
+  "supportedTrust": [
+    "reputation",
+    "crypto-economic"
+  ],
+  "metadata": {
+    "version": "1.2.0",
+    "license": "MIT",
+    "source": "https://github.com/SwiftAdviser/mandate",
+    "documentation": "https://app.mandate.md/SKILL.md",
+    "tags": [
+      "agent-wallet",
+      "policy-engine",
+      "spend-limits",
+      "allowlist",
+      "approval-workflow",
+      "circuit-breaker",
+      "x402",
+      "non-custodial",
+      "multichain",
+      "evm",
+      "solana",
+      "ton",
+      "usdc",
+      "security",
+      "AI-agents",
+      "transaction-validation",
+      "mcp",
+      "openClaw",
+      "agentKit",
+      "elizaOS"
+    ],
+    "category": "agent-security",
+    "chains": [
+      "eip155:1",
+      "eip155:8453",
+      "eip155:84532",
+      "eip155:11155111",
+      "eip155:56",
+      "solana:mainnet",
+      "ton:mainnet"
+    ],
+    "mcpTools": [
+      {
+        "name": "search",
+        "description": "Look up Mandate schema, policies, supported fields, and example payloads"
+      },
+      {
+        "name": "execute",
+        "description": "Call Mandate API: validate transactions, register agents, check intent status"
+      }
+    ],
+    "apiEndpoints": [
+      {
+        "method": "POST",
+        "path": "/api/agents/register",
+        "description": "Register a new agent, get runtime key and claim URL",
+        "auth": "none",
+        "x402": false
+      },
+      {
+        "method": "POST",
+        "path": "/api/validate",
+        "description": "Chain-agnostic policy validation (spend limits, allowlists, schedules, risk scoring)",
+        "auth": "RuntimeKey or x402",
+        "x402Price": "$0.10"
+      },
+      {
+        "method": "POST",
+        "path": "/api/validate/preflight",
+        "description": "Lightweight policy check for custodial wallets",
+        "auth": "RuntimeKey or x402",
+        "x402Price": "$0.05"
+      },
+      {
+        "method": "POST",
+        "path": "/api/intents/{id}/events",
+        "description": "Post transaction hash after broadcast for envelope verification",
+        "auth": "RuntimeKey"
+      },
+      {
+        "method": "GET",
+        "path": "/api/intents/{id}/status",
+        "description": "Poll intent state (reserved, broadcasted, confirmed, failed)",
+        "auth": "RuntimeKey"
+      }
+    ],
+    "x402": {
+      "network": "eip155:8453",
+      "asset": "USDC",
+      "facilitator": "Coinbase CDP",
+      "prices": {
+        "validate": "$0.10",
+        "preflight": "$0.05"
+      }
+    }
+  }
+}
