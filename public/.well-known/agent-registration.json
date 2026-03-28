@@ -2,7 +2,7 @@
   "type": "https://eips.ethereum.org/EIPS/eip-8004#registration-v1",
   "name": "Mandate",
   "description": "Non-custodial agent wallet policy layer for AI agents. Enforces spend limits, allowlists, approval workflows, and circuit breakers for agent transactions without receiving private keys. Supports EVM (Ethereum, Base, BNB), Solana, and TON. Pay-per-call validation via x402 protocol (USDC on Base). Integrates with OpenClaw, Claude Code, GOAT SDK, Coinbase AgentKit, ElizaOS, GAME by Virtuals, and ACP.",
-  "image": "https://app.mandate.md/mandate-logo.png",
+  "image": "https://app.mandate.md/logo.png",
   "services": [
     {
       "name": "web",
