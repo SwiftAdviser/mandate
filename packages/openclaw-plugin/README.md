@@ -8,23 +8,19 @@ Policy gatekeeper for AI agent wallets. Validates spending limits, allowlists, a
 openclaw plugins install @mandate.md/mandate-openclaw-plugin
 ```
 
-## Setup (required after install)
+## Setup
 
 ### Step 1: Register with Mandate
-
-The agent must call `mandate_register` with its name and wallet address:
 
 ```
 mandate_register name="MyAgent" evmAddress="0xYourWalletAddress"
 ```
 
-This returns:
-- `runtimeKey`: saved automatically to `~/.mandate/runtime-key`
-- `claimUrl`: **show this to the wallet owner** so they can configure spending limits
+Returns `runtimeKey` (saved automatically) and `claimUrl` (show to wallet owner to configure limits).
 
 ### Step 2: Validate before every transaction
 
-Before any transfer, swap, send, buy, sell, bridge, stake, or bet:
+Preflight validation is the recommended flow. Action-based, chain-agnostic:
 
 ```
 mandate_validate action="transfer" amount="10" to="0xRecipient" token="USDC" reason="Payment for services"
@@ -44,7 +40,7 @@ mandate_status intentId="..."
 | Tool | When | What |
 |------|------|------|
 | `mandate_register` | Once after install | Get runtimeKey + claimUrl |
-| `mandate_validate` | Before EVERY financial action | Pre-flight policy check |
+| `mandate_validate` | Before EVERY financial action | Preflight policy check |
 | `mandate_status` | After validate | Check intent status |
 
 ## How it works
@@ -58,3 +54,9 @@ mandate_status intentId="..."
 
 runtimeKey is stored in `~/.mandate/runtime-key` (created by mandate_register).
 Can also be set in OpenClaw config: `plugins.entries.openclaw-plugin.config.runtimeKey`.
+
+## Community
+
+- [Telegram Developer Chat](https://t.me/mandate_md_chat)
+- [Documentation](https://mandate.md)
+- [GitHub](https://github.com/AIMandateProject/mandate)

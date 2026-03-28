@@ -147,7 +147,7 @@ describe('MandateWallet.sendTransactionWithApproval', () => {
     const client = (wallet as any).client as MandateClient;
 
     // validate throws ApprovalRequiredError
-    vi.spyOn(client, 'validate').mockRejectedValue(
+    vi.spyOn(client, 'rawValidate').mockRejectedValue(
       new ApprovalRequiredError('intent-1', 'approval-1'),
     );
     // waitForApproval resolves
@@ -175,7 +175,7 @@ describe('MandateWallet.sendTransactionWithApproval', () => {
     const wallet = makeWallet();
     const client = (wallet as any).client as MandateClient;
 
-    vi.spyOn(client, 'validate').mockResolvedValue({
+    vi.spyOn(client, 'rawValidate').mockResolvedValue({
       allowed: true,
       intentId: 'intent-2',
       requiresApproval: false,
@@ -200,7 +200,7 @@ describe('MandateWallet.sendTransactionWithApproval', () => {
     const wallet = makeWallet();
     const client = (wallet as any).client as MandateClient;
 
-    vi.spyOn(client, 'validate').mockResolvedValue({
+    vi.spyOn(client, 'rawValidate').mockResolvedValue({
       allowed: true,
       intentId: 'intent-3',
       requiresApproval: false,
@@ -219,7 +219,7 @@ describe('MandateWallet.sendTransactionWithApproval', () => {
 
     expect(result.intentId).toBe('intent-3');
     // validate was called with calldata starting with ERC20 transfer selector
-    const validateCall = (client.validate as any).mock.calls[0][0];
+    const validateCall = (client.rawValidate as any).mock.calls[0][0];
     expect(validateCall.calldata.startsWith('0xa9059cbb')).toBe(true);
   });
 });

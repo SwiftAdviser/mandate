@@ -24,7 +24,7 @@ vi.mock('viem', async () => {
 // Mock MandateClient
 vi.mock('../MandateClient.js', () => ({
   MandateClient: vi.fn().mockImplementation(() => ({
-    validate: vi.fn().mockResolvedValue({
+    rawValidate: vi.fn().mockResolvedValue({
       allowed: true,
       intentId: 'intent-123',
       requiresApproval: false,
@@ -129,8 +129,8 @@ describe('MandateWallet with ExternalSigner', () => {
 
     await wallet.transfer(RECIPIENT, '5000000', TOKEN);
 
-    // validate should have been called before sendTransaction
-    expect(mockClientInstance.validate).toHaveBeenCalledTimes(1);
+    // rawValidate should have been called before sendTransaction
+    expect(mockClientInstance.rawValidate).toHaveBeenCalledTimes(1);
     expect(signer.sendTransaction).toHaveBeenCalledTimes(1);
   });
 

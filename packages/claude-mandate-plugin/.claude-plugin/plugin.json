@@ -1,6 +1,13 @@
 {
   "name": "mandate",
-  "description": "Enforces Mandate policy validation before any agent transaction",
-  "version": "1.0.0",
-  "author": { "name": "Mandate" }
+  "description": "Policy guardrails for AI agent wallets. Blocks financial transactions unless validated by Mandate spend limits, allowlists, and approval workflows first.",
+  "version": "1.1.0",
+  "author": {
+    "name": "Mandate",
+    "url": "https://mandate.md"
+  },
+  "homepage": "https://github.com/AIMandateProject/mandate/tree/master/packages/claude-mandate-plugin",
+  "repository": "https://github.com/AIMandateProject/mandate",
+  "license": "MIT",
+  "keywords": ["wallet", "policy", "agent", "transaction", "security", "web3", "crypto"]
 }

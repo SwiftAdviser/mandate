@@ -1,5 +1,6 @@
 import type {
   IntentPayload, IntentStatus, MandateConfig,
+  PreflightPayload, PreflightResult,
   RegisterResult, ValidateResult,
 } from './types.js';
 import {
@@ -45,9 +46,47 @@ export class MandateClient {
     return res.json();
   }
 
-  // ── Validation ────────────────────────────────────────────────────────
-  async validate(payload: IntentPayload): Promise<ValidateResult> {
-    const res = await this.post('/api/validate', payload);
+  // -- Validation (action-based, primary endpoint) --------------------------
+  async validate(params: PreflightPayload): Promise<PreflightResult> {
+    const res = await this.post('/api/validate', params);
+
+    if (res.status === 403) throw new CircuitBreakerError();
+
+    if (res.status === 422) {
+      const data = await res.json();
+      const reason = data.blockReason ?? 'unknown';
+      if (reason.startsWith('aegis_')) {
+        throw new RiskBlockedError(reason);
+      }
+      throw new PolicyBlockedError(reason, data.blockDetail, data.declineMessage);
+    }
+
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}));
+      throw new MandateError(data.error ?? 'Validation failed', res.status);
+    }
+
+    const data: PreflightResult = await res.json();
+
+    if (data.requiresApproval && data.intentId && data.approvalId) {
+      throw new ApprovalRequiredError(data.intentId, data.approvalId, data.approvalReason ?? undefined);
+    }
+
+    return data;
+  }
+
+  /** Backward-compatible alias for validate(). */
+  async preflight(params: PreflightPayload): Promise<PreflightResult> {
+    return this.validate(params);
+  }
+
+  // -- Raw validation (legacy, self-custodial) --------------------------------
+  /**
+   * @deprecated Use validate() for action-based validation.
+   * Raw EVM param validation, kept for self-custodial signing flows.
+   */
+  async rawValidate(payload: IntentPayload): Promise<ValidateResult> {
+    const res = await this.post('/api/validate/raw', payload);
 
     if (res.status === 403) throw new CircuitBreakerError();
 
@@ -74,34 +113,7 @@ export class MandateClient {
     return data;
   }
 
-  // ── Validation (chain-agnostic, primary endpoint) ──────────────────
-  async preflight(params: {
-    action: string;
-    amount?: string;
-    to?: string;
-    token?: string;
-    reason: string;
-    chain?: string;
-  }): Promise<ValidateResult & { action: string }> {
-    const res = await this.post('/api/validate', params);
-
-    if (res.status === 403) throw new CircuitBreakerError();
-
-    if (res.status === 422) {
-      const data = await res.json();
-      const reason = data.blockReason ?? 'unknown';
-      throw new PolicyBlockedError(reason, data.blockDetail, data.declineMessage);
-    }
-
-    if (!res.ok) {
-      const data = await res.json().catch(() => ({}));
-      throw new MandateError(data.error ?? 'Preflight failed', res.status);
-    }
-
-    return res.json();
-  }
-
-  // ── Post event (after broadcast) ─────────────────────────────────────
+  // -- Post event (after broadcast) --------------------------------------------
   async postEvent(intentId: string, txHash: `0x${string}`): Promise<void> {
     const res = await this.post(`/api/intents/${intentId}/events`, { txHash });
     if (!res.ok) {

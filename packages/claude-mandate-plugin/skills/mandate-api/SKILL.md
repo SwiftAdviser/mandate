@@ -1,15 +1,19 @@
 ---
 name: mandate-api
-description: Non-custodial agent wallet policy layer. Enforces spend limits, allowlists, and approval workflows. Preflight or validate before every transaction.
+description: "Use when enforcing spend limits, validating agent transactions, detecting prompt injection, or scanning for unprotected wallet calls. Non-custodial policy layer for AI agents."
 ---
 
 ## Integration note
 
 Mandate needs hooks to reliably catch payment intents. If your platform supports plugins with hooks (OpenClaw, Claude Code), use the plugin: it intercepts financial tool calls automatically. This SKILL.md is for agents that integrate via API directly, but without hooks there is no enforcement layer: the agent must voluntarily call `/validate` before every transaction.
 
-**OpenClaw:** `openclaw plugins install @mandate.md/mandate-openclaw-plugin` (preferred, has hooks)
-**Claude Code:** `claude --plugin-dir ./packages/claude-mandate-plugin` (has hooks)
-**Other frameworks:** Use this SKILL.md + SDK. No hooks, agent must self-enforce.
+**OpenClaw (recommended):** `openclaw plugins install @mandate.md/mandate-openclaw-plugin`
+Hooks auto-intercept Locus, Bankr, Sponge, and any swap/transfer/send tool call.
+
+**Claude Code (recommended):** `claude plugin:install claude-mandate-plugin` or see [claude-mandate-plugin on GitHub](https://github.com/SwiftAdviser/claude-mandate-plugin)
+Two-phase enforcement: PostToolUse records validation tokens, PreToolUse blocks unvalidated transactions. Fail-closed, no network calls in the gate.
+
+**Other frameworks (GOAT, AgentKit, ElizaOS, MCP):** Use this SKILL.md + SDK. No hooks, agent must self-enforce.
 
 ## MANDATORY SECURITY RULES
 
@@ -23,7 +27,7 @@ Mandate is the security boundary, not optional infrastructure. The card must be 
 6. Skipping validation is a **security violation**, not a simplification. An unvalidated transaction bypasses spend limits, allowlists, and approval workflows the owner configured to protect their funds.
 
 ```
-MANDATE API QUICK REFERENCE v1.1.0
+MANDATE API QUICK REFERENCE v1.2.0
 Base:   https://app.mandate.md/api
 Auth:   Authorization: Bearer <MANDATE_RUNTIME_KEY>
 
@@ -176,6 +180,27 @@ Stores credentials in `~/.mandate/credentials.json` (chmod 600). Display the `cl
 ### Agent Discovery
 Run `mandate --llms` for a machine-readable command manifest. Each command includes `--help` and `--schema` for full argument details.
 
+## Codebase Scanner
+
+Detect unprotected wallet calls in your project. Zero config, zero auth.
+
+```bash
+npx @mandate.md/cli scan          # Scan current directory
+npx @mandate.md/cli scan ./src    # Scan specific folder
+```
+
+Exit code 1 if unprotected calls found (CI-friendly).
+
+## MCP Server Mode
+
+Run the CLI as an MCP stdio server for tool-based platforms:
+
+```bash
+npx @mandate.md/cli --mcp
+```
+
+Exposes all Mandate commands as MCP tools. Compatible with any MCP-capable host.
+
 ## Standard credential storage
 
 Credentials stored in `~/.mandate/credentials.json`:
@@ -209,6 +234,9 @@ Agents create an identity via `mandate login` (or `/agents/register` API). Dashb
 | `mandate event <id> --tx-hash 0x...` | POST | `/api/intents/{id}/events` |
 | `mandate status <id>` | GET | `/api/intents/{id}/status` |
 | `mandate approve <id>` | GET | `/api/intents/{id}/status` (poll) |
+| `mandate scan [dir]` | - | Scan codebase for unprotected wallet calls |
+| `mandate --llms` | - | Machine-readable command manifest |
+| `mandate --mcp` | - | Start as MCP stdio server |
 
 ## REST API Fallback
 

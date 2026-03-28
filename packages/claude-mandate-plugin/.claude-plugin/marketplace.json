@@ -1,0 +1,18 @@
+{
+  "name": "mandate",
+  "owner": {
+    "name": "Mandate",
+    "email": "krutovoyroman@gmail.com"
+  },
+  "metadata": {
+    "description": "Policy guardrails for AI agent wallets. Blocks financial transactions unless validated first.",
+    "version": "1.1.0"
+  },
+  "plugins": [
+    {
+      "name": "mandate",
+      "source": "./",
+      "description": "Enforces Mandate policy validation before any agent transaction. Two-phase enforcement: tracks validation tokens, gates financial calls."
+    }
+  ]
+}

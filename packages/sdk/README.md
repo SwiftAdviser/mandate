@@ -1,129 +1,51 @@
 # @mandate.md/sdk
 
-Policy guardrails for agent wallets. Not a wallet — a policy layer that wraps yours.
-
-> **Non-custodial.** Your private key never leaves your machine. Mandate validates intent metadata against your policy, then you sign and broadcast.
+Intent-aware policy layer for agent wallets. Validate **why** your agent wants to spend before it spends.
 
 ## Install
 
 ```bash
 bun add @mandate.md/sdk viem
+# or
+npm install @mandate.md/sdk viem
 ```
 
-## Two ways to use Mandate
-
-### Option A: CLI (recommended for agents)
-
-```bash
-bun add -g @mandate.md/cli
-mandate login --name "MyAgent" --address 0x...
-mandate validate --to 0x... --reason "Invoice #127" ...
-```
-
-The CLI computes intentHash, manages credentials, and chains the flow automatically. See [@mandate.md/cli](https://www.npmjs.com/package/@mandate.md/cli).
-
-### Option B: SDK (for programmatic integration)
-
-Keep reading.
-
-## Quick Start
-
-### 1. Register your agent
+## Quick start
 
 ```typescript
 import { MandateClient } from '@mandate.md/sdk';
-
-const { runtimeKey, claimUrl } = await MandateClient.register({
-  name: 'MyAgent',
-  evmAddress: '0xYourAgentAddress',
-  chainId: 84532, // Base Sepolia
-});
-
-// Save runtimeKey to .env
-// Display claimUrl to the user to link agent to dashboard
-```
-
-### 2. Wrap your wallet
-
-```typescript
-import { MandateWallet, USDC, CHAIN_ID } from '@mandate.md/sdk';
-
-// With private key
-const wallet = new MandateWallet({
-  runtimeKey: process.env.MANDATE_RUNTIME_KEY!,
-  privateKey: process.env.AGENT_PRIVATE_KEY! as `0x${string}`,
-  chainId: CHAIN_ID.BASE_SEPOLIA,
-});
-
-// Or wrap an existing signer
-const wallet = new MandateWallet({
-  runtimeKey: process.env.MANDATE_RUNTIME_KEY!,
-  chainId: CHAIN_ID.BASE_SEPOLIA,
-  signer: {
-    sendTransaction: (tx) => yourWallet.sendTransaction(tx),
-    getAddress: () => yourWallet.address,
-  },
-});
-```
-
-### 3. Transfer with policy enforcement
-
-```typescript
-const { txHash, status } = await wallet.transfer(
-  '0xRecipient',
-  '5000000', // 5 USDC (6 decimals)
-  USDC.BASE_SEPOLIA,
-  { reason: 'Invoice #127 from Alice' },
-);
-```
-
-What happens under the hood:
-1. Encode ERC20 calldata
-2. Estimate gas
-3. Compute `intentHash` (keccak256 of canonical tx string)
-4. `POST /validate` — policy check
-5. Sign locally with your key
-6. Broadcast to chain
-7. `POST /events` — envelope verification
-8. Poll until confirmed
-
-### 4. Low-level: MandateClient
-
-For custodial wallets or custom flows where you control signing:
-
-```typescript
-import { MandateClient, computeIntentHash } from '@mandate.md/sdk';
 
 const client = new MandateClient({
   runtimeKey: process.env.MANDATE_RUNTIME_KEY!,
 });
 
-const intentHash = computeIntentHash({
-  chainId: 84532, nonce: 0,
-  to: tokenAddress, calldata: encodedCalldata,
-  valueWei: '0', gasLimit: '90000',
-  maxFeePerGas: '1000000000',
-  maxPriorityFeePerGas: '1000000000',
-});
-
-const { intentId } = await client.validate({
-  ...txParams, intentHash,
+// Validate before every transaction
+const result = await client.validate({
+  action: 'transfer',
+  amount: '50',
+  to: '0xRecipient',
+  token: 'USDC',
   reason: 'Invoice #127 from Alice',
 });
 
-// Sign and broadcast with your own wallet...
-
-await client.postEvent(intentId, txHash);
-const status = await client.getStatus(intentId);
+if (result.allowed) {
+  // proceed with your wallet
+}
 ```
 
-### 5. x402 payments
+The `reason` field is where Mandate catches prompt injections, urgency pressure, and vague justifications that session keys can't see.
+
+## Register an agent
 
 ```typescript
-const response = await wallet.x402Pay('https://api.example.com/data');
+const { runtimeKey, claimUrl } = await MandateClient.register({
+  name: 'MyAgent',
+  evmAddress: '0xYourAgentAddress',
+});
+// Owner visits claimUrl to link agent to their dashboard
 ```
 
-## Error Handling
+## Error handling
 
 ```typescript
 import {
@@ -134,48 +56,62 @@ import {
 } from '@mandate.md/sdk';
 
 try {
-  await wallet.transfer(to, amount, token);
+  await client.validate({ action: 'transfer', amount: '500', reason: '...' });
 } catch (err) {
   if (err instanceof PolicyBlockedError) {
-    // err.blockReason — "per_tx_limit_exceeded", "daily_quota_exceeded", etc.
-    // err.detail — "$150 exceeds $100/tx limit"
-    // err.declineMessage — human-readable explanation
+    // err.blockReason: "exceeds_daily_limit", "address_not_allowed", etc.
+    // err.declineMessage: human-readable counter-evidence for the agent
   }
   if (err instanceof ApprovalRequiredError) {
     // err.intentId, err.approvalId
-    // Use wallet.transferWithApproval() to auto-wait
+    // Transaction paused. Owner approves via dashboard/Telegram.
+    const status = await client.waitForApproval(err.intentId);
   }
   if (err instanceof CircuitBreakerError) {
-    // Agent frozen. Owner resets via dashboard.
+    // Agent frozen. Mismatch detected between validated and broadcast tx.
   }
   if (err instanceof RiskBlockedError) {
-    // err.blockReason — "aegis_critical_risk"
+    // On-chain risk: honeypot, malicious contract, flagged address
   }
 }
 ```
+
+## Scan for unprotected calls
+
+```bash
+npx @mandate.md/cli scan
+```
+
+Or use the [Claude Code plugin](https://github.com/SwiftAdviser/claude-mandate-plugin): it scans automatically on every session start.
 
 ## Exports
 
 | Export | Description |
 |--------|-------------|
-| `MandateWallet` | High-level: validate + sign + broadcast + poll |
-| `MandateClient` | Low-level: API wrapper for custom flows |
-| `computeIntentHash` | Deterministic keccak256 of canonical tx string |
-| `PolicyBlockedError` | Thrown when policy blocks the transaction |
-| `ApprovalRequiredError` | Thrown when human approval is needed |
-| `CircuitBreakerError` | Thrown when agent is frozen |
-| `RiskBlockedError` | Thrown on risk assessment failure |
+| `MandateClient` | Validate transactions against spend limits, allowlists, reason analysis |
+| `MandateWallet` | Full sign + broadcast flow for self-custodial wallets |
+| `PolicyBlockedError` | Policy blocks the transaction |
+| `ApprovalRequiredError` | Human approval needed |
+| `CircuitBreakerError` | Agent frozen (envelope mismatch) |
+| `RiskBlockedError` | On-chain risk detected |
 | `USDC` | Token addresses (`BASE_SEPOLIA`, `BASE_MAINNET`) |
 | `CHAIN_ID` | Chain IDs (`BASE_SEPOLIA`, `BASE_MAINNET`) |
 
-Sub-path import for client-only (smaller bundle):
+Sub-path import for smaller bundle:
 ```typescript
 import { MandateClient } from '@mandate.md/sdk/client';
 ```
 
-## Links
+## CLI
 
-- [SKILL.md](https://app.mandate.md/SKILL.md) — Full API reference for AI agents
-- [Dashboard](https://app.mandate.md) — Configure policies
-- [@mandate.md/cli](https://www.npmjs.com/package/@mandate.md/cli) — Agent-discoverable CLI
-- [GitHub](https://github.com/SwiftAdviser/mandate)
+```bash
+npx @mandate.md/cli validate --action transfer --amount 50 --reason "Invoice #127"
+```
+
+See [@mandate.md/cli](https://www.npmjs.com/package/@mandate.md/cli).
+
+## Community
+
+- [Telegram Developer Chat](https://t.me/mandate_md_chat)
+- [Docs](https://mandate.md)
+- [GitHub](https://github.com/AIMandateProject/mandate)

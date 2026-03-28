@@ -9,11 +9,12 @@ import { transferCommand } from './commands/transfer.js';
 import { eventCommand } from './commands/event.js';
 import { statusCommand } from './commands/status.js';
 import { approveCommand } from './commands/approve.js';
+import { scanCommand } from './commands/scan.js';
 
 export type { CliVars } from './vars.js';
 
 const cli = Cli.create('mandate', {
-  version: '0.1.0',
+  version: '0.2.0',
   description: 'Non-custodial agent wallet policy layer. Validate transactions against spend limits, allowlists, and approval workflows — without ever touching private keys.',
   vars: cliVars,
   sync: {
@@ -54,6 +55,9 @@ const cli = Cli.create('mandate', {
   .command('approve', {
     ...approveCommand,
     middleware: [requireAuth],
+  })
+  .command('scan', {
+    ...scanCommand,
   });
 
 cli.serve();

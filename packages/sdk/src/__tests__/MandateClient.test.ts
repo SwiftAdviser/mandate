@@ -41,7 +41,7 @@ function mockFetch(status: number, body: unknown): void {
 
 beforeEach(() => { vi.unstubAllGlobals(); });
 
-// ── MandateClient.register ────────────────────────────────────────────────────
+// -- MandateClient.register ---------------------------------------------------
 describe('MandateClient.register', () => {
   it('returns RegisterResult on 201', async () => {
     const body = { agentId: 'uuid-1', runtimeKey: 'mndt_test_xyz', claimUrl: 'http://x', evmAddress: '0xabc', chainId: 84532 };
@@ -70,12 +70,12 @@ describe('MandateClient.register', () => {
   });
 });
 
-// ── validate ─────────────────────────────────────────────────────────────────
-describe('MandateClient#validate', () => {
+// -- rawValidate (legacy, deprecated) -----------------------------------------
+describe('MandateClient#rawValidate', () => {
   it('returns ValidateResult when allowed', async () => {
     mockFetch(200, { allowed: true, intentId: 'intent-1', requiresApproval: false, approvalId: null, blockReason: null });
 
-    const result = await makeClient().validate(PAYLOAD);
+    const result = await makeClient().rawValidate(PAYLOAD);
 
     expect(result.allowed).toBe(true);
     expect(result.intentId).toBe('intent-1');
@@ -84,13 +84,13 @@ describe('MandateClient#validate', () => {
   it('throws CircuitBreakerError on 403', async () => {
     mockFetch(403, {});
 
-    await expect(makeClient().validate(PAYLOAD)).rejects.toThrow(CircuitBreakerError);
+    await expect(makeClient().rawValidate(PAYLOAD)).rejects.toThrow(CircuitBreakerError);
   });
 
   it('throws PolicyBlockedError on 422 with blockReason', async () => {
     mockFetch(422, { blockReason: 'per_tx_limit_exceeded' });
 
-    const err = await makeClient().validate(PAYLOAD).catch(e => e);
+    const err = await makeClient().rawValidate(PAYLOAD).catch(e => e);
     expect(err).toBeInstanceOf(PolicyBlockedError);
     expect(err.blockReason).toBe('per_tx_limit_exceeded');
   });
@@ -102,7 +102,7 @@ describe('MandateClient#validate', () => {
       declineMessage: 'This transaction exceeds the per-transaction spending limit.',
     });
 
-    const err = await makeClient().validate(PAYLOAD).catch(e => e);
+    const err = await makeClient().rawValidate(PAYLOAD).catch(e => e);
     expect(err).toBeInstanceOf(PolicyBlockedError);
     expect(err.declineMessage).toBe('This transaction exceeds the per-transaction spending limit.');
     expect(err.detail).toBe('$10.00 exceeds $1/tx limit');
@@ -111,7 +111,7 @@ describe('MandateClient#validate', () => {
   it('throws RiskBlockedError on 422 with aegis_ blockReason', async () => {
     mockFetch(422, { blockReason: 'aegis_critical_risk' });
 
-    const err = await makeClient().validate(PAYLOAD).catch(e => e);
+    const err = await makeClient().rawValidate(PAYLOAD).catch(e => e);
     expect(err).toBeInstanceOf(RiskBlockedError);
     expect(err.blockReason).toBe('aegis_critical_risk');
   });
@@ -122,7 +122,7 @@ describe('MandateClient#validate', () => {
       approvalId: null, blockReason: null, riskLevel: 'LOW', riskDegraded: false,
     });
 
-    const result = await makeClient().validate(PAYLOAD);
+    const result = await makeClient().rawValidate(PAYLOAD);
     expect(result.riskLevel).toBe('LOW');
     expect(result.riskDegraded).toBe(false);
   });
@@ -136,7 +136,7 @@ describe('MandateClient#validate', () => {
       blockReason: null,
     });
 
-    const err = await makeClient().validate(PAYLOAD).catch(e => e);
+    const err = await makeClient().rawValidate(PAYLOAD).catch(e => e);
     expect(err).toBeInstanceOf(ApprovalRequiredError);
     expect(err.intentId).toBe('intent-1');
     expect(err.approvalId).toBe('approval-1');
@@ -152,7 +152,7 @@ describe('MandateClient#validate', () => {
       blockReason: null,
     });
 
-    const err = await makeClient().validate(PAYLOAD).catch(e => e);
+    const err = await makeClient().rawValidate(PAYLOAD).catch(e => e);
     expect(err).toBeInstanceOf(ApprovalRequiredError);
     expect(err.approvalReason).toBe('Transaction amount exceeds the approval threshold. Please wait.');
   });
@@ -160,10 +160,10 @@ describe('MandateClient#validate', () => {
   it('throws MandateError on 500', async () => {
     mockFetch(500, { error: 'Server error' });
 
-    await expect(makeClient().validate(PAYLOAD)).rejects.toThrow(MandateError);
+    await expect(makeClient().rawValidate(PAYLOAD)).rejects.toThrow(MandateError);
   });
 
-  it('sends reason in validate request body', async () => {
+  it('sends reason in rawValidate request body', async () => {
     const spy = vi.fn().mockResolvedValue({
       ok: true,
       status: 200,
@@ -171,7 +171,7 @@ describe('MandateClient#validate', () => {
     });
     vi.stubGlobal('fetch', spy);
 
-    await makeClient().validate(PAYLOAD);
+    await makeClient().rawValidate(PAYLOAD);
 
     const body = JSON.parse(spy.mock.calls[0][1].body);
     expect(body.reason).toBe('Invoice #127 from Alice for March design work');
@@ -185,10 +185,10 @@ describe('MandateClient#validate', () => {
     });
     vi.stubGlobal('fetch', spy);
 
-    await makeClient().validate(PAYLOAD);
+    await makeClient().rawValidate(PAYLOAD);
 
     expect(spy).toHaveBeenCalledWith(
-      `${BASE_URL}/api/validate`,
+      `${BASE_URL}/api/validate/raw`,
       expect.objectContaining({
         headers: expect.objectContaining({ Authorization: `Bearer ${RUNTIME_KEY}` }),
       }),
@@ -196,7 +196,113 @@ describe('MandateClient#validate', () => {
   });
 });
 
-// ── postEvent ─────────────────────────────────────────────────────────────────
+// -- validate (preflight, primary method) -------------------------------------
+describe('MandateClient#validate', () => {
+  const preflightParams = {
+    action: 'transfer',
+    amount: '10.00',
+    to: '0xRecipient',
+    token: 'USDC',
+    reason: 'Payment for services',
+  };
+
+  it('sends action + reason to /api/validate and returns PreflightResult with action field', async () => {
+    const spy = vi.fn().mockResolvedValue({
+      ok: true,
+      status: 200,
+      json: () => Promise.resolve({
+        allowed: true, intentId: 'intent-pf', requiresApproval: false,
+        approvalId: null, blockReason: null, action: 'transfer',
+      }),
+    });
+    vi.stubGlobal('fetch', spy);
+
+    const result = await makeClient().validate(preflightParams);
+
+    expect(spy).toHaveBeenCalledWith(
+      `${BASE_URL}/api/validate`,
+      expect.objectContaining({
+        headers: expect.objectContaining({ Authorization: `Bearer ${RUNTIME_KEY}` }),
+      }),
+    );
+    const body = JSON.parse(spy.mock.calls[0][1].body);
+    expect(body.action).toBe('transfer');
+    expect(body.reason).toBe('Payment for services');
+    expect(result.action).toBe('transfer');
+    expect(result.allowed).toBe(true);
+  });
+
+  it('throws CircuitBreakerError on 403', async () => {
+    mockFetch(403, {});
+
+    await expect(makeClient().validate(preflightParams)).rejects.toThrow(CircuitBreakerError);
+  });
+
+  it('throws PolicyBlockedError on 422', async () => {
+    mockFetch(422, { blockReason: 'per_tx_limit_exceeded', blockDetail: 'over limit' });
+
+    const err = await makeClient().validate(preflightParams).catch(e => e);
+    expect(err).toBeInstanceOf(PolicyBlockedError);
+    expect(err.blockReason).toBe('per_tx_limit_exceeded');
+  });
+
+  it('throws RiskBlockedError on 422 with aegis_ prefix', async () => {
+    mockFetch(422, { blockReason: 'aegis_high_risk' });
+
+    const err = await makeClient().validate(preflightParams).catch(e => e);
+    expect(err).toBeInstanceOf(RiskBlockedError);
+    expect(err.blockReason).toBe('aegis_high_risk');
+  });
+
+  it('throws ApprovalRequiredError when requiresApproval=true', async () => {
+    mockFetch(200, {
+      allowed: true,
+      intentId: 'intent-pf',
+      requiresApproval: true,
+      approvalId: 'approval-pf',
+      blockReason: null,
+      action: 'transfer',
+    });
+
+    const err = await makeClient().validate(preflightParams).catch(e => e);
+    expect(err).toBeInstanceOf(ApprovalRequiredError);
+    expect(err.intentId).toBe('intent-pf');
+    expect(err.approvalId).toBe('approval-pf');
+  });
+
+  it('throws MandateError on 500', async () => {
+    mockFetch(500, { error: 'Server error' });
+
+    await expect(makeClient().validate(preflightParams)).rejects.toThrow(MandateError);
+  });
+});
+
+// -- preflight (alias) --------------------------------------------------------
+describe('MandateClient#preflight', () => {
+  it('is an alias for validate and calls /api/validate', async () => {
+    const spy = vi.fn().mockResolvedValue({
+      ok: true,
+      status: 200,
+      json: () => Promise.resolve({
+        allowed: true, intentId: 'intent-alias', requiresApproval: false,
+        approvalId: null, blockReason: null, action: 'transfer',
+      }),
+    });
+    vi.stubGlobal('fetch', spy);
+
+    const params = { action: 'transfer', reason: 'test alias' };
+    const result = await makeClient().preflight(params);
+
+    expect(spy).toHaveBeenCalledWith(
+      `${BASE_URL}/api/validate`,
+      expect.anything(),
+    );
+    expect(result.allowed).toBe(true);
+    expect(result.action).toBe('transfer');
+  });
+});
+
+// -- postEvent ----------------------------------------------------------------
 describe('MandateClient#postEvent', () => {
   it('resolves void on 200', async () => {
     mockFetch(200, { status: 'broadcasted' });
@@ -211,7 +317,7 @@ describe('MandateClient#postEvent', () => {
   });
 });
 
-// ── getStatus ─────────────────────────────────────────────────────────────────
+// -- getStatus ----------------------------------------------------------------
 describe('MandateClient#getStatus', () => {
   it('returns IntentStatus', async () => {
     const body = {
@@ -241,7 +347,7 @@ describe('MandateClient#getStatus', () => {
   });
 });
 
-// ── waitForConfirmation ───────────────────────────────────────────────────────
+// -- waitForConfirmation ------------------------------------------------------
 describe('MandateClient#waitForConfirmation', () => {
   it('resolves immediately when already confirmed', async () => {
     mockFetch(200, {
@@ -277,7 +383,7 @@ describe('MandateClient#waitForConfirmation', () => {
   });
 
   it('throws timeout error when deadline exceeded', async () => {
-    // Always returns 'reserved' — never terminal
+    // Always returns 'reserved' - never terminal
     mockFetch(200, {
       intentId: 'i', status: 'reserved', txHash: null,
       blockNumber: null, gasUsed: null, amountUsd: null, decodedAction: null,
@@ -290,7 +396,7 @@ describe('MandateClient#waitForConfirmation', () => {
   });
 });
 
-// ── Error classes ─────────────────────────────────────────────────────────────
+// -- Error classes ------------------------------------------------------------
 describe('Error classes', () => {
   it('MandateError has statusCode', () => {
     const e = new MandateError('fail', 500);

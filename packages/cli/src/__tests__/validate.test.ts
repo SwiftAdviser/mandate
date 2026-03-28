@@ -21,88 +21,54 @@ beforeEach(() => {
   vi.mocked(fs.readFileSync).mockReturnValue(JSON.stringify(CREDS));
 });
 
-describe('mandate validate', () => {
-  it('returns ok when policy check passes', async () => {
-    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({
-      ok: true,
-      status: 200,
-      json: () => Promise.resolve({
-        allowed: true,
-        intentId: 'intent-1',
-        requiresApproval: false,
-        approvalId: null,
-        blockReason: null,
-      }),
-    }));
-
-    const { default: cli } = await import('../index.js');
-
-    let output = '';
-    await cli.serve([
-      'validate',
-      '--to', '0x036CbD53842c5426634e7929541eC2318f3dCF7e',
-      '--calldata', '0xa9059cbb',
-      '--nonce', '42',
-      '--gas-limit', '90000',
-      '--max-fee-per-gas', '1000000000',
-      '--max-priority-fee-per-gas', '1000000000',
-      '--reason', 'Invoice #127',
-    ], {
-      stdout(s: string) { output += s; },
-      exit() {},
-    });
-
-    expect(output).toContain('intent-1');
-    expect(output).toContain('ok');
-
-    vi.unstubAllGlobals();
-  });
-
-  it('computes intentHash and sends it in request', async () => {
+describe('mandate validate (preflight, default)', () => {
+  it('calls /api/validate with action-based payload', async () => {
     const fetchSpy = vi.fn().mockResolvedValue({
       ok: true,
       status: 200,
       json: () => Promise.resolve({
         allowed: true,
-        intentId: 'intent-1',
+        intentId: 'intent-pf1',
         requiresApproval: false,
         approvalId: null,
         blockReason: null,
+        action: 'transfer',
       }),
     });
     vi.stubGlobal('fetch', fetchSpy);
 
     const { default: cli } = await import('../index.js');
 
+    let output = '';
     await cli.serve([
       'validate',
+      '--action', 'transfer',
+      '--amount', '10',
       '--to', '0x036CbD53842c5426634e7929541eC2318f3dCF7e',
-      '--nonce', '42',
-      '--gas-limit', '90000',
-      '--max-fee-per-gas', '1000000000',
-      '--max-priority-fee-per-gas', '1000000000',
-      '--reason', 'Test',
+      '--token', 'USDC',
+      '--reason', 'Invoice #42',
     ], {
-      stdout() {},
+      stdout(s: string) { output += s; },
       exit() {},
     });
 
-    const body = JSON.parse(fetchSpy.mock.calls[0][1].body);
-    // Verify intentHash is present and is a hex string
-    expect(body.intentHash).toMatch(/^0x[a-f0-9]{64}$/);
+    // Verify preflight payload sent to /api/validate
+    const [url, reqInit] = fetchSpy.mock.calls[0];
+    expect(url).toContain('/api/validate');
+    expect(url).not.toContain('/api/validate/raw');
 
-    // Verify it matches what computeIntentHash would produce
-    const expected = computeIntentHash({
-      chainId: 84532,
-      nonce: 42,
-      to: '0x036CbD53842c5426634e7929541eC2318f3dCF7e' as `0x${string}`,
-      calldata: '0x',
-      valueWei: '0',
-      gasLimit: '90000',
-      maxFeePerGas: '1000000000',
-      maxPriorityFeePerGas: '1000000000',
-    });
-    expect(body.intentHash).toBe(expected);
+    const body = JSON.parse(reqInit.body);
+    expect(body.action).toBe('transfer');
+    expect(body.amount).toBe('10');
+    expect(body.to).toBe('0x036CbD53842c5426634e7929541eC2318f3dCF7e');
+    expect(body.token).toBe('USDC');
+    expect(body.reason).toBe('Invoice #42');
+    // No EVM fields in preflight
+    expect(body.intentHash).toBeUndefined();
+    expect(body.nonce).toBeUndefined();
+
+    expect(output).toContain('intent-pf1');
+    expect(output).toContain('ok');
 
     vi.unstubAllGlobals();
   });
@@ -122,11 +88,7 @@ describe('mandate validate', () => {
     let output = '';
     await cli.serve([
       'validate',
-      '--to', '0x036CbD53842c5426634e7929541eC2318f3dCF7e',
-      '--nonce', '1',
-      '--gas-limit', '90000',
-      '--max-fee-per-gas', '1000000000',
-      '--max-priority-fee-per-gas', '1000000000',
+      '--action', 'transfer',
       '--reason', 'Big payment',
     ], {
       stdout(s: string) { output += s; },
@@ -149,6 +111,7 @@ describe('mandate validate', () => {
         requiresApproval: true,
         approvalId: 'approval-1',
         blockReason: null,
+        action: 'transfer',
       }),
     }));
 
@@ -157,11 +120,7 @@ describe('mandate validate', () => {
     let output = '';
     await cli.serve([
       'validate',
-      '--to', '0x036CbD53842c5426634e7929541eC2318f3dCF7e',
-      '--nonce', '1',
-      '--gas-limit', '90000',
-      '--max-fee-per-gas', '1000000000',
-      '--max-priority-fee-per-gas', '1000000000',
+      '--action', 'transfer',
       '--reason', 'Big payment needing approval',
     ], {
       stdout(s: string) { output += s; },
@@ -174,7 +133,102 @@ describe('mandate validate', () => {
 
     vi.unstubAllGlobals();
   });
+});
 
+describe('mandate validate --raw', () => {
+  it('computes intentHash and calls /api/validate/raw', async () => {
+    const fetchSpy = vi.fn().mockResolvedValue({
+      ok: true,
+      status: 200,
+      json: () => Promise.resolve({
+        allowed: true,
+        intentId: 'intent-raw1',
+        requiresApproval: false,
+        approvalId: null,
+        blockReason: null,
+      }),
+    });
+    vi.stubGlobal('fetch', fetchSpy);
+
+    const { default: cli } = await import('../index.js');
+
+    let output = '';
+    await cli.serve([
+      'validate',
+      '--raw',
+      '--to', '0x036CbD53842c5426634e7929541eC2318f3dCF7e',
+      '--nonce', '42',
+      '--gas-limit', '90000',
+      '--max-fee-per-gas', '1000000000',
+      '--max-priority-fee-per-gas', '1000000000',
+      '--reason', 'Invoice #127',
+    ], {
+      stdout(s: string) { output += s; },
+      exit() {},
+    });
+
+    const [url, reqInit] = fetchSpy.mock.calls[0];
+    expect(url).toContain('/api/validate/raw');
+
+    const body = JSON.parse(reqInit.body);
+    expect(body.intentHash).toMatch(/^0x[a-f0-9]{64}$/);
+    expect(body.nonce).toBe(42);
+    expect(body.gasLimit).toBe('90000');
+
+    // Verify intentHash matches computed value
+    const expected = computeIntentHash({
+      chainId: 84532,
+      nonce: 42,
+      to: '0x036CbD53842c5426634e7929541eC2318f3dCF7e' as `0x${string}`,
+      calldata: '0x',
+      valueWei: '0',
+      gasLimit: '90000',
+      maxFeePerGas: '1000000000',
+      maxPriorityFeePerGas: '1000000000',
+    });
+    expect(body.intentHash).toBe(expected);
+
+    expect(output).toContain('intent-raw1');
+    expect(output).toContain('ok');
+
+    vi.unstubAllGlobals();
+  });
+
+  it('returns blocked output on PolicyBlockedError in raw mode', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({
+      ok: false,
+      status: 422,
+      json: () => Promise.resolve({
+        blockReason: 'per_tx_limit_exceeded',
+        blockDetail: '$150 exceeds $100/tx limit',
+      }),
+    }));
+
+    const { default: cli } = await import('../index.js');
+
+    let output = '';
+    await cli.serve([
+      'validate',
+      '--raw',
+      '--to', '0x036CbD53842c5426634e7929541eC2318f3dCF7e',
+      '--nonce', '1',
+      '--gas-limit', '90000',
+      '--max-fee-per-gas', '1000000000',
+      '--max-priority-fee-per-gas', '1000000000',
+      '--reason', 'Big payment',
+    ], {
+      stdout(s: string) { output += s; },
+      exit() {},
+    });
+
+    expect(output).toContain('POLICY_BLOCKED');
+    expect(output).toContain('per_tx_limit_exceeded');
+
+    vi.unstubAllGlobals();
+  });
+});
+
+describe('mandate validate auth', () => {
   it('requires auth middleware (no creds = error)', async () => {
     vi.mocked(fs.existsSync).mockReturnValue(false);
 
@@ -184,11 +238,7 @@ describe('mandate validate', () => {
     let exitCode: number | undefined;
     await cli.serve([
       'validate',
-      '--to', '0x036CbD53842c5426634e7929541eC2318f3dCF7e',
-      '--nonce', '1',
-      '--gas-limit', '90000',
-      '--max-fee-per-gas', '1000000000',
-      '--max-priority-fee-per-gas', '1000000000',
+      '--action', 'transfer',
       '--reason', 'Test',
     ], {
       stdout(s: string) { output += s; },

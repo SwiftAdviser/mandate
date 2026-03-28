@@ -42,6 +42,8 @@ export type {
   MandateConfig,
   IntentPayload,
   ValidateResult,
+  PreflightPayload,
+  PreflightResult,
   IntentStatus,
   RegisterResult,
   ExternalSigner,

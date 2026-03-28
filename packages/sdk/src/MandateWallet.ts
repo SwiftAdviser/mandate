@@ -26,7 +26,7 @@ import { baseSepolia, base } from 'viem/chains';
 import { MandateClient } from './MandateClient.js';
 import { computeIntentHash } from './intentHash.js';
 import { ApprovalRequiredError } from './types.js';
-import type { IntentStatus, IntentPayload, MandateConfig, ExternalSigner } from './types.js';
+import type { IntentStatus, IntentPayload, MandateConfig, ExternalSigner, PreflightResult } from './types.js';
 
 const ERC20_ABI = [
   {
@@ -162,7 +162,7 @@ export class MandateWallet {
   ): Promise<TransferResult> {
     const prepared = await this.prepareTransaction(to, calldata, valueWei, opts.reason ?? 'No reason provided');
 
-    const validation = await this.client.validate(prepared.payload);
+    const validation = await this.client.rawValidate(prepared.payload);
     const intentId = validation.intentId!;
 
     return this.signBroadcastConfirm(intentId, to, calldata, valueWei, prepared, opts);
@@ -188,7 +188,7 @@ export class MandateWallet {
     let intentId: string;
 
     try {
-      const validation = await this.client.validate(prepared.payload);
+      const validation = await this.client.rawValidate(prepared.payload);
       intentId = validation.intentId!;
     } catch (err) {
       if (!(err instanceof ApprovalRequiredError)) throw err;
@@ -371,6 +371,25 @@ export class MandateWallet {
         'Payment-Signature': txHash,
         'X-Payment-TxHash':  txHash,
       },
+    });
+  }
+
+  /**
+   * Preflight a transfer via the action-based validate endpoint.
+   * Lightweight alternative to the full sendTransaction flow.
+   */
+  async preflightTransfer(params: {
+    to: `0x${string}`;
+    amount: string;
+    token?: string;
+    reason: string;
+  }): Promise<PreflightResult> {
+    return this.client.validate({
+      action: 'transfer',
+      to: params.to,
+      amount: params.amount,
+      token: params.token,
+      reason: params.reason,
     });
   }
 

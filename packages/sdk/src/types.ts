@@ -45,6 +45,19 @@ export interface IntentStatus {
   expiresAt: string | null;
 }
 
+export interface PreflightPayload {
+  action: string;
+  amount?: string;
+  to?: string;
+  token?: string;
+  reason: string;
+  chain?: string;
+}
+
+export interface PreflightResult extends ValidateResult {
+  action: string;
+}
+
 export interface RegisterResult {
   agentId: string;
   runtimeKey: string;

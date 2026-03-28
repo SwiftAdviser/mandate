@@ -44,7 +44,7 @@ for target in "${REWRITE_TARGETS[@]}"; do
     cat > "$dest" <<FRONT
 ---
 name: mandate-api
-description: Non-custodial agent wallet policy layer. Enforces spend limits, allowlists, and approval workflows. Preflight or validate before every transaction.
+description: "Use when enforcing spend limits, validating agent transactions, detecting prompt injection, or scanning for unprotected wallet calls. Non-custodial policy layer for AI agents."
 ---
 FRONT
     echo "$BODY" >> "$dest"

@@ -112,14 +112,14 @@ fi
 cat <<'DENY'
 MANDATE POLICY GATE: Transaction blocked. You must validate with Mandate first.
 
-Preflight (recommended for custodial wallets like Bankr, Locus, Sponge):
-  mandate preflight --action "swap" --reason "<why>" [--amount <usd>] [--to <addr>]
+Validate (recommended):
+  mandate validate --action "swap" --reason "<why>" --amount "50" --to "0xAddr"
 
-  Or REST: POST https://app.mandate.md/api/validate/preflight
+  Or REST: POST https://app.mandate.md/api/validate
   Body: { "action": "swap", "reason": "why", "amount": "50", "to": "0x..." }
 
-Raw validate (for self-custodial, needs gas params + intentHash):
-  mandate validate --to <recipient> --calldata <data> --reason "<why>"
+Legacy raw validate (self-custodial, needs gas params + intentHash):
+  mandate validate --raw --to <recipient> --calldata <data> --reason "<why>"
 
 After validation succeeds (allowed: true), retry this tool call.
 DENY
