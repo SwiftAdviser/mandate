@@ -3,8 +3,12 @@ main = "src/index.ts"
 compatibility_date = "2024-11-01"
 compatibility_flags = ["nodejs_compat"]
 
+routes = [
+  { pattern = "mcp.mandate.md", custom_domain = true }
+]
+
 [vars]
 MANDATE_API_URL = "https://app.mandate.md"
 
-# Secrets (set via: npx wrangler secret put MANDATE_RUNTIME_KEY)
+# Secrets (set via: bunx wrangler secret put MANDATE_RUNTIME_KEY)
 # MANDATE_RUNTIME_KEY

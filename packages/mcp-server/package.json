@@ -1,21 +1,19 @@
 {
   "name": "@mandate/mcp-server",
   "version": "0.1.0",
+  "devDependencies": {
+    "@cloudflare/workers-types": "^4.0.0",
+    "typescript": "^5.0.0",
+    "vitest": "^2.0.0",
+    "wrangler": "^3.0.0"
+  },
   "description": "Cloudflare Workers MCP server for Mandate — exposes search + execute tools",
-  "type": "module",
   "scripts": {
     "dev": "wrangler dev",
     "deploy": "wrangler deploy",
     "build": "tsc --noEmit",
     "test": "vitest run"
   },
-  "dependencies": {
-    "@cloudflare/agents": "^0.0.16"
-  },
-  "devDependencies": {
-    "@cloudflare/workers-types": "^4.0.0",
-    "typescript": "^5.0.0",
-    "vitest": "^2.0.0",
-    "wrangler": "^3.0.0"
-  }
+  "type": "module",
+  "dependencies": {}
 }

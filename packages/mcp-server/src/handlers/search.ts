@@ -42,6 +42,35 @@ Policy fields (set via dashboard or API):
   circuitBreaker: bool — if true, all txs blocked
   `.trim(),
 
+  'x402': `
+x402 Pay-Per-Call (no registration required)
+Protocol: x402 v2 (HTTP 402 Payment Required)
+Network: Base mainnet (eip155:8453)
+Asset: USDC (0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913)
+Facilitator: Coinbase CDP
+
+Pricing:
+  POST /api/validate         $0.10 USDC
+  POST /api/validate/preflight  $0.05 USDC
+
+Flow:
+  1. POST to endpoint without auth -> receive 402 + PAYMENT-REQUIRED header (base64 JSON)
+  2. Decode header: { x402Version: 2, accepts: [{ scheme, network, amount, asset, payTo }] }
+  3. Sign EIP-712 payment authorization using @x402/fetch or @x402/evm
+  4. Retry request with PAYMENT-SIGNATURE header (base64 encoded signed payload)
+  5. Server verifies via CDP facilitator -> returns 200 with validation result
+
+Client setup (TypeScript):
+  import { wrapFetchWithPayment, x402Client } from '@x402/fetch';
+  import { registerExactEvmScheme } from '@x402/evm/exact/client';
+  const client = new x402Client();
+  registerExactEvmScheme(client, { signer: account });
+  const fetchWithPay = wrapFetchWithPayment(fetch, client);
+  const res = await fetchWithPay('https://app.mandate.md/api/validate', { method: 'POST', ... });
+
+Alternative: use RuntimeKey (Bearer mndt_live_...) for free unlimited access after registration.
+  `.trim(),
+
   'examples': `
 Example validate call:
 {

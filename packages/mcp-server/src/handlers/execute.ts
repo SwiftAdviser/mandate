@@ -20,6 +20,10 @@ export async function executeHandler(
         url = `${base}/api/validate`;
         method = 'POST';
         break;
+      case 'preflight':
+        url = `${base}/api/validate/preflight`;
+        method = 'POST';
+        break;
       case 'register':
         url = `${base}/api/agents/register`;
         method = 'POST';
