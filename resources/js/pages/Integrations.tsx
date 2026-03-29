@@ -84,25 +84,74 @@ bankr prompt "Swap 0.1 ETH for USDC"  // now allowed`,
   },
   {
     id: 'mcp',
-    comingSoon: true,
-    framework: 'MCP / Codex',
-    package: '@mandate/mcp-worker',
-    category: 'assistant',
+    framework: 'MCP Server',
+    package: 'mcp.mandate.md/mcp',
+    category: 'core',
     icon: '⚙️',
-    tagline: 'Cloudflare Worker MCP server with policy enforcement',
-    install: 'npx wrangler deploy',
-    quickStart: 'npx wrangler deploy && add mandate MCP server URL to your agent config',
-    code: `[mcp_servers.mandate]
-url = "https://mandate-mcp.YOUR_SUBDOMAIN.workers.dev/mcp"
-env = { MANDATE_RUNTIME_KEY = "$MANDATE_RUNTIME_KEY" }
+    logo: '/logos/mcp.svg',
+    tagline: 'Connect any MCP client (Claude, Cursor, Codex) to Mandate policy tools.',
+    install: 'https://mcp.mandate.md/mcp',
+    quickStart: 'Add https://mcp.mandate.md/mcp to your MCP client config',
+    code: `// Claude Desktop: ~/.claude/claude_desktop_config.json
+{
+  "mcpServers": {
+    "mandate": {
+      "url": "https://mcp.mandate.md/mcp"
+    }
+  }
+}
 
-# All payment tools routed through Mandate policy checks
-# Add to ~/.codex/mcp.toml or equivalent`,
-    lang: 'toml',
+// Codex / other MCP clients: add the URL to your config.
+// Tools available:
+//   search   - look up API schemas, policy fields, x402 docs
+//   execute  - call validate, preflight, register, status
+//   x402_info - get x402 pricing and payment flow
+
+// JSON-RPC over HTTP POST. No auth needed for search/x402_info.
+// Execute with validate/preflight accepts x402 pay-per-call.`,
+    lang: 'json',
+    envVars: [],
+    prerequisites: [],
+  },
+  {
+    id: 'x402',
+    framework: 'x402 Pay-Per-Call',
+    package: 'x402 protocol',
+    category: 'core',
+    icon: '💳',
+    tagline: 'Pay $0.10/validation with USDC on Base. No registration needed.',
+    install: 'bun add @x402/fetch @x402/evm',
+    quickStart: 'bun add @x402/fetch @x402/evm',
+    code: `import { wrapFetchWithPayment, x402Client } from '@x402/fetch';
+import { registerExactEvmScheme } from '@x402/evm/exact/client';
+import { privateKeyToAccount } from 'viem/accounts';
+
+// 1. Set up x402 client with your wallet
+const account = privateKeyToAccount(process.env.PRIVATE_KEY);
+const client = new x402Client();
+registerExactEvmScheme(client, { signer: account });
+const fetchWithPay = wrapFetchWithPayment(fetch, client);
+
+// 2. Call validate - auto-pays $0.10 USDC on Base
+const res = await fetchWithPay('https://app.mandate.md/api/validate', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({
+    action: 'transfer',
+    amount: '10',
+    to: '0xRecipient...',
+    token: 'USDC',
+    reason: 'Pay invoice #42',
+  }),
+});
+
+const { allowed, payer } = await res.json();
+// No API key, no registration. Just pay and use.`,
+    lang: 'typescript',
     envVars: [
-      { name: 'MANDATE_RUNTIME_KEY', note: 'from dashboard' },
+      { name: 'PRIVATE_KEY', note: 'EVM wallet with USDC on Base' },
     ],
-    prerequisites: ['Cloudflare account required'],
+    prerequisites: ['USDC on Base mainnet for payments'],
   },
   {
     id: 'eliza',
