@@ -28,7 +28,7 @@
     {
       "name": "SKILL",
       "endpoint": "https://app.mandate.md/SKILL.md"
-    },
+    }
   ],
   "x402Support": true,
   "active": true,
