@@ -8,6 +8,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Support\Str;
 
 class SocialAuthController extends Controller
@@ -69,11 +70,15 @@ class SocialAuthController extends Controller
             'redirect_uri' => url(config("services.{$provider}.redirect")),
         ];
 
-        if ($provider === 'google') {
-            $tokenParams['grant_type'] = 'authorization_code';
-            $tokenResponse = Http::asForm()->post($config['token_url'], $tokenParams);
-        } else {
-            $tokenResponse = Http::acceptJson()->post($config['token_url'], $tokenParams);
+        try {
+            if ($provider === 'google') {
+                $tokenParams['grant_type'] = 'authorization_code';
+                $tokenResponse = Http::asForm()->post($config['token_url'], $tokenParams);
+            } else {
+                $tokenResponse = Http::acceptJson()->post($config['token_url'], $tokenParams);
+            }
+        } catch (ConnectionException) {
+            return redirect('/login')->with('error', ucfirst($provider).' login temporarily unavailable. Please try again.');
         }
 
         $accessToken = $tokenResponse->json('access_token');
@@ -82,7 +87,11 @@ class SocialAuthController extends Controller
         }
 
         // Fetch user info
-        $socialUser = Http::withToken($accessToken)->get($config['userinfo_url'])->json();
+        try {
+            $socialUser = Http::withToken($accessToken)->get($config['userinfo_url'])->json();
+        } catch (ConnectionException) {
+            return redirect('/login')->with('error', ucfirst($provider).' login temporarily unavailable. Please try again.');
+        }
 
         // Extract user data (provider-specific field names)
         $userData = $this->extractUserData($provider, $socialUser);
