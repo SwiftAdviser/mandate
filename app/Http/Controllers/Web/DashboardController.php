@@ -6,9 +6,11 @@ use App\Http\Controllers\Controller;
 use App\Models\Agent;
 use App\Models\ApprovalQueue;
 use App\Models\PolicyInsight;
+use App\Models\SkillHeartbeat;
 use App\Models\TxIntent;
 use App\Services\IntentSummaryService;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response as HttpResponse;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -235,6 +237,61 @@ class DashboardController extends Controller
             'wallet_address' => $agent?->wallet_address ?? '',
             'chain_id' => $agent?->chain_id ?? 0,
             'already_claimed' => $agent?->isClaimed() ?? false,
+        ]);
+    }
+
+    public function heartbeats(Request $request): Response|HttpResponse
+    {
+        $adminId = config('mandate.admin_user_id');
+        if ($adminId && (string) auth()->id() !== (string) $adminId) {
+            abort(403);
+        }
+
+        $today = now()->startOfDay();
+        $thirtyDaysAgo = now()->subDays(30)->startOfDay();
+
+        // Daily counts for last 30 days
+        $dailyCounts = SkillHeartbeat::where('created_at', '>=', $thirtyDaysAgo)
+            ->selectRaw('DATE(created_at) as date')
+            ->selectRaw('COUNT(*) as total')
+            ->selectRaw('COUNT(DISTINCT agent_id) as unique_agents')
+            ->selectRaw('SUM(CASE WHEN agent_id IS NOT NULL THEN 1 ELSE 0 END) as keyed')
+            ->selectRaw('SUM(CASE WHEN agent_id IS NULL THEN 1 ELSE 0 END) as anonymous')
+            ->groupByRaw('DATE(created_at)')
+            ->orderBy('date')
+            ->get();
+
+        // Totals
+        $todayTotal = SkillHeartbeat::where('created_at', '>=', $today)->count();
+        $todayKeyed = SkillHeartbeat::where('created_at', '>=', $today)->whereNotNull('agent_id')->count();
+        $todayAnonymous = $todayTotal - $todayKeyed;
+
+        $weekStart = now()->startOfWeek();
+        $weekTotal = SkillHeartbeat::where('created_at', '>=', $weekStart)->count();
+
+        $monthStart = now()->startOfMonth();
+        $monthTotal = SkillHeartbeat::where('created_at', '>=', $monthStart)->count();
+
+        // Top agents this week (join to avoid N+1)
+        $topAgents = SkillHeartbeat::where('skill_heartbeats.created_at', '>=', $weekStart)
+            ->whereNotNull('skill_heartbeats.agent_id')
+            ->join('agents', 'skill_heartbeats.agent_id', '=', 'agents.id')
+            ->selectRaw('skill_heartbeats.agent_id, agents.name as agent_name, COUNT(*) as count_this_week, MAX(skill_heartbeats.created_at) as last_seen')
+            ->groupBy('skill_heartbeats.agent_id', 'agents.name')
+            ->orderByDesc('count_this_week')
+            ->limit(20)
+            ->get();
+
+        return Inertia::render('Heartbeats', [
+            'daily_counts' => $dailyCounts,
+            'totals' => [
+                'today' => $todayTotal,
+                'keyed_today' => $todayKeyed,
+                'anonymous_today' => $todayAnonymous,
+                'week' => $weekTotal,
+                'month' => $monthTotal,
+            ],
+            'top_agents' => $topAgents,
         ]);
     }
 }

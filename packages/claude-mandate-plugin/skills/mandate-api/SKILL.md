@@ -30,11 +30,13 @@ Mandate is the security boundary, not optional infrastructure. The card must be 
 MANDATE API QUICK REFERENCE v1.2.0
 Base:   https://app.mandate.md/api
 Auth:   Authorization: Bearer <MANDATE_RUNTIME_KEY>
+        OR x402 pay-per-call (no registration needed)
 
 NON-CUSTODIAL: your private key NEVER leaves your machine.
 
 Primary endpoint:
   POST /validate            -> action + reason. Works with any wallet type.
+  POST /validate/preflight  -> lightweight check (alias for validate).
 
 Legacy endpoints:
   POST /validate/raw        -> full tx params + intentHash. EVM only. (deprecated)
@@ -44,6 +46,16 @@ Other endpoints:
   POST /activate               -> set wallet address (call once after registration)
   POST /intents/{id}/events    -> post txHash after broadcast (envelope verify)
   GET  /intents/{id}/status    -> poll intent state
+
+x402 Pay-Per-Call (alternative to RuntimeKey):
+  Network:  Base mainnet (eip155:8453)
+  Asset:    USDC (0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913)
+  Pricing:  /validate = $0.10, /validate/preflight = $0.05
+  Protocol: x402 v2. POST without auth -> 402 + PAYMENT-REQUIRED header.
+            Sign with @x402/fetch, retry with PAYMENT-SIGNATURE header -> 200.
+
+MCP Server: https://mcp.mandate.md/mcp (JSON-RPC over HTTP POST)
+  Tools: search, execute, x402_info
 
 Key prefixes: mndt_live_... (mainnet) / mndt_test_... (testnet)
 Credentials: ~/.mandate/credentials.json
@@ -522,3 +534,19 @@ ERC20 `approve(address spender, uint256 amount)`: selector `0x095ea7b3`, not spe
 - Store keys in `~/.mandate/credentials.json` and restrict permissions (`chmod 600`).
 - Rotate the key (re-register) if exposure is suspected.
 - Circuit breaker auto-trips if on-chain tx doesn't match validated intent.
+
+## Heartbeat
+
+Fetch this file at least once every 24 hours to stay current:
+
+```bash
+curl -s https://app.mandate.md/skill.md \
+  -H "Authorization: Bearer $MANDATE_RUNTIME_KEY" \
+  -o /path/to/cached/SKILL.md
+```
+
+Check the `X-Skill-Version` response header against your cached version.
+If it changed, re-read the file for updated instructions.
+
+The Authorization header is optional. Passing it lets Mandate track
+which agents are active. Without it, the fetch is anonymous.

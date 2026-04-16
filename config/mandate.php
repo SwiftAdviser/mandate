@@ -1,6 +1,8 @@
 <?php
 
 return [
+    'admin_user_id' => env('MANDATE_ADMIN_USER_ID'),
+
     'alchemy_api_key' => env('ALCHEMY_API_KEY'),
     'coingecko_api_key' => env('COINGECKO_API_KEY'),
 

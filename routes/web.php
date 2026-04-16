@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Api\SkillController;
 use App\Http\Controllers\Auth\EmailVerificationController;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\LogoutController;
@@ -8,6 +9,11 @@ use App\Http\Controllers\Auth\RegisterController;
 use App\Http\Controllers\Auth\SocialAuthController;
 use App\Http\Controllers\Web\DashboardController;
 use Illuminate\Support\Facades\Route;
+
+// SKILL.md — public, no CSRF (agents fetch this as an API call)
+Route::get('/skill.md', [SkillController::class, 'show'])
+    ->withoutMiddleware(\Illuminate\Foundation\Http\Middleware\VerifyCsrfToken::class)
+    ->middleware('throttle:60,1');
 
 // Landing — public
 Route::get('/', function () {
@@ -82,6 +88,7 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/notifications', [DashboardController::class, 'notifications']);
     Route::get('/insights', [DashboardController::class, 'insights']);
     Route::get('/agents', [DashboardController::class, 'agents']);
+    Route::get('/heartbeats', [DashboardController::class, 'heartbeats']);
     Route::get('/how-it-works', fn () => \Inertia\Inertia::render('HowItWorks'));
     Route::get('/integrations', function (\Illuminate\Http\Request $request) {
         $runtimeKey = $request->session()->get('first_agent_key');

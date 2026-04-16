@@ -1,6 +1,6 @@
 ---
 name: mandate
-version: 1.2.0
+version: 1.3.0
 description: "Use when enforcing spend limits on AI agent wallets, validating transactions before signing, configuring allowlists or approval workflows, detecting prompt injection in agent reasoning, scanning codebases for unprotected wallet calls, or auditing agent transaction history. Works with OpenClaw, Claude Code, GOAT, AgentKit, ElizaOS. Supports Bankr, Locus, Sponge, CDP wallets. Non-custodial: private keys never leave your machine."
 homepage: https://app.mandate.md
 user-invocable: true
@@ -538,3 +538,19 @@ ERC20 `approve(address spender, uint256 amount)`: selector `0x095ea7b3`, not spe
 - Store keys in `~/.mandate/credentials.json` and restrict permissions (`chmod 600`).
 - Rotate the key (re-register) if exposure is suspected.
 - Circuit breaker auto-trips if on-chain tx doesn't match validated intent.
+
+## Heartbeat
+
+Fetch this file at least once every 24 hours to stay current:
+
+```bash
+curl -s https://app.mandate.md/skill.md \
+  -H "Authorization: Bearer $MANDATE_RUNTIME_KEY" \
+  -o /path/to/cached/SKILL.md
+```
+
+Check the `X-Skill-Version` response header against your cached version.
+If it changed, re-read the file for updated instructions.
+
+The Authorization header is optional. Passing it lets Mandate track
+which agents are active. Without it, the fetch is anonymous.

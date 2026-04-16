@@ -9,7 +9,7 @@ Mandate is a **non-custodial agent wallet policy layer**. It enforces spend limi
 - **Backend**: Laravel 12 (PHP 8.2) API at `app.mandate.md`
 - **Frontend**: React 19 + Inertia.js + Tailwind 4 (dashboard at `app.mandate.md`)
 - **SDK packages**: TypeScript monorepo in `packages/` (bun workspaces)
-- **SKILL.md**: Canonical API reference for the Mandate API (used as a skill by AI agents). `public/SKILL.md` is the **source of truth**. All other copies (plugin SKILL.md, openclaw SKILL.md) are derived from it. When changing SKILL.md: edit `public/SKILL.md` first, bump the version in frontmatter, then run `bash scripts/sync-skill.sh` to propagate.
+- **SKILL.md**: Canonical API reference for the Mandate API (used as a skill by AI agents). `resources/skill.md` is the **source of truth** (served dynamically via `GET /skill.md` with heartbeat telemetry). All other copies (plugin SKILL.md, openclaw SKILL.md) are derived from it. When changing SKILL.md: edit `resources/skill.md` first, bump the version in frontmatter, then run `bash scripts/sync-skill.sh` to propagate + publish to ClawhHub.
 
 ## Commands
 

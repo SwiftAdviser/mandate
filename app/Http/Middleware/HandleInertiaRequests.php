@@ -54,6 +54,7 @@ class HandleInertiaRequests extends Middleware
             'pending_approvals' => $pendingApprovals,
             'active_insights_count' => $activeInsightsCount,
             'agent_activated' => $agentActivated,
+            'is_admin' => $user && config('mandate.admin_user_id') && (string) $user->id === (string) config('mandate.admin_user_id'),
             'app_url' => config('app.url'),
         ]);
     }

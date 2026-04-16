@@ -1,5 +1,5 @@
 import { Link, usePage } from '@inertiajs/react';
-import { LayoutDashboard, Bot, Shield, FileText, CheckCircle, Bell, ScrollText, Puzzle, Play, Sparkles } from 'lucide-react';
+import { LayoutDashboard, Bot, Shield, FileText, CheckCircle, Bell, ScrollText, Puzzle, Play, Sparkles, Activity } from 'lucide-react';
 
 function TelegramIcon({ size = 16 }: { size?: number }) {
   return (
@@ -21,6 +21,7 @@ const NAV = [
   { href: '/approvals',       label: 'Approvals',      icon: CheckCircle, badge: true, needsAgent: true },
   { href: '/notifications',   label: 'Notifications',  icon: Bell, needsAgent: true },
   { href: '/audit',           label: 'Audit Log',      icon: ScrollText, needsAgent: true },
+  { href: '/heartbeats',      label: 'Heartbeats',     icon: Activity, adminOnly: true },
 ];
 
 export default function DashboardLayout({ children }: { children: ReactNode }) {
@@ -30,6 +31,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
   const pendingApprovals = (page.props as any).pending_approvals ?? 0;
   const activeInsights = (page.props as any).active_insights_count ?? 0;
   const agentActivated = (page.props as any).agent_activated ?? false;
+  const isAdmin = (page.props as any).is_admin ?? false;
   const [collapsed, setCollapsed] = useState(false);
 
   return (
@@ -77,7 +79,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
 
         {/* Nav */}
         <nav style={{ flex: 1, padding: '12px 8px', overflow: 'auto' }}>
-          {NAV.filter(item => !item.needsAgent || agentActivated).map(item => {
+          {NAV.filter(item => (!item.needsAgent || agentActivated) && (!item.adminOnly || isAdmin)).map(item => {
             const active = url.startsWith(item.href);
             const Icon = item.icon;
             return (
