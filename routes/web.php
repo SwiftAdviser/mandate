@@ -14,6 +14,7 @@ use Illuminate\Support\Facades\Route;
 Route::get('/skill.md', [SkillController::class, 'show'])
     ->withoutMiddleware(\Illuminate\Foundation\Http\Middleware\VerifyCsrfToken::class)
     ->middleware('throttle:60,1');
+Route::get('/SKILL.md', fn () => redirect('/skill.md', 301));
 
 // Landing — public
 Route::get('/', function () {
