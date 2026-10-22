@@ -1,9 +1,27 @@
 [phases.setup]
-nixPkgs = ["php84", "php84Extensions.pdo_pgsql", "php84Extensions.redis", "php84Extensions.bcmath", "php84Extensions.pcntl", "php84Extensions.posix", "php84Extensions.gd", "php84Extensions.zip", "bun", "nodejs_22", "python3", "python311Packages.supervisor"]
+nixPkgs = [
+  "(with (import ../nix/php-security.nix { inherit pkgs; }); php84)",
+  "(with (import ../nix/php-security.nix { inherit pkgs; }); php84Extensions.pdo_pgsql)",
+  "(with (import ../nix/php-security.nix { inherit pkgs; }); php84Extensions.redis)",
+  "(with (import ../nix/php-security.nix { inherit pkgs; }); php84Extensions.bcmath)",
+  "(with (import ../nix/php-security.nix { inherit pkgs; }); php84Extensions.pcntl)",
+  "(with (import ../nix/php-security.nix { inherit pkgs; }); php84Extensions.posix)",
+  "(with (import ../nix/php-security.nix { inherit pkgs; }); php84Extensions.gd)",
+  "(with (import ../nix/php-security.nix { inherit pkgs; }); php84Extensions.zip)",
+  "bun",
+  "nodejs_22",
+  "python3",
+  "python311Packages.supervisor",
+]
+# Fixed PHP sources; fail before Composer/app installation on regression.
+nixpkgsArchive = "e24b4c09e963677b1beea49d411cd315a024ad3a"
+onlyIncludeFiles = ["nix/php-security.nix"]
+cmds = ["php -r '$expected = \"8.4.27\"; if (PHP_VERSION !== $expected || phpversion(\"session\") !== $expected || phpversion(\"filter\") !== $expected) { fwrite(STDERR, \"Unsafe PHP runtime\\n\"); exit(1); } echo \"Verified PHP \".PHP_VERSION.PHP_EOL;'"]
+
 
 [phases.install]
 cmds = [
-  "curl -sS https://getcomposer.org/installer | php84 -- --install-dir=/usr/local/bin --filename=composer",
+  "curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer",
   "composer install --no-dev --optimize-autoloader",
   "bun install --frozen-lockfile",
   "bun run build"
