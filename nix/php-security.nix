@@ -13,7 +13,7 @@ pkgs.appendOverlays [
               # shared filter module in that child, retaining every assertion.
               filter = pprev.extensions.filter.overrideAttrs (old: {
                 postPatch = (old.postPatch or "") + ''
-                  substituteInPlace tests/oom_filter_default_encoded.phpt tests/oom_filter_input.phpt tests/oom_filter_input_array.phpt \
+                  substituteInPlace ext/filter/tests/oom_filter_default_encoded.phpt ext/filter/tests/oom_filter_input.phpt ext/filter/tests/oom_filter_input_array.phpt \
                     --replace-fail "getenv('TEST_PHP_CGI_EXECUTABLE'), '-n'," "getenv('TEST_PHP_CGI_EXECUTABLE'), '-n', '-d', 'extension=' . __DIR__ . '/../modules/filter.so',"
                 '';
               });
