@@ -22,7 +22,7 @@ cmds = ["php -r '$expected = \"8.4.27\"; if (PHP_VERSION !== $expected || phpver
 [phases.install]
 cmds = [
   "curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer",
-  "composer install --no-dev --optimize-autoloader",
+  "php /usr/local/bin/composer install --no-dev --optimize-autoloader",
   "bun install --frozen-lockfile",
   "bun run build"
 ]
